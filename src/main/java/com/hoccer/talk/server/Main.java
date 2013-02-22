@@ -11,10 +11,12 @@ public class Main {
 	public static void main(String[] args) {
 		Server s = new Server(new InetSocketAddress("localhost", 8080));
 		try {
+			TalkServer ts = new TalkServer();
+			
 			DefaultHandler clientDefHandler = new DefaultHandler();
 			clientDefHandler.setServeIcon(false);
 			
-			WebSocketHandler clientHandler = new ClientSocketHandler();
+			WebSocketHandler clientHandler = new TalkRpcHandler(ts);
 			clientHandler.setHandler(clientDefHandler);
 			
 			s.setHandler(clientHandler);
