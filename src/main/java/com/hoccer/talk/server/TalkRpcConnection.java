@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import org.apache.log4j.Logger;
 
-import better.jsonrpc.util.JsonRpcConnection;
+import better.jsonrpc.core.JsonRpcConnection;
 import better.jsonrpc.util.ProxyUtil;
 
 import com.hoccer.talk.model.TalkDelivery;
