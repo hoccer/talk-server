@@ -11,16 +11,12 @@ public class TalkDatabase {
 	private static Hashtable<String, TalkClient> allClientsById
 		= new Hashtable<String, TalkClient>();
 	
-	public static TalkClient newClient() {
-		String id = UUID.randomUUID().toString();
-		TalkClient result = new TalkClient(id);
-		allClientsById.put(id, result);
+	public static TalkClient findClient(String clientId) {
+		TalkClient result = new TalkClient(clientId);
+		allClientsById.put(clientId, result);
 		return result;
 	}
 	
-	public static TalkClient findClient(String clientId) {
-		return allClientsById.get(clientId);
-	}
 	
 	private static Hashtable<String, TalkMessage> allMessagesById
 		= new Hashtable<String, TalkMessage>();

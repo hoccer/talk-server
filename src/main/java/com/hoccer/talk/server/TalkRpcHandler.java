@@ -28,8 +28,6 @@ public class TalkRpcHandler extends WebSocketHandler {
 		JsonRpcWsConnection connection = new JsonRpcWsConnection(mMapper);
 		connection.setServer(mServer.getRpcServer());
 		TalkRpcConnection rpcConnection = new TalkRpcConnection(mServer, connection);
-		connection.setHandler(rpcConnection);
-		connection.addListener(rpcConnection);
 		return connection;
 	}
 

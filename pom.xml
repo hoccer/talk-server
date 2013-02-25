@@ -19,11 +19,14 @@
   </properties>
 
   <dependencies>
+    <!-- Base library with models and protocols -->
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.16</version>
+      <groupId>hoccer</groupId>
+      <artifactId>hoccer-talk-common</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
     </dependency>
+    
+    <!-- Jetty server framework -->
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
@@ -34,16 +37,8 @@
       <artifactId>jetty-websocket</artifactId>
       <version>${jetty.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-      <version>2.0.6</version>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.0.6</version>
-    </dependency>
+
+    <!-- JSON-RPC stack -->
     <dependency>
       <groupId>better</groupId>
       <artifactId>better-jsonrpc-common</artifactId>
@@ -54,20 +49,31 @@
       <artifactId>better-jsonrpc-ws-client</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
+    
+    <!-- Logging -->
     <dependency>
-      <groupId>hoccer</groupId>
-      <artifactId>hoccer-talk-common</artifactId>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.16</version>
+    </dependency>
+    
+    <!-- Metrics -->
+    <dependency>
+       <groupId>com.yammer.metrics</groupId>
+       <artifactId>metrics-core</artifactId>
+       <version>2.2.0</version>
+    </dependency>
+
+    <!-- Push support library -->
+    <dependency>
+      <groupId>better</groupId>
+      <artifactId>better-push-sender</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
+    
   </dependencies>
   
   <repositories>
-    <repository>
-        <id>jsonrpc4j-webdav-maven-repo</id>
-        <name>jsonrpc4j maven repository</name>
-        <url>http://jsonrpc4j.googlecode.com/svn/maven/repo/</url>
-        <layout>default</layout>
-    </repository>
   </repositories>
   
   <build>
