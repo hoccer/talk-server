@@ -13,6 +13,12 @@ import com.hoccer.talk.server.push.PushRequest;
 
 import better.jsonrpc.server.JsonRpcServer;
 
+/**
+ * Main object of the Talk server
+ *
+ * This holds global state such as the list of active connections,
+ * references to common database mapping helpers and so on.
+ */
 public class TalkServer {
 	
 	private static final Logger log = Logger.getLogger(TalkServer.class);
