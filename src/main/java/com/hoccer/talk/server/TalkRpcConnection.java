@@ -109,19 +109,36 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 		}
 	
 		@Override
-		public void requestOutgoingDelivery(boolean wanted) {
+		public TalkDelivery[] deliveryRequest(TalkMessage message, TalkDelivery[] deliveries) {
+            log.info("client requests delivery of new message to "
+                    + deliveries.length + " clients");
+            for(TalkDelivery d: deliveries) {
+                String receiverId = d.getReceiverId();
+                TalkClient receiver = TalkDatabase.findClient(receiverId);
+                if(receiver == null) {
+                    log.info("delivery rejected: client " + receiverId + " does not exist");
+                    // mark delivery failed
+                } else {
+                    log.info("delivery accepted: client " + receiverId);
+                    // delivery accepted, save
+                    TalkDatabase.saveDelivery(d);
+                }
+            }
+            return deliveries;
 		}
 	
 		@Override
-		public void requestIncomingDelivery(boolean wanted) {
-		}
-	
-		@Override
-		public void deliveryRequest(TalkMessage m, TalkDelivery[] d) {
-		}
-	
-		@Override
-		public void deliveryConfirm(String messageId) {
+		public TalkDelivery deliveryConfirm(String messageId) {
+            log.info("client confirms delivery of message " + messageId);
+            TalkDelivery d = TalkDatabase.findDelivery(messageId, mClient.getClientId());
+            if(d == null) {
+                log.info("confirmation ignored: no delivery of message "
+                        + messageId + " for client " + mClient.getClientId());
+            } else {
+                log.info("confirmation accepted: message "
+                        + messageId + " for client " + mClient.getClientId());
+            }
+            return d;
 		}
 	
 	}
