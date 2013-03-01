@@ -114,14 +114,19 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
                     + deliveries.length + " clients");
             for(TalkDelivery d: deliveries) {
                 String receiverId = d.getReceiverId();
-                TalkClient receiver = TalkDatabase.findClient(receiverId);
-                if(receiver == null) {
-                    log.info("delivery rejected: client " + receiverId + " does not exist");
+                if(receiverId.equals(mClient.getClientId())) {
+                    log.info("delivery rejected: send to self");
                     // mark delivery failed
                 } else {
-                    log.info("delivery accepted: client " + receiverId);
-                    // delivery accepted, save
-                    TalkDatabase.saveDelivery(d);
+                    TalkClient receiver = TalkDatabase.findClient(receiverId);
+                    if(receiver == null) {
+                        log.info("delivery rejected: client " + receiverId + " does not exist");
+                        // mark delivery failed
+                    } else {
+                        log.info("delivery accepted: client " + receiverId);
+                        // delivery accepted, save
+                        TalkDatabase.saveDelivery(d);
+                    }
                 }
             }
             return deliveries;
