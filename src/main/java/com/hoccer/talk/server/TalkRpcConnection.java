@@ -56,7 +56,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 		mConnection = connection;
 		mHandler = new TalkRpcServerImpl();
 		mClientRpc = ProxyUtil.createClientProxy(
-				this.getClass().getClassLoader(),
+				TalkRpcClient.class.getClassLoader(),
 				TalkRpcClient.class,
 				mConnection);
 		mConnection.setHandler(mHandler);
@@ -100,7 +100,13 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      * RPC protocol implementation
      */
 	public class TalkRpcServerImpl implements TalkRpcServer {
-	
+
+        private void requireIdentification() {
+            if(mClient == null) {
+                throw new RuntimeException("Not logged in");
+            }
+        }
+
 		@Override
 		public void identify(String clientId) {
 			log.info("client identifies as " + clientId);
@@ -110,6 +116,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 	
 		@Override
 		public TalkDelivery[] deliveryRequest(TalkMessage message, TalkDelivery[] deliveries) {
+            requireIdentification();
             log.info("client requests delivery of new message to "
                     + deliveries.length + " clients");
             for(TalkDelivery d: deliveries) {
@@ -134,6 +141,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 	
 		@Override
 		public TalkDelivery deliveryConfirm(String messageId) {
+            requireIdentification();
             log.info("client confirms delivery of message " + messageId);
             TalkDelivery d = TalkDatabase.findDelivery(messageId, mClient.getClientId());
             if(d == null) {

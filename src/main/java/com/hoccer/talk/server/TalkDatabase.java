@@ -13,7 +13,8 @@ public class TalkDatabase {
 	private static Hashtable<String, TalkClient> allClientsById
 		= new Hashtable<String, TalkClient>();
 
-    private static Hashtable<String, Vector<TalkDelivery>> allDeliveriesByClientId;
+    private static Hashtable<String, Vector<TalkDelivery>> allDeliveriesByClientId
+        = new Hashtable<String, Vector<TalkDelivery>>();
 	
 	public static TalkClient findClient(String clientId) {
 		TalkClient result = new TalkClient(clientId);
@@ -47,9 +48,11 @@ public class TalkDatabase {
 
     public static TalkDelivery findDelivery(String messageId, String clientId) {
         Vector<TalkDelivery> deliveries = allDeliveriesByClientId.get(clientId);
-        for(TalkDelivery d: deliveries) {
-            if(d.getMessageId().equals(messageId)) {
-                return d;
+        if(deliveries != null) {
+            for(TalkDelivery d: deliveries) {
+                if(d.getMessageId().equals(messageId)) {
+                    return d;
+                }
             }
         }
         return null;

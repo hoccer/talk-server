@@ -20,21 +20,30 @@ import better.jsonrpc.server.JsonRpcServer;
  * references to common database mapping helpers and so on.
  */
 public class TalkServer {
-	
+
+    /** Logger for changes in global server state */
 	private static final Logger log = Logger.getLogger(TalkServer.class);
 
+    /** server-global JSON mapper */
 	ObjectMapper mMapper;
-	
+
+    /** JSON-RPC server instance */
 	JsonRpcServer mRpcServer;
-	
+
+    /** Push service agent */
 	PushAgent mPushAgent;
-	
+
+    /** All connections (every connected websocket) */
 	Vector<TalkRpcConnection> mConnections =
 			new Vector<TalkRpcConnection>();
-	
+
+    /** All logged-in connections by client ID */
 	Hashtable<String, TalkRpcConnection> mConnectionsByClientId =
 			new Hashtable<String, TalkRpcConnection>();
-	
+
+    /**
+     * Create and initialize a Hoccer Talk server
+     */
 	public TalkServer() {
 		mMapper = new ObjectMapper();
 		mRpcServer = new JsonRpcServer(TalkRpcServer.class);
