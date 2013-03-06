@@ -15,35 +15,14 @@ public class TalkDatabase {
 
     private static Hashtable<String, Vector<TalkDelivery>> allDeliveriesByClientId
         = new Hashtable<String, Vector<TalkDelivery>>();
-	
+
+    private static Hashtable<String, TalkMessage> allMessagesById =
+            new Hashtable<String, TalkMessage>();
+
 	public static TalkClient findClient(String clientId) {
 		TalkClient result = new TalkClient(clientId);
 		allClientsById.put(clientId, result);
 		return result;
-	}
-	
-	
-	private static Hashtable<String, TalkMessage> allMessagesById =
-        new Hashtable<String, TalkMessage>();
-	
-	public static void saveMessage(TalkMessage m) {
-		String id = UUID.randomUUID().toString();
-		TalkMessage result = new TalkMessage();
-		allMessagesById.put(id, result);
-	}
-
-    public static void saveDelivery(TalkDelivery delivery) {
-        String clientId = delivery.getReceiverId();
-        Vector<TalkDelivery> vec = allDeliveriesByClientId.get(clientId);
-        if(vec == null) {
-            vec = new Vector<TalkDelivery>();
-            allDeliveriesByClientId.put(clientId, vec);
-        }
-        vec.add(delivery);
-    }
-	
-	public static TalkMessage findMessage(String messageId) {
-		return allMessagesById.get(messageId);
 	}
 
     public static TalkDelivery findDelivery(String messageId, String clientId) {
@@ -56,6 +35,20 @@ public class TalkDatabase {
             }
         }
         return null;
+    }
+
+	public static void saveMessage(TalkMessage m) {
+		allMessagesById.put(m.getMessageId(), m);
+	}
+
+    public static void saveDelivery(TalkDelivery delivery) {
+        String clientId = delivery.getReceiverId();
+        Vector<TalkDelivery> vec = allDeliveriesByClientId.get(clientId);
+        if(vec == null) {
+            vec = new Vector<TalkDelivery>();
+            allDeliveriesByClientId.put(clientId, vec);
+        }
+        vec.add(delivery);
     }
 	
 }

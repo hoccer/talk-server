@@ -1,5 +1,6 @@
 package com.hoccer.talk.server;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
@@ -107,7 +108,19 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
             }
         }
 
-		@Override
+        @Override
+        public String[] getAllClients() {
+            log.info("client gets all clients");
+            List<String> ri = mServer.getAllClients();
+            String[] r = new String[ri.size()];
+            int i = 0;
+            for(String s: ri) {
+                r[i++] = s;
+            }
+            return r;
+        }
+
+        @Override
 		public void identify(String clientId) {
 			log.info("client identifies as " + clientId);
 			mClient = TalkDatabase.findClient(clientId);
@@ -119,6 +132,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
             requireIdentification();
             log.info("client requests delivery of new message to "
                     + deliveries.length + " clients");
+            TalkDatabase.saveMessage(message);
             for(TalkDelivery d: deliveries) {
                 String receiverId = d.getReceiverId();
                 if(receiverId.equals(mClient.getClientId())) {

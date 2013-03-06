@@ -1,7 +1,6 @@
 package com.hoccer.talk.server;
 
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.*;
 
 import org.apache.log4j.Logger;
 
@@ -57,6 +56,17 @@ public class TalkServer {
 	public JsonRpcServer getRpcServer() {
 		return mRpcServer;
 	}
+
+    /** XXX highly temporary */
+    public List<String> getAllClients() {
+        log.info("getAllClients()");
+        Enumeration<String> k = mConnectionsByClientId.keys();
+        List<String> r = new ArrayList<String>();
+        while(k.hasMoreElements()) {
+            r.add(k.nextElement());
+        }
+        return r;
+    }
 	
 	public void identifyClient(TalkClient client, TalkRpcConnection connection) {
 		mConnectionsByClientId.put(client.getClientId(), connection);
