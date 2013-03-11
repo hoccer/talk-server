@@ -16,7 +16,7 @@ public class TalkServerMain {
 			DefaultHandler clientDefHandler = new DefaultHandler();
 			clientDefHandler.setServeIcon(false);
 			
-			WebSocketHandler clientHandler = new TalkRpcHandler(ts);
+			WebSocketHandler clientHandler = new TalkRpcConnectionHandler(ts);
 			clientHandler.setHandler(clientDefHandler);
 			
 			s.setHandler(clientHandler);

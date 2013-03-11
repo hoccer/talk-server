@@ -18,9 +18,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * creating and configuring a connection object for them.
  *
  */
-public class TalkRpcHandler extends WebSocketHandler {
+public class TalkRpcConnectionHandler extends WebSocketHandler {
 
-	private static final Logger log = Logger.getLogger(TalkRpcHandler.class);
+	private static final Logger log = Logger.getLogger(TalkRpcConnectionHandler.class);
 
     /** JSON object mapper common to all connections */
 	ObjectMapper mMapper;
@@ -35,7 +35,7 @@ public class TalkRpcHandler extends WebSocketHandler {
      * Construct a handler for the given server
      * @param server to add connections to
      */
-	public TalkRpcHandler(TalkServer server) {
+	public TalkRpcConnectionHandler(TalkServer server) {
 		mMapper = server.getMapper();
         mRpcServer = server.getRpcServer();
 		mTalkServer = server;
