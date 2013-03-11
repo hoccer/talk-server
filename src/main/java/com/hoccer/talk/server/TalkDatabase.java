@@ -16,8 +16,8 @@ public class TalkDatabase {
     private static Hashtable<String, Vector<TalkDelivery>> allDeliveriesByClientId
         = new Hashtable<String, Vector<TalkDelivery>>();
 
-    private static Hashtable<String, TalkMessage> allMessagesById =
-            new Hashtable<String, TalkMessage>();
+    private static Hashtable<String, TalkMessage> allMessagesById
+        = new Hashtable<String, TalkMessage>();
 
 	public static TalkClient findClient(String clientId) {
 		TalkClient result = new TalkClient(clientId);
