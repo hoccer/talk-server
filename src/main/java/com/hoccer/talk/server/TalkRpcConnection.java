@@ -1,19 +1,12 @@
 package com.hoccer.talk.server;
 
-import java.util.List;
-import java.util.UUID;
-
 import org.apache.log4j.Logger;
 
 import better.jsonrpc.core.JsonRpcConnection;
 import better.jsonrpc.util.ProxyUtil;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.model.TalkDelivery;
-import com.hoccer.talk.model.TalkMessage;
 import com.hoccer.talk.rpc.TalkRpcClient;
-import com.hoccer.talk.rpc.TalkRpcServer;
 
 /**
  * Connection object representing one JSON-RPC connection each
@@ -35,13 +28,10 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 	JsonRpcConnection mConnection;
 	
 	/** JSON-RPC handler object */
-	TalkRpcServerImpl mHandler;
+    TalkRpcHandler mHandler;
 	
 	/** RPC interface to client */
 	TalkRpcClient mClientRpc;
-	
-	/** Client object, if logged in */
-	TalkClient mClient;
 	
 	/** Last time we have seen client activity (connection or message) */
 	long mLastActivity;
@@ -53,14 +43,15 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      * @param connection that we should handle
      */
 	public TalkRpcConnection(TalkServer server, JsonRpcConnection connection) {
+        // remember stuff
 		mServer = server;
 		mConnection = connection;
-		mHandler = new TalkRpcServerImpl();
+        // create a json-rpc proxy for client notifications
 		mClientRpc = ProxyUtil.createClientProxy(
 				TalkRpcClient.class.getClassLoader(),
 				TalkRpcClient.class,
 				mConnection);
-		mConnection.setHandler(mHandler);
+        // register ourselves for connection events
 		mConnection.addListener(this);
 	}
 
@@ -83,7 +74,11 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 		mLastActivity = System.currentTimeMillis();
         // tell the server about the connection
 		mServer.connectionOpened(this);
-	}
+        // create a fresh handler object
+        mHandler = new TalkRpcHandler(mServer, this);
+        // register the handler with the connection
+        mConnection.setHandler(mHandler);
+    }
 
     /**
      * Callback: underlying connection is now closed
@@ -95,79 +90,6 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 		mLastActivity = -1;
         // tell the server about the disconnect
 		mServer.connectionClosed(this);
-	}
-
-    /**
-     * RPC protocol implementation
-     */
-	public class TalkRpcServerImpl implements TalkRpcServer {
-
-        private void requireIdentification() {
-            if(mClient == null) {
-                throw new RuntimeException("Not logged in");
-            }
-        }
-
-        @Override
-        public String[] getAllClients() {
-            log.info("client gets all clients");
-            List<String> ri = mServer.getAllClients();
-            String[] r = new String[ri.size()];
-            int i = 0;
-            for(String s: ri) {
-                r[i++] = s;
-            }
-            return r;
-        }
-
-        @Override
-		public void identify(String clientId) {
-			log.info("client identifies as " + clientId);
-			mClient = TalkDatabase.findClient(clientId);
-			mServer.identifyClient(mClient, TalkRpcConnection.this);
-		}
-	
-		@Override
-		public TalkDelivery[] deliveryRequest(TalkMessage message, TalkDelivery[] deliveries) {
-            requireIdentification();
-            log.info("client requests delivery of new message to "
-                    + deliveries.length + " clients");
-            TalkDatabase.saveMessage(message);
-            for(TalkDelivery d: deliveries) {
-                String receiverId = d.getReceiverId();
-                if(receiverId.equals(mClient.getClientId())) {
-                    log.info("delivery rejected: send to self");
-                    // mark delivery failed
-                } else {
-                    TalkClient receiver = TalkDatabase.findClient(receiverId);
-                    if(receiver == null) {
-                        log.info("delivery rejected: client " + receiverId + " does not exist");
-                        // mark delivery failed
-                    } else {
-                        log.info("delivery accepted: client " + receiverId);
-                        // delivery accepted, save
-                        TalkDatabase.saveDelivery(d);
-                    }
-                }
-            }
-            return deliveries;
-		}
-	
-		@Override
-		public TalkDelivery deliveryConfirm(String messageId) {
-            requireIdentification();
-            log.info("client confirms delivery of message " + messageId);
-            TalkDelivery d = TalkDatabase.findDelivery(messageId, mClient.getClientId());
-            if(d == null) {
-                log.info("confirmation ignored: no delivery of message "
-                        + messageId + " for client " + mClient.getClientId());
-            } else {
-                log.info("confirmation accepted: message "
-                        + messageId + " for client " + mClient.getClientId());
-            }
-            return d;
-		}
-	
 	}
 
 }
