@@ -49,6 +49,13 @@
       <artifactId>better-jsonrpc-websocket</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
+
+    <!-- Command line parsing -->
+    <dependency>
+        <groupId>com.beust</groupId>
+        <artifactId>jcommander</artifactId>
+        <version>1.30</version>
+    </dependency>
     
     <!-- Logging -->
     <dependency>
