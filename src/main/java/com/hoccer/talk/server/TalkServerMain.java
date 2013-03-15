@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.websocket.WebSocketHandler;

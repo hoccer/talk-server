@@ -1,4 +1,4 @@
-package com.hoccer.talk.server;
+package com.hoccer.talk.server.rpc;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -10,6 +10,8 @@ import org.eclipse.jetty.websocket.WebSocketHandler;
 import better.jsonrpc.websocket.JsonRpcWsConnection;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.hoccer.talk.server.TalkServer;
 
 /**
  * WebSocket handler

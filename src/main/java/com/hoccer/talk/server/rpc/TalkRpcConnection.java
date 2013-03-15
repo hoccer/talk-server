@@ -1,4 +1,4 @@
-package com.hoccer.talk.server;
+package com.hoccer.talk.server.rpc;
 
 import org.apache.log4j.Logger;
 
@@ -7,6 +7,7 @@ import better.jsonrpc.util.ProxyUtil;
 
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.TalkRpcClient;
+import com.hoccer.talk.server.TalkServer;
 
 /**
  * Connection object representing one JSON-RPC connection each

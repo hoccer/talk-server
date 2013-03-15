@@ -9,6 +9,7 @@ import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.TalkRpcServer;
 import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.push.PushRequest;
+import com.hoccer.talk.server.rpc.TalkRpcConnection;
 
 import better.jsonrpc.server.JsonRpcServer;
 

@@ -1,10 +1,13 @@
-package com.hoccer.talk.server;
+package com.hoccer.talk.server.rpc;
 
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.model.TalkMessage;
 import com.hoccer.talk.rpc.TalkRpcServer;
+import com.hoccer.talk.server.TalkServer;
+import com.hoccer.talk.server.TalkDatabase;
+
 
 import java.util.List;
 import java.util.UUID;
