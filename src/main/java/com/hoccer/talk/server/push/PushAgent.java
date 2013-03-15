@@ -31,17 +31,17 @@ public class PushAgent {
 	}
 
 	protected void performRequest(PushRequest request) {
-		TalkClient client = request.getClient();
-		Message message = new Message.Builder()
-			.timeToLive(23)
-			.restrictedPackageName(client.getGcmPackage())
-			.delayWhileIdle(false)
-			.build();
-		try {
-			mSender.send(message, client.getGcmRegistration(), 10);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		TalkClient client = request.getClient();
+//		Message message = new Message.Builder()
+//			.timeToLive(23)
+//			.restrictedPackageName(client.getGcmPackage())
+//			.delayWhileIdle(false)
+//			.build();
+//		try {
+//			mSender.send(message, client.getGcmRegistration(), 10);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 	
 }
