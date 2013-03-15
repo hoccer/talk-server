@@ -2,6 +2,7 @@ package com.hoccer.talk.server;
 
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,7 +46,7 @@ public class TalkServer {
      * Create and initialize a Hoccer Talk server
      */
 	public TalkServer() {
-		mMapper = new ObjectMapper();
+		mMapper = createObjectMapper();
 		mRpcServer = new JsonRpcServer(TalkRpcServer.class);
 		mPushAgent = new PushAgent();
 	}
@@ -57,6 +58,12 @@ public class TalkServer {
 	public JsonRpcServer getRpcServer() {
 		return mRpcServer;
 	}
+
+    private ObjectMapper createObjectMapper() {
+        ObjectMapper result = new ObjectMapper();
+        result.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        return result;
+    }
 
     /** XXX highly temporary */
     public List<String> getAllClients() {
