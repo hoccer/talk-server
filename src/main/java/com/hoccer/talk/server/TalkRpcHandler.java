@@ -7,6 +7,7 @@ import com.hoccer.talk.model.TalkMessage;
 import com.hoccer.talk.rpc.TalkRpcServer;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 public class TalkRpcHandler implements TalkRpcServer {
@@ -56,21 +57,28 @@ public class TalkRpcHandler implements TalkRpcServer {
     @Override
     public TalkDelivery[] deliveryRequest(TalkMessage message, TalkDelivery[] deliveries) {
         requireIdentification();
+        String messageId = UUID.randomUUID().toString();
         LOG.info("client requests delivery of new message to "
                 + deliveries.length + " clients");
+        message.setMessageId(messageId);
         TalkDatabase.saveMessage(message);
         for (TalkDelivery d : deliveries) {
             String receiverId = d.getReceiverId();
+            d.setMessageId(messageId);
             if (receiverId.equals(mClient.getClientId())) {
                 LOG.info("delivery rejected: send to self");
                 // mark delivery failed
+                d.setState(TalkDelivery.STATE_FAILED);
             } else {
                 TalkClient receiver = TalkDatabase.findClient(receiverId);
                 if (receiver == null) {
                     LOG.info("delivery rejected: client " + receiverId + " does not exist");
                     // mark delivery failed
+                    d.setState(TalkDelivery.STATE_FAILED);
                 } else {
                     LOG.info("delivery accepted: client " + receiverId);
+                    // mark delivery as in progress
+                    d.setState(TalkDelivery.STATE_DELIVERING);
                     // delivery accepted, save
                     TalkDatabase.saveDelivery(d);
                 }

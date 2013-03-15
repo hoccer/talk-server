@@ -48,7 +48,9 @@ public class TalkDatabase {
             vec = new Vector<TalkDelivery>();
             allDeliveriesByClientId.put(clientId, vec);
         }
-        vec.add(delivery);
+        if(!vec.contains(delivery)) {
+            vec.add(delivery);
+        }
     }
 	
 }
