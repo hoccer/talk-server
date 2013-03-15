@@ -3,11 +3,11 @@ package com.hoccer.talk.server;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.hoccer.talk.rpc.ITalkRpcServer;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.rpc.TalkRpcServer;
 import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.push.PushRequest;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
@@ -47,7 +47,7 @@ public class TalkServer {
      */
 	public TalkServer() {
 		mMapper = createObjectMapper();
-		mRpcServer = new JsonRpcServer(TalkRpcServer.class);
+		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
 		mPushAgent = new PushAgent();
 	}
 	

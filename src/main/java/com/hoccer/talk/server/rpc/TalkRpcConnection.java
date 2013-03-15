@@ -1,12 +1,11 @@
 package com.hoccer.talk.server.rpc;
 
+import com.hoccer.talk.rpc.ITalkRpcClient;
 import org.apache.log4j.Logger;
 
 import better.jsonrpc.core.JsonRpcConnection;
 import better.jsonrpc.util.ProxyUtil;
 
-import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.rpc.TalkRpcClient;
 import com.hoccer.talk.server.TalkServer;
 
 /**
@@ -32,7 +31,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
     TalkRpcHandler mHandler;
 	
 	/** RPC interface to client */
-	TalkRpcClient mClientRpc;
+	ITalkRpcClient mClientRpc;
 	
 	/** Last time we have seen client activity (connection or message) */
 	long mLastActivity;
@@ -49,8 +48,8 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 		mConnection = connection;
         // create a json-rpc proxy for client notifications
 		mClientRpc = ProxyUtil.createClientProxy(
-				TalkRpcClient.class.getClassLoader(),
-				TalkRpcClient.class,
+				ITalkRpcClient.class.getClassLoader(),
+				ITalkRpcClient.class,
 				mConnection);
         // register ourselves for connection events
 		mConnection.addListener(this);
