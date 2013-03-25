@@ -1,6 +1,7 @@
 package com.hoccer.talk.server;
 
 import java.util.Hashtable;
+import java.util.List;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -12,6 +13,9 @@ public class TalkDatabase {
 	
 	private static Hashtable<String, TalkClient> allClientsById
 		= new Hashtable<String, TalkClient>();
+
+    private static Hashtable<String, Vector<TalkDelivery>> allDeliveriesByMessageId
+        = new Hashtable<String, Vector<TalkDelivery>>();
 
     private static Hashtable<String, Vector<TalkDelivery>> allDeliveriesByClientId
         = new Hashtable<String, Vector<TalkDelivery>>();
@@ -37,19 +41,42 @@ public class TalkDatabase {
         return null;
     }
 
+    public static TalkMessage findMessage(String messageId) {
+        return allMessagesById.get(messageId);
+    }
+
+    public static List<TalkDelivery> findDeliveriesForClient(String clientId) {
+        return allDeliveriesByClientId.get(clientId);
+    }
+
+    public static List<TalkDelivery> findDeliveriesForMessage(String messageId) {
+        return allDeliveriesByMessageId.get(messageId);
+    }
+
 	public static void saveMessage(TalkMessage m) {
 		allMessagesById.put(m.getMessageId(), m);
 	}
 
     public static void saveDelivery(TalkDelivery delivery) {
         String clientId = delivery.getReceiverId();
-        Vector<TalkDelivery> vec = allDeliveriesByClientId.get(clientId);
-        if(vec == null) {
-            vec = new Vector<TalkDelivery>();
-            allDeliveriesByClientId.put(clientId, vec);
+        String messageId = delivery.getMessageId();
+
+        Vector<TalkDelivery> clientVec = allDeliveriesByClientId.get(clientId);
+        if(clientVec == null) {
+            clientVec = new Vector<TalkDelivery>();
+            allDeliveriesByClientId.put(clientId, clientVec);
         }
-        if(!vec.contains(delivery)) {
-            vec.add(delivery);
+        if(!clientVec.contains(delivery)) {
+            clientVec.add(delivery);
+        }
+
+        Vector<TalkDelivery> messageVec = allDeliveriesByMessageId.get(messageId);
+        if(messageVec == null) {
+            messageVec = new Vector<TalkDelivery>();
+            allDeliveriesByMessageId.put(messageId, messageVec);
+        }
+        if(!messageVec.contains(delivery)) {
+            messageVec.add(delivery);
         }
     }
 	
