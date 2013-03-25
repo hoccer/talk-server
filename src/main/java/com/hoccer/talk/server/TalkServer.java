@@ -4,6 +4,7 @@ import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hoccer.talk.rpc.ITalkRpcServer;
+import com.hoccer.talk.server.delivery.DeliveryAgent;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +32,9 @@ public class TalkServer {
     /** JSON-RPC server instance */
 	JsonRpcServer mRpcServer;
 
+    /** Delivery agent */
+    DeliveryAgent mDeliveryAgent;
+
     /** Push service agent */
 	PushAgent mPushAgent;
 
@@ -48,6 +52,7 @@ public class TalkServer {
 	public TalkServer() {
 		mMapper = createObjectMapper();
 		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
+        mDeliveryAgent = new DeliveryAgent(this);
 		mPushAgent = new PushAgent();
 	}
 	
@@ -58,6 +63,14 @@ public class TalkServer {
 	public JsonRpcServer getRpcServer() {
 		return mRpcServer;
 	}
+
+    public DeliveryAgent getDeliveryAgent() {
+        return mDeliveryAgent;
+    }
+
+    public TalkRpcConnection getClientConnection(String clientId) {
+        return mConnectionsByClientId.get(clientId);
+    }
 
     private ObjectMapper createObjectMapper() {
         ObjectMapper result = new ObjectMapper();
@@ -98,7 +111,18 @@ public class TalkServer {
 
 	public void connectionClosed(TalkRpcConnection connection) {
 		log.info("connection closed");
+        // remove connection from list
 		mConnections.remove(connection);
+        // remove connection from table (being extra careful not to mess it up)
+        if(connection.isLoggedIn()) {
+            String clientId = connection.getClientId();
+            if(mConnectionsByClientId.contains(clientId)) {
+                TalkRpcConnection storedConnection = mConnectionsByClientId.get(clientId);
+                if(storedConnection == connection) {
+                    mConnectionsByClientId.remove(clientId);
+                }
+            }
+        }
 	}
 	
 }

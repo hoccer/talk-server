@@ -11,8 +11,16 @@ import com.hoccer.talk.server.TalkDatabase;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Vector;
 import java.util.logging.Logger;
 
+/**
+ * RPC handler for talk protocol communications
+ *
+ * This class has all of its public methods exposed directly to the client
+ * via JSON-RPC. It should not hold any state, only process calls.
+ *
+ */
 public class TalkRpcHandler implements ITalkRpcServer {
 
     private static final Logger LOG =
@@ -24,16 +32,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
     /** Reference to connection object */
     private TalkRpcConnection mConnection;
 
-    /** Client object, if logged in */
-    private TalkClient mClient;
-
     public TalkRpcHandler(TalkServer pServer, TalkRpcConnection pConnection) {
         mServer = pServer;
         mConnection = pConnection;
     }
 
     private void requireIdentification() {
-        if (mClient == null) {
+        if (!mConnection.isLoggedIn()) {
             throw new RuntimeException("Not logged in");
         }
     }
@@ -53,54 +58,82 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void identify(String clientId) {
         LOG.info("client identifies as " + clientId);
-        mClient = TalkDatabase.findClient(clientId);
-        mServer.identifyClient(mClient, mConnection);
+        mConnection.identifyClient(clientId);
     }
 
     @Override
     public TalkDelivery[] deliveryRequest(TalkMessage message, TalkDelivery[] deliveries) {
         requireIdentification();
+
+        LOG.info("client requests delivery of new message to " + deliveries.length + " clients");
+
+        // generate a message id
         String messageId = UUID.randomUUID().toString();
-        LOG.info("client requests delivery of new message to "
-                + deliveries.length + " clients");
         message.setMessageId(messageId);
-        TalkDatabase.saveMessage(message);
+
+        // walk deliveries and determine which to accept,
+        // filling in missing things as we go
+        Vector<TalkDelivery> acceptedDeliveries = new Vector<TalkDelivery>();
         for (TalkDelivery d : deliveries) {
             String receiverId = d.getReceiverId();
+            // initialize the mid field
             d.setMessageId(messageId);
-            if (receiverId.equals(mClient.getClientId())) {
+
+            // reject messages to self
+            if (receiverId.equals(mConnection.getClientId())) {
                 LOG.info("delivery rejected: send to self");
                 // mark delivery failed
                 d.setState(TalkDelivery.STATE_FAILED);
-            } else {
-                TalkClient receiver = TalkDatabase.findClient(receiverId);
-                if (receiver == null) {
-                    LOG.info("delivery rejected: client " + receiverId + " does not exist");
-                    // mark delivery failed
-                    d.setState(TalkDelivery.STATE_FAILED);
-                } else {
-                    LOG.info("delivery accepted: client " + receiverId);
-                    // mark delivery as in progress
-                    d.setState(TalkDelivery.STATE_DELIVERING);
-                    // delivery accepted, save
-                    TalkDatabase.saveDelivery(d);
-                }
+                continue;
+            }
+
+            // reject messages to nonexisting clients
+            //   XXX this check does not currently work because findClient() creates instances
+            TalkClient receiver = TalkDatabase.findClient(receiverId);
+            if (receiver == null) {
+                LOG.info("delivery rejected: client " + receiverId + " does not exist");
+                // mark delivery failed
+                d.setState(TalkDelivery.STATE_FAILED);
+                continue;
+            }
+
+            // all fine, delivery accepted
+            LOG.info("delivery accepted: client " + receiverId);
+            // mark delivery as in progress
+            d.setState(TalkDelivery.STATE_DELIVERING);
+            // delivery accepted, remember as such
+            acceptedDeliveries.add(d);
+        }
+
+        // process all accepted deliveries
+        if(!acceptedDeliveries.isEmpty()) {
+            // save the message
+            TalkDatabase.saveMessage(message);
+            for(TalkDelivery ds: acceptedDeliveries) {
+                // save the delivery object
+                TalkDatabase.saveDelivery(ds);
+                // initiate delivery
+                mServer.getDeliveryAgent().triggerDelivery(ds.getReceiverId());
             }
         }
+
+        // done - return whatever we are left with
         return deliveries;
     }
 
     @Override
     public TalkDelivery deliveryConfirm(String messageId) {
         requireIdentification();
+        String clientId = mConnection.getClientId();
         LOG.info("client confirms delivery of message " + messageId);
-        TalkDelivery d = TalkDatabase.findDelivery(messageId, mClient.getClientId());
+        TalkDelivery d = TalkDatabase.findDelivery(messageId, clientId);
         if (d == null) {
             LOG.info("confirmation ignored: no delivery of message "
-                    + messageId + " for client " + mClient.getClientId());
+                    + messageId + " for client " + clientId);
         } else {
             LOG.info("confirmation accepted: message "
-                    + messageId + " for client " + mClient.getClientId());
+                    + messageId + " for client " + clientId);
+            d.setState(TalkDelivery.STATE_DELIVERED);
         }
         return d;
     }

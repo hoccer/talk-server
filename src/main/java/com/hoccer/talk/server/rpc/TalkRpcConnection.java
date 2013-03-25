@@ -1,6 +1,8 @@
 package com.hoccer.talk.server.rpc;
 
+import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.ITalkRpcClient;
+import com.hoccer.talk.server.TalkDatabase;
 import org.apache.log4j.Logger;
 
 import better.jsonrpc.core.JsonRpcConnection;
@@ -36,6 +38,9 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 	/** Last time we have seen client activity (connection or message) */
 	long mLastActivity;
 
+    /** Client object (if logged in) */
+    TalkClient mClient;
+
     /**
      * Construct a connection for the given server using the given connection
      *
@@ -61,8 +66,41 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      * @return true if connected
      */
 	public boolean isConnected() {
-		return mConnection != null && mConnection.isConnected();
+		return mConnection.isConnected();
 	}
+
+    /**
+     * Indicate if the connection is currently logged in
+     */
+    public boolean isLoggedIn() {
+        return isConnected() && mClient != null;
+    }
+
+    /**
+     * Returns the logged-in client or null
+     * @return
+     */
+    public TalkClient getClient() {
+        return mClient;
+    }
+
+    /**
+     * Returns the logged-in clients id or null
+     * @return
+     */
+    public String getClientId() {
+        if(mClient != null) {
+            return mClient.getClientId();
+        }
+        return null;
+    }
+
+    /**
+     * Returns the RPC interface to the client
+     */
+    public ITalkRpcClient getClientRpc() {
+        return mClientRpc;
+    }
 
     /**
      * Callback: underlying connection is now open
@@ -91,5 +129,15 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
         // tell the server about the disconnect
 		mServer.connectionClosed(this);
 	}
+
+    /**
+     * Called by handler when the client has logged in
+     */
+    public void identifyClient(String clientId) {
+        mClient = TalkDatabase.findClient(clientId);
+        if(mClient != null) {
+            mServer.identifyClient(mClient, this);
+        }
+    }
 
 }
