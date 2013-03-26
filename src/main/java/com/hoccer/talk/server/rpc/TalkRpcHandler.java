@@ -59,6 +59,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void identify(String clientId) {
         LOG.info("client identifies as " + clientId);
         mConnection.identifyClient(clientId);
+        mServer.getDeliveryAgent().triggerDelivery(mConnection.getClientId());
     }
 
     @Override
