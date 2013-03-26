@@ -69,6 +69,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         // generate a message id
         String messageId = UUID.randomUUID().toString();
+        message.setSenderId(mConnection.getClientId());
         message.setMessageId(messageId);
 
         // walk deliveries and determine which to accept,
