@@ -29,6 +29,10 @@ public class TalkDatabase {
 		return result;
 	}
 
+    public static void saveClient(TalkClient client) {
+        allClientsById.put(client.getClientId(), client);
+    }
+
     public static TalkDelivery findDelivery(String messageId, String clientId) {
         Vector<TalkDelivery> deliveries = allDeliveriesByClientId.get(clientId);
         if(deliveries != null) {

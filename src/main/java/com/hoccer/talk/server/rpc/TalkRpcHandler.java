@@ -44,6 +44,26 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public void registerGcm(String registeredPackage, String registrationId) {
+        requireIdentification();
+        LOG.info("client registers for GCM with id " + registrationId);
+        TalkClient client = mConnection.getClient();
+        client.setGcmPackage(registeredPackage);
+        client.setGcmRegistration(registrationId);
+        TalkDatabase.saveClient(client);
+    }
+
+    @Override
+    public void unregisterGcm() {
+        requireIdentification();
+        LOG.info("client unregisters GCM");
+        TalkClient client = mConnection.getClient();
+        client.setGcmPackage(null);
+        client.setGcmRegistration(null);
+        TalkDatabase.saveClient(client);
+    }
+
+    @Override
     public String[] getAllClients() {
         LOG.info("client gets all clients");
         List<String> ri = mServer.getAllClients();
