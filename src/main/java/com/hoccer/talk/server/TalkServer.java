@@ -64,6 +64,10 @@ public class TalkServer {
 		return mRpcServer;
 	}
 
+    public PushAgent getPushAgent() {
+        return mPushAgent;
+    }
+
     public DeliveryAgent getDeliveryAgent() {
         return mDeliveryAgent;
     }

@@ -71,11 +71,11 @@
        <version>${metrics.version}</version>
     </dependency>
 
-    <!-- Push support library -->
+    <!-- Simple JSON (used by GCM library) -->
     <dependency>
-      <groupId>better</groupId>
-      <artifactId>better-push-sender</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <groupId>com.googlecode.json-simple</groupId>
+      <artifactId>json-simple</artifactId>
+      <version>1.1.1</version>
     </dependency>
     
   </dependencies>

@@ -64,6 +64,24 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public void registerApns(String registrationToken) {
+        requireIdentification();
+        LOG.info("client registers for APNS with token " + registrationToken);
+        TalkClient client = mConnection.getClient();
+        client.setApnsToken(registrationToken);
+        TalkDatabase.saveClient(client);
+    }
+
+    @Override
+    public void unregisterApns() {
+        requireIdentification();
+        LOG.info("client unregisters APNS");
+        TalkClient client = mConnection.getClient();
+        client.setApnsToken(null);
+        TalkDatabase.saveClient(client);
+    }
+
+    @Override
     public String[] getAllClients() {
         LOG.info("client gets all clients");
         List<String> ri = mServer.getAllClients();
