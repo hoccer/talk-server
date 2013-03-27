@@ -3,7 +3,9 @@ package com.hoccer.talk.server.rpc;
 import javax.servlet.http.HttpServletRequest;
 
 import better.jsonrpc.server.JsonRpcServer;
-import org.apache.log4j.Logger;
+import java.util.logging.Logger;
+
+import com.hoccer.talk.logging.HoccerLoggers;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketHandler;
 
@@ -22,7 +24,7 @@ import com.hoccer.talk.server.TalkServer;
  */
 public class TalkRpcConnectionHandler extends WebSocketHandler {
 
-	private static final Logger log = Logger.getLogger(TalkRpcConnectionHandler.class);
+	private static final Logger log = HoccerLoggers.getLogger(TalkRpcConnectionHandler.class);
 
     /** JSON object mapper common to all connections */
 	ObjectMapper mMapper;

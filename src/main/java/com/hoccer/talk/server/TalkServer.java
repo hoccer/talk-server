@@ -3,9 +3,10 @@ package com.hoccer.talk.server;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.delivery.DeliveryAgent;
-import org.apache.log4j.Logger;
+import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoccer.talk.model.TalkClient;
@@ -24,7 +25,7 @@ import better.jsonrpc.server.JsonRpcServer;
 public class TalkServer {
 
     /** Logger for changes in global server state */
-	private static final Logger log = Logger.getLogger(TalkServer.class);
+	private static final Logger log = HoccerLoggers.getLogger(TalkServer.class);
 
     /** server-global JSON mapper */
 	ObjectMapper mMapper;
