@@ -24,8 +24,11 @@ public class TalkDatabase {
         = new Hashtable<String, TalkMessage>();
 
 	public static TalkClient findClient(String clientId) {
-		TalkClient result = new TalkClient(clientId);
-		allClientsById.put(clientId, result);
+        TalkClient result = allClientsById.get(clientId);
+        if(result == null) {
+		    result = new TalkClient(clientId);
+		    allClientsById.put(clientId, result);
+        }
 		return result;
 	}
 
