@@ -67,9 +67,7 @@ public class DeliveryAgent {
         }
 
         // send push request
-        LOG.info("push!");
         if(client.getGcmPackage() != null && client.getGcmRegistration() != null) {
-            LOG.info("got the stuff!");
             mServer.getPushAgent().submitRequest(new PushRequest(client));
         }
     }

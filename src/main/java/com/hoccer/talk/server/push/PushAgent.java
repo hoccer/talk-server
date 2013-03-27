@@ -22,6 +22,7 @@ public class PushAgent {
 	public PushAgent() {
 		mExecutor = Executors.newSingleThreadExecutor();
 		mSender = new Sender(TalkServerConfiguration.GCM_API_KEY);
+
 	}
 	
 	public void submitRequest(final PushRequest request) {
@@ -38,12 +39,11 @@ public class PushAgent {
         LOG.info("performing push for " + request.getClient().getClientId());
 		TalkClient client = request.getClient();
 		Message message = new Message.Builder()
-			.timeToLive(23)
-			.restrictedPackageName(client.getGcmPackage())
-			.delayWhileIdle(false)
-            .addData("test-field", "test-data")
+            .collapseKey("com.hoccer.talk.wake")
+            .timeToLive(TalkServerConfiguration.GCM_WAKE_TTL)
+            .restrictedPackageName(client.getGcmPackage())
+            .dryRun(true)
 			.build();
-        LOG.info("message: " + message.toString());
 		try {
 			mSender.send(message, client.getGcmRegistration(), 10);
 		} catch (IOException e) {
