@@ -67,6 +67,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void registerApns(String registrationToken) {
         requireIdentification();
         LOG.info("client registers for APNS with token " + registrationToken);
+        // APNS occasionally returns these for no good reason
+        if(registrationToken.length() == 0) {
+            return;
+        }
+        // set and save the token
         TalkClient client = mConnection.getClient();
         client.setApnsToken(registrationToken);
         TalkDatabase.saveClient(client);
