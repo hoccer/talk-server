@@ -10,6 +10,9 @@ import com.google.android.gcm.server.Sender;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.server.TalkServerConfiguration;
+import com.notnoop.apns.APNS;
+import com.notnoop.apns.ApnsService;
+import com.notnoop.apns.ApnsServiceBuilder;
 
 public class PushAgent {
 
@@ -17,13 +20,33 @@ public class PushAgent {
 
 	private ExecutorService mExecutor;
 
-	private Sender mSender;
+	private Sender mGcmSender;
+
+    private ApnsService mApnsService;
 	
 	public PushAgent() {
 		mExecutor = Executors.newSingleThreadExecutor();
-		mSender = new Sender(TalkServerConfiguration.GCM_API_KEY);
+        if(TalkServerConfiguration.GCM_ENABLE) {
+            initializeGcm();
+        }
+        if(TalkServerConfiguration.APNS_ENABLE) {
+            initializeApns();
+        }
+    }
 
-	}
+    private void initializeGcm() {
+        mGcmSender = new Sender(TalkServerConfiguration.GCM_API_KEY);
+    }
+
+    private void initializeApns() {
+        ApnsServiceBuilder apnsServiceBuilder = APNS.newService()
+                .withCert(TalkServerConfiguration.APNS_CERT_PATH,
+                        TalkServerConfiguration.APNS_CERT_PASSWORD);
+        if(TalkServerConfiguration.APNS_USE_SANDBOX) {
+            apnsServiceBuilder = apnsServiceBuilder.withSandboxDestination();
+        }
+        mApnsService = apnsServiceBuilder.build();
+    }
 	
 	public void submitRequest(final PushRequest request) {
         LOG.info("submitted request for " + request.getClient().getClientId());
@@ -45,7 +68,7 @@ public class PushAgent {
             .dryRun(true)
 			.build();
 		try {
-			mSender.send(message, client.getGcmRegistration(), 10);
+			mGcmSender.send(message, client.getGcmRegistration(), 10);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
