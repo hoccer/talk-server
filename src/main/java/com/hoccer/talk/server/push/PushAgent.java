@@ -13,6 +13,7 @@ import com.hoccer.talk.server.TalkServerConfiguration;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.ApnsServiceBuilder;
+import com.notnoop.apns.PayloadBuilder;
 
 public class PushAgent {
 
@@ -41,7 +42,7 @@ public class PushAgent {
     private void initializeApns() {
         ApnsServiceBuilder apnsServiceBuilder = APNS.newService()
                 .withCert(TalkServerConfiguration.APNS_CERT_PATH,
-                        TalkServerConfiguration.APNS_CERT_PASSWORD);
+                          TalkServerConfiguration.APNS_CERT_PASSWORD);
         if(TalkServerConfiguration.APNS_USE_SANDBOX) {
             apnsServiceBuilder = apnsServiceBuilder.withSandboxDestination();
         }
@@ -61,17 +62,35 @@ public class PushAgent {
 	private void performRequest(PushRequest request) {
         LOG.info("performing push for " + request.getClient().getClientId());
 		TalkClient client = request.getClient();
-		Message message = new Message.Builder()
-            .collapseKey("com.hoccer.talk.wake")
-            .timeToLive(TalkServerConfiguration.GCM_WAKE_TTL)
-            .restrictedPackageName(client.getGcmPackage())
-            .dryRun(true)
-			.build();
-		try {
-			mGcmSender.send(message, client.getGcmRegistration(), 10);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        if(client.isGcmCapable()) {
+            performRequestViaGcm(request);
+        } else if(client.isApnsCapable()) {
+            performRequestViaApns(request);
+        }
 	}
+
+    private void performRequestViaGcm(PushRequest request) {
+        LOG.info("performing GCM push for " + request.getClient().getClientId());
+        TalkClient client = request.getClient();
+        Message message = new Message.Builder()
+                .collapseKey("com.hoccer.talk.wake")
+                .timeToLive(TalkServerConfiguration.GCM_WAKE_TTL)
+                .restrictedPackageName(client.getGcmPackage())
+                .dryRun(true)
+                .build();
+        try {
+            mGcmSender.send(message, client.getGcmRegistration(), 10);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void performRequestViaApns(PushRequest request) {
+        LOG.info("performing APNS push for " + request.getClient().getClientId());
+        TalkClient client = request.getClient();
+        PayloadBuilder b = APNS.newPayload();
+        b.alertBody("You have new messages!");
+        mApnsService.push(client.getApnsToken(), b.build());
+    }
 	
 }
