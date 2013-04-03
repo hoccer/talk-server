@@ -47,10 +47,14 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
     }
 
+    private void logCall(String message) {
+        LOG.info("[" + mConnection.getConnectionId() + "] " + message);
+    }
+
     @Override
     public void registerGcm(String registeredPackage, String registrationId) {
         requireIdentification();
-        LOG.info("client registers for GCM with id " + registrationId);
+        logCall("registerGcm(" + registeredPackage + "," + registrationId + ")");
         TalkClient client = mConnection.getClient();
         client.setGcmPackage(registeredPackage);
         client.setGcmRegistration(registrationId);
@@ -60,7 +64,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void unregisterGcm() {
         requireIdentification();
-        LOG.info("client unregisters GCM");
+        logCall("unregisterGcm()");
         TalkClient client = mConnection.getClient();
         client.setGcmPackage(null);
         client.setGcmRegistration(null);
@@ -70,7 +74,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void registerApns(String registrationToken) {
         requireIdentification();
-        LOG.info("client registers for APNS with token " + registrationToken);
+        logCall("registerApns(" + registrationToken + ")");
         // APNS occasionally returns these for no good reason
         if(registrationToken.length() == 0) {
             return;
@@ -84,7 +88,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void unregisterApns() {
         requireIdentification();
-        LOG.info("client unregisters APNS");
+        logCall("unregisterApns()");
         TalkClient client = mConnection.getClient();
         client.setApnsToken(null);
         mDatabase.saveClient(client);
@@ -92,7 +96,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     @Override
     public String[] getAllClients() {
-        LOG.info("client gets all clients");
+        logCall("getAllClients()");
         List<String> ri = mServer.getAllClients();
         String[] r = new String[ri.size()];
         int i = 0;
@@ -104,7 +108,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     @Override
     public void identify(String clientId) {
-        LOG.info("client identifies as " + clientId);
+        logCall("identify(" + clientId + ")");
         mConnection.identifyClient(clientId);
         mServer.getDeliveryAgent().triggerDelivery(mConnection.getClientId());
     }
@@ -113,7 +117,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public TalkDelivery[] deliveryRequest(TalkMessage message, TalkDelivery[] deliveries) {
         requireIdentification();
 
-        LOG.info("client requests delivery of new message to " + deliveries.length + " clients");
+        logCall("deliveryRequest(" + deliveries.length + " deliveries)");
 
         // generate a message id
         String messageId = UUID.randomUUID().toString();
@@ -173,8 +177,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public TalkDelivery deliveryConfirm(String messageId) {
         requireIdentification();
+        logCall("confirmDelivery(" + messageId + ")");
         String clientId = mConnection.getClientId();
-        LOG.info("client confirms delivery of message " + messageId);
         TalkDelivery d = mDatabase.findDelivery(messageId, clientId);
         if (d == null) {
             LOG.info("confirmation ignored: no delivery of message "

@@ -22,7 +22,7 @@ import com.hoccer.talk.server.TalkServer;
 public class TalkRpcConnection implements JsonRpcConnection.Listener {
 
     /** Logger for connection-related things */
-	private static final Logger log = HoccerLoggers.getLogger(TalkRpcConnection.class);
+	private static final Logger LOG = HoccerLoggers.getLogger(TalkRpcConnection.class);
 	
 	/** Server this connection belongs to */
 	TalkServer mServer;
@@ -60,6 +60,19 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
         // register ourselves for connection events
 		mConnection.addListener(this);
 	}
+
+    /**
+     * Get the connection ID of this connection
+     *
+     * This is derived from JSON-RPC stuff at the moment.
+     *
+     * The only purpose of this is for identifying log messages.
+     *
+     * @return
+     */
+    public int getConnectionId() {
+        return mConnection.getConnectionId();
+    }
 
     /**
      * Indicate if the connection is currently connected
@@ -109,6 +122,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      */
 	@Override
 	public void onOpen(JsonRpcConnection connection) {
+        LOG.info("[" + getConnectionId() + "] connection opened");
         // reset the time of last activity
 		mLastActivity = System.currentTimeMillis();
         // tell the server about the connection
@@ -125,6 +139,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      */
 	@Override
 	public void onClose(JsonRpcConnection connection) {
+        LOG.info("[" + getConnectionId() + "] connection closed");
         // invalidate the time of last activity
 		mLastActivity = -1;
         // tell the server about the disconnect
@@ -135,8 +150,11 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      * Called by handler when the client has logged in
      */
     public void identifyClient(String clientId) {
+        LOG.info("[" + getConnectionId() + "] logged in as " + clientId);
         mClient = mServer.getDatabase().findClientById(clientId);
-        if(mClient != null) {
+        if(mClient == null) {
+            throw new RuntimeException("Client does not exist");
+        } else {
             mServer.identifyClient(mClient, this);
         }
     }

@@ -94,7 +94,6 @@ public class TalkServer {
 
     /** XXX highly temporary */
     public List<String> getAllClients() {
-        log.info("getAllClients()");
         Enumeration<String> k = mConnectionsByClientId.keys();
         List<String> r = new ArrayList<String>();
         while(k.hasMoreElements()) {
@@ -107,24 +106,11 @@ public class TalkServer {
 		mConnectionsByClientId.put(client.getClientId(), connection);
 	}
 	
-	public void notifyClient(TalkClient client) {
-		TalkRpcConnection connection =
-				mConnectionsByClientId.get(client.getClientId());
-		
-		if(connection != null && connection.isConnected()) {
-			return;
-		}
-		
-		mPushAgent.submitRequest(new PushRequest(client));
-	}
-	
 	public void connectionOpened(TalkRpcConnection connection) {
-		log.info("connection opened");
 		mConnections.add(connection);
 	}
 
 	public void connectionClosed(TalkRpcConnection connection) {
-		log.info("connection closed");
         // remove connection from list
 		mConnections.remove(connection);
         // remove connection from table (being extra careful not to mess it up)

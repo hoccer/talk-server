@@ -26,6 +26,7 @@ public class TalkServerMain {
     String database = "jongo";
 
     private void run() {
+        // select and instantiate database backend
         ITalkServerDatabase db = null;
         if(database.equals("jongo")) {
             db = new JongoDatabase();
