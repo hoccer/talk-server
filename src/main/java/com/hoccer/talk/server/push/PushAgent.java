@@ -36,10 +36,12 @@ public class PushAgent {
     }
 
     private void initializeGcm() {
+        LOG.info("initializing push support for GCM");
         mGcmSender = new Sender(TalkServerConfiguration.GCM_API_KEY);
     }
 
     private void initializeApns() {
+        LOG.info("initializing push support for APNS");
         ApnsServiceBuilder apnsServiceBuilder = APNS.newService()
                 .withCert(TalkServerConfiguration.APNS_CERT_PATH,
                           TalkServerConfiguration.APNS_CERT_PASSWORD);
@@ -50,7 +52,6 @@ public class PushAgent {
     }
 	
 	public void submitRequest(final PushRequest request) {
-        LOG.info("submitted request for " + request.getClient().getClientId());
 		mExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
@@ -60,7 +61,6 @@ public class PushAgent {
 	}
 
 	private void performRequest(PushRequest request) {
-        LOG.info("performing push for " + request.getClient().getClientId());
 		TalkClient client = request.getClient();
         if(TalkServerConfiguration.GCM_ENABLE && client.isGcmCapable()) {
             performRequestViaGcm(request);
@@ -70,7 +70,7 @@ public class PushAgent {
 	}
 
     private void performRequestViaGcm(PushRequest request) {
-        LOG.info("performing GCM push for " + request.getClient().getClientId());
+        LOG.info("push for " + request.getClient().getClientId() + " (GCM)");
         TalkClient client = request.getClient();
         Message message = new Message.Builder()
                 .collapseKey("com.hoccer.talk.wake")
@@ -86,7 +86,7 @@ public class PushAgent {
     }
 
     private void performRequestViaApns(PushRequest request) {
-        LOG.info("performing APNS push for " + request.getClient().getClientId());
+        LOG.info("push for " + request.getClient().getClientId() + " (APNS)");
         TalkClient client = request.getClient();
         PayloadBuilder b = APNS.newPayload();
         b.alertBody("You have new messages!");

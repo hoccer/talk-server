@@ -34,7 +34,6 @@ public class DeliveryAgent {
     }
 
     public void triggerDelivery(final String clientId) {
-        LOG.info("triggerDelivery(" + clientId + ")");
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -44,17 +43,18 @@ public class DeliveryAgent {
     }
 
     private void deliverIncomingMessages(String clientId) {
-        LOG.info("deliverIncomingMessages(" + clientId + ")");
+        LOG.info("delivering for " + clientId);
 
-        TalkClient client = null;
+        // get all outstanding deliveries for the client - abort if none
+        List<TalkDelivery> deliveries = mDatabase.findDeliveriesForClient(clientId);
+        if(deliveries.size() == 0) {
+            return;
+        }
 
-        // we can only do something if there is an active connection
+        // deliver directly if connected - push if not connected
         TalkRpcConnection connection = mServer.getClientConnection(clientId);
         if(connection != null && connection.isLoggedIn()) {
-            // get client from connection
-            client = connection.getClient();
-            // get all outstanding deliveries for the client
-            List<TalkDelivery> deliveries = mDatabase.findDeliveriesForClient(clientId);
+            // perform deliveries one by one
             for(TalkDelivery delivery: deliveries) {
                 // we only care about DELIVERING messages
                 if(delivery.getState() == TalkDelivery.STATE_DELIVERING) {
@@ -65,14 +65,14 @@ public class DeliveryAgent {
                 }
             }
         } else {
-            LOG.info("can not deliver to client - not connected");
-            client = mDatabase.findClientById(clientId);
+            // find client in database
+            TalkClient client = mDatabase.findClientById(clientId);
+            // send push request
+            if(client.isGcmCapable() || client.isApnsCapable()) {
+                mServer.getPushAgent().submitRequest(new PushRequest(client));
+            }
         }
 
-        // send push request
-        if(client.isGcmCapable() || client.isApnsCapable()) {
-            mServer.getPushAgent().submitRequest(new PushRequest(client));
-        }
     }
 
 }
