@@ -89,7 +89,14 @@ public class PushAgent {
         LOG.info("push for " + request.getClient().getClientId() + " (APNS)");
         TalkClient client = request.getClient();
         PayloadBuilder b = APNS.newPayload();
-        b.alertBody("You have new messages!");
+        int messageCount = 23;
+        if (messageCount > 1) {
+            b.localizedKey("apn_new_messages");
+            b.localizedArguments(String.valueOf(messageCount));
+        } else {
+            b.localizedKey("apn_one_new_message");
+        }
+        b.badge(messageCount);
         b.sound("default");
         mApnsService.push(client.getApnsToken(), b.build());
     }
