@@ -3,7 +3,7 @@ package com.hoccer.talk.server;
 public class TalkServerConfiguration {
 
     /** True to enable GCM */
-    public static final boolean GCM_ENABLE = true;
+    public static final boolean GCM_ENABLE = false;
 
     /** GCM API key */
     public static final String GCM_API_KEY = "AIzaSyA25wabV4kSQTaF73LTgTkjmw0yZ8inVr8";
@@ -18,7 +18,7 @@ public class TalkServerConfiguration {
     public static final String APNS_CERT_PATH = "HoccerTalkApplePushNotificationDev.p12";
 
     /** APNS certificate password */
-    public static final String APNS_CERT_PASSWORD = "";
+    public static final String APNS_CERT_PASSWORD = "Mf)LW*L#/\"dlco\\/;ns{";
 
     /** Put APNS into sandbox mode */
     public static final boolean APNS_USE_SANDBOX = true;
