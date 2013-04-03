@@ -67,7 +67,7 @@ public class DeliveryAgent {
         }
 
         // send push request
-        if(client.getGcmPackage() != null && client.getGcmRegistration() != null) {
+        if(client.isGcmCapable() || client.isApnsCapable()) {
             mServer.getPushAgent().submitRequest(new PushRequest(client));
         }
     }
