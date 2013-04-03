@@ -5,8 +5,8 @@ import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.model.TalkMessage;
 import com.hoccer.talk.rpc.ITalkRpcServer;
+import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
-import com.hoccer.talk.server.TalkDatabase;
 
 
 import java.util.List;
@@ -29,12 +29,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
     /** Reference to server */
     private TalkServer mServer;
 
+    /** Reference to database accessor */
+    private ITalkServerDatabase mDatabase;
+
     /** Reference to connection object */
     private TalkRpcConnection mConnection;
 
     public TalkRpcHandler(TalkServer pServer, TalkRpcConnection pConnection) {
         mServer = pServer;
         mConnection = pConnection;
+        mDatabase = mServer.getDatabase();
     }
 
     private void requireIdentification() {
@@ -50,7 +54,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         TalkClient client = mConnection.getClient();
         client.setGcmPackage(registeredPackage);
         client.setGcmRegistration(registrationId);
-        TalkDatabase.saveClient(client);
+        mDatabase.saveClient(client);
     }
 
     @Override
@@ -60,7 +64,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         TalkClient client = mConnection.getClient();
         client.setGcmPackage(null);
         client.setGcmRegistration(null);
-        TalkDatabase.saveClient(client);
+        mDatabase.saveClient(client);
     }
 
     @Override
@@ -74,7 +78,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // set and save the token
         TalkClient client = mConnection.getClient();
         client.setApnsToken(registrationToken);
-        TalkDatabase.saveClient(client);
+        mDatabase.saveClient(client);
     }
 
     @Override
@@ -83,7 +87,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         LOG.info("client unregisters APNS");
         TalkClient client = mConnection.getClient();
         client.setApnsToken(null);
-        TalkDatabase.saveClient(client);
+        mDatabase.saveClient(client);
     }
 
     @Override
@@ -134,7 +138,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
             // reject messages to nonexisting clients
             //   XXX this check does not currently work because findClient() creates instances
-            TalkClient receiver = TalkDatabase.findClient(receiverId);
+            TalkClient receiver = mDatabase.findClientById(receiverId);
             if (receiver == null) {
                 LOG.info("delivery rejected: client " + receiverId + " does not exist");
                 // mark delivery failed
@@ -153,10 +157,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // process all accepted deliveries
         if(!acceptedDeliveries.isEmpty()) {
             // save the message
-            TalkDatabase.saveMessage(message);
+            mDatabase.saveMessage(message);
             for(TalkDelivery ds: acceptedDeliveries) {
                 // save the delivery object
-                TalkDatabase.saveDelivery(ds);
+                mDatabase.saveDelivery(ds);
                 // initiate delivery
                 mServer.getDeliveryAgent().triggerDelivery(ds.getReceiverId());
             }
@@ -171,7 +175,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
         String clientId = mConnection.getClientId();
         LOG.info("client confirms delivery of message " + messageId);
-        TalkDelivery d = TalkDatabase.findDelivery(messageId, clientId);
+        TalkDelivery d = mDatabase.findDelivery(messageId, clientId);
         if (d == null) {
             LOG.info("confirmation ignored: no delivery of message "
                     + messageId + " for client " + clientId);

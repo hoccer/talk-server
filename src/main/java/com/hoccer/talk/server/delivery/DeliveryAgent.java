@@ -4,7 +4,7 @@ import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.model.TalkMessage;
-import com.hoccer.talk.server.TalkDatabase;
+import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.push.PushRequest;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
@@ -25,9 +25,12 @@ public class DeliveryAgent {
 
     private TalkServer mServer;
 
+    private ITalkServerDatabase mDatabase;
+
     public DeliveryAgent(TalkServer server) {
         mExecutor = Executors.newSingleThreadScheduledExecutor();
         mServer = server;
+        mDatabase = mServer.getDatabase();
     }
 
     public void triggerDelivery(final String clientId) {
@@ -51,19 +54,19 @@ public class DeliveryAgent {
             // get client from connection
             client = connection.getClient();
             // get all outstanding deliveries for the client
-            List<TalkDelivery> deliveries = TalkDatabase.findDeliveriesForClient(clientId);
+            List<TalkDelivery> deliveries = mDatabase.findDeliveriesForClient(clientId);
             for(TalkDelivery delivery: deliveries) {
                 // we only care about DELIVERING messages
                 if(delivery.getState() == TalkDelivery.STATE_DELIVERING) {
                     // get the matching message
-                    TalkMessage message = TalkDatabase.findMessage(delivery.getMessageId());
+                    TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
                     // post the notification for the client
                     connection.getClientRpc().incomingDelivery(delivery, message);
                 }
             }
         } else {
             LOG.info("can not deliver to client - not connected");
-            client = TalkDatabase.findClient(clientId);
+            client = mDatabase.findClientById(clientId);
         }
 
         // send push request

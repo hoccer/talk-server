@@ -5,6 +5,7 @@ import java.util.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.rpc.ITalkRpcServer;
+import com.hoccer.talk.server.database.MemoryDatabase;
 import com.hoccer.talk.server.delivery.DeliveryAgent;
 import java.util.logging.Logger;
 
@@ -33,6 +34,9 @@ public class TalkServer {
     /** JSON-RPC server instance */
 	JsonRpcServer mRpcServer;
 
+    /** Database accessor */
+    ITalkServerDatabase mDatabase;
+
     /** Delivery agent */
     DeliveryAgent mDeliveryAgent;
 
@@ -53,6 +57,7 @@ public class TalkServer {
 	public TalkServer() {
 		mMapper = createObjectMapper();
 		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
+        mDatabase = new MemoryDatabase();
         mDeliveryAgent = new DeliveryAgent(this);
 		mPushAgent = new PushAgent();
 	}
@@ -64,6 +69,10 @@ public class TalkServer {
 	public JsonRpcServer getRpcServer() {
 		return mRpcServer;
 	}
+
+    public ITalkServerDatabase getDatabase() {
+        return mDatabase;
+    }
 
     public PushAgent getPushAgent() {
         return mPushAgent;

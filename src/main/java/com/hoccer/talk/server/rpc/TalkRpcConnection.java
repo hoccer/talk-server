@@ -3,7 +3,7 @@ package com.hoccer.talk.server.rpc;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.ITalkRpcClient;
-import com.hoccer.talk.server.TalkDatabase;
+
 import java.util.logging.Logger;
 
 import better.jsonrpc.core.JsonRpcConnection;
@@ -26,7 +26,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 	
 	/** Server this connection belongs to */
 	TalkServer mServer;
-	
+
 	/** JSON-RPC connection object */
 	JsonRpcConnection mConnection;
 	
@@ -135,7 +135,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      * Called by handler when the client has logged in
      */
     public void identifyClient(String clientId) {
-        mClient = TalkDatabase.findClient(clientId);
+        mClient = mServer.getDatabase().findClientById(clientId);
         if(mClient != null) {
             mServer.identifyClient(mClient, this);
         }
