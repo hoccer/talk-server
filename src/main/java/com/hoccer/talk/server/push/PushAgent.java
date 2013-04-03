@@ -90,6 +90,7 @@ public class PushAgent {
         TalkClient client = request.getClient();
         PayloadBuilder b = APNS.newPayload();
         b.alertBody("You have new messages!");
+        b.sound("default");
         mApnsService.push(client.getApnsToken(), b.build());
     }
 	
