@@ -62,9 +62,9 @@ public class PushAgent {
 	private void performRequest(PushRequest request) {
         LOG.info("performing push for " + request.getClient().getClientId());
 		TalkClient client = request.getClient();
-        if(client.isGcmCapable()) {
+        if(TalkServerConfiguration.GCM_ENABLE && client.isGcmCapable()) {
             performRequestViaGcm(request);
-        } else if(client.isApnsCapable()) {
+        } else if(TalkServerConfiguration.APNS_ENABLE && client.isApnsCapable()) {
             performRequestViaApns(request);
         }
 	}
