@@ -187,6 +187,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             LOG.info("confirmation accepted: message "
                     + messageId + " for client " + clientId);
             d.setState(TalkDelivery.STATE_DELIVERED);
+            mDatabase.saveDelivery(d);
         }
         return d;
     }
