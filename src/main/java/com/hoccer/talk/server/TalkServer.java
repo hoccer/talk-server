@@ -54,10 +54,10 @@ public class TalkServer {
     /**
      * Create and initialize a Hoccer Talk server
      */
-	public TalkServer() {
+	public TalkServer(ITalkServerDatabase database) {
+        mDatabase = database;
 		mMapper = createObjectMapper();
 		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
-        mDatabase = new MemoryDatabase();
         mDeliveryAgent = new DeliveryAgent(this);
 		mPushAgent = new PushAgent();
 	}

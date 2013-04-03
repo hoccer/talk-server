@@ -4,6 +4,8 @@ import java.net.InetSocketAddress;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.hoccer.talk.server.database.JongoDatabase;
+import com.hoccer.talk.server.database.MemoryDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
@@ -19,9 +21,24 @@ public class TalkServerMain {
                description = "Port to listen on")
     int port = 8080;
 
+    @Parameter(names={"-d", "-database"},
+               description = "Database backend to use (memory or jongo)")
+    String database = "jongo";
+
     private void run() {
+        ITalkServerDatabase db = null;
+        if(database.equals("jongo")) {
+            db = new JongoDatabase();
+        }
+        if(database.equals("memory")) {
+            db = new MemoryDatabase();
+        }
+        if(db == null) {
+            throw new RuntimeException("Invalid database backend: " + database);
+        }
+
         // create the talk server
-        TalkServer ts = new TalkServer();
+        TalkServer ts = new TalkServer(db);
 
         // create jetty instance
         Server s = new Server(new InetSocketAddress(listen, port));
