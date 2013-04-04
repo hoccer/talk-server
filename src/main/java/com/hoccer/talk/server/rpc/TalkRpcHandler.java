@@ -142,7 +142,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             if(secret != null) {
                 LOG.warning("Token generator returned existing token - regenerating");
             }
-            if(3 < attempt++) {
+            if(attempt++ > 3) {
                 throw new RuntimeException("Could not generate a token");
             }
             secret = genPw();
@@ -151,7 +151,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // create the token object
         TalkToken token = new TalkToken();
         token.setClientId(mConnection.getClientId());
-        token.setSecret(genPw());
+        token.setPurpose(tokenPurpose);
+        token.setState(TalkToken.STATE_UNUSED);
+        token.setSecret(secret);
         token.setGenerationTime(time);
         token.setExpiryTime(calendar.getTime());
 
@@ -196,6 +198,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // check if token is unused
         if(!token.getState().equals(TalkToken.STATE_UNUSED)) {
             LOG.info("token has already been used");
+            return false;
+        }
+
+        // check if token is still valid
+        if(token.getExpiryTime().before(new Date())) {
+            LOG.info("token has expired");
             return false;
         }
 
