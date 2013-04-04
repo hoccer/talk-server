@@ -1,15 +1,26 @@
 package com.hoccer.talk.server.database;
 
-import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.model.TalkDelivery;
-import com.hoccer.talk.model.TalkMessage;
-import com.hoccer.talk.model.TalkToken;
+import com.hoccer.talk.model.*;
 import com.hoccer.talk.server.ITalkServerDatabase;
 
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 
+/**
+ * This is a simple in-memory implementation of the Talk database
+ *
+ * It is intended to be used in testing and for easy development.
+ *
+ * Note that this code is not, by any means, usable for production.
+ *
+ * Shortcomings:
+ *
+ *  * returns non-cloned lists from internal state
+ *  * returns null instead of empty lists in several cases
+ *  * indices/hashtables are selected ad-hoc
+ *
+ */
 public class MemoryDatabase implements ITalkServerDatabase {
 
     private Hashtable<String, TalkClient> mClientsById
@@ -26,6 +37,9 @@ public class MemoryDatabase implements ITalkServerDatabase {
 
     private Hashtable<String, TalkToken> mTokensBySecret
             = new Hashtable<String, TalkToken>();
+
+    private Hashtable<String, Vector<TalkRelationship>> mRelationshipsByClientId
+            = new Hashtable<String, Vector<TalkRelationship>>();
 
 
     public MemoryDatabase() {
@@ -120,4 +134,35 @@ public class MemoryDatabase implements ITalkServerDatabase {
         mTokensBySecret.put(token.getSecret(), token);
     }
 
+    @Override
+    public List<TalkRelationship> findRelationships(String client) {
+        return mRelationshipsByClientId.get(client);
+    }
+
+    @Override
+    public TalkRelationship findRelationshipBetween(String client, String otherClient) {
+        Vector<TalkRelationship> relationships = mRelationshipsByClientId.get(client);
+        if(relationships != null) {
+            for(TalkRelationship r: relationships) {
+                if(r.getOtherClientId().equals(otherClient)) {
+                    return r;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void saveRelationship(TalkRelationship relationship) {
+        String clientId = relationship.getClientId();
+
+        Vector<TalkRelationship> clientVec = mRelationshipsByClientId.get(clientId);
+        if(clientVec == null) {
+            clientVec = new Vector<TalkRelationship>();
+            mRelationshipsByClientId.put(clientId, clientVec);
+        }
+        if(!clientVec.contains(relationship)) {
+            clientVec.add(relationship);
+        }
+    }
 }

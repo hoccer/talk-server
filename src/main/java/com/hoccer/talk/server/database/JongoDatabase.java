@@ -1,9 +1,6 @@
 package com.hoccer.talk.server.database;
 
-import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.model.TalkDelivery;
-import com.hoccer.talk.model.TalkMessage;
-import com.hoccer.talk.model.TalkToken;
+import com.hoccer.talk.model.*;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
@@ -16,6 +13,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Database implementation using the Jongo mapper to MongoDB
+ *
+ * This is intended as the production backend.
+ *
+ */
 public class JongoDatabase implements ITalkServerDatabase {
 
     /** Mongo connection pool */
@@ -156,4 +159,35 @@ public class JongoDatabase implements ITalkServerDatabase {
         mTokens.save(token);
     }
 
+    @Override
+    public List<TalkRelationship> findRelationships(String client) {
+        List<TalkRelationship> res = new ArrayList<TalkRelationship>();
+        Iterator<TalkRelationship> it =
+                mRelationships.find("{clientId:#}", client)
+                              .as(TalkRelationship.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
+    public TalkRelationship findRelationshipBetween(String client, String otherClient) {
+        TalkRelationship res = null;
+        Iterator<TalkRelationship> it =
+                mRelationships.find("{clientId:#,otherClientId:#}", client, otherClient)
+                              .as(TalkRelationship.class).iterator();
+        if(it.hasNext()) {
+            res = it.next();
+            if(it.hasNext()) {
+                throw new RuntimeException("Multiple relationships between " + client + " and " + otherClient);
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public void saveRelationship(TalkRelationship relationship) {
+        mRelationships.save(relationship);
+    }
 }
