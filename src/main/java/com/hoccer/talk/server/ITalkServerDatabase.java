@@ -3,6 +3,7 @@ package com.hoccer.talk.server;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.model.TalkMessage;
+import com.hoccer.talk.model.TalkToken;
 
 import java.util.List;
 
@@ -28,5 +29,8 @@ public interface ITalkServerDatabase {
     public List<TalkDelivery> findDeliveriesForClient(String clientId);
     public List<TalkDelivery> findDeliveriesForMessage(String messageId);
     public void saveDelivery(TalkDelivery delivery);
+
+    public TalkToken findTokenByPurposeAndSecret(String purpose, String secret);
+    public void saveToken(TalkToken token);
 
 }

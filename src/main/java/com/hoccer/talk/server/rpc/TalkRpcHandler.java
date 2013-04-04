@@ -4,14 +4,14 @@ import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.model.TalkMessage;
+import com.hoccer.talk.model.TalkToken;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 
 
-import java.util.List;
-import java.util.UUID;
-import java.util.Vector;
+import java.io.*;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -111,6 +111,101 @@ public class TalkRpcHandler implements ITalkRpcServer {
         logCall("identify(" + clientId + ")");
         mConnection.identifyClient(clientId);
         mServer.getDeliveryAgent().triggerDelivery(mConnection.getClientId());
+    }
+
+    @Override
+    public String generateToken(String tokenPurpose, int secondsValid) {
+        requireIdentification();
+
+        logCall("generateToken(" + tokenPurpose + "," + secondsValid + ")");
+
+        // verify request
+        if(!TalkToken.isValidPurpose(tokenPurpose)) {
+            throw new RuntimeException("Invalid token purpose");
+        }
+
+        // constrain validity period (XXX constants)
+        secondsValid = Math.max(60, secondsValid);            // at least 1 minute
+        secondsValid = Math.min(7 * 24 * 3600, secondsValid); // at most 1 week
+
+        // get the current time
+        Date time = new Date();
+        // compute expiry time
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(time);
+        calendar.add(Calendar.SECOND, Math.round(secondsValid));
+
+        // generate the secret
+        int attempt = 0;
+        String secret = null;
+        do {
+            if(secret != null) {
+                LOG.warning("Token generator returned existing token - regenerating");
+            }
+            if(3 < attempt++) {
+                throw new RuntimeException("Could not generate a token");
+            }
+            secret = genPw();
+        } while (mDatabase.findTokenByPurposeAndSecret(tokenPurpose, secret) != null);
+
+        // create the token object
+        TalkToken token = new TalkToken();
+        token.setClientId(mConnection.getClientId());
+        token.setSecret(genPw());
+        token.setGenerationTime(time);
+        token.setExpiryTime(calendar.getTime());
+
+        // save the token
+        mDatabase.saveToken(token);
+
+        // return the secret
+        return token.getSecret();
+    }
+
+    private String genPw() {
+        String result = null;
+        ProcessBuilder pb = new ProcessBuilder("pwgen", "20", "1");
+        try {
+            Process p = pb.start();
+            InputStream s = p.getInputStream();
+            BufferedReader r = new BufferedReader(new InputStreamReader(s));
+            String line = r.readLine();
+            LOG.info("pwline " + line);
+            if(line.length() == 20) {
+                result = line;
+            }
+        } catch (IOException ioe) {
+        }
+        return result;
+    }
+
+    @Override
+    public boolean pairByToken(String secret) {
+        requireIdentification();
+        logCall("pairByToken(" + secret + ")");
+
+        TalkToken token = mDatabase.findTokenByPurposeAndSecret(
+                            TalkToken.PURPOSE_PAIRING, secret);
+
+        // check if token exists
+        if(token == null) {
+            LOG.info("no token could be found");
+            return false;
+        }
+
+        // check if token is unused
+        if(!token.getState().equals(TalkToken.STATE_UNUSED)) {
+            LOG.info("token has already been used");
+            return false;
+        }
+
+        LOG.info("performing token-based pairing between " + mConnection.getClientId() + " and " + token.getClientId());
+
+        // invalidate the token
+        token.setState(TalkToken.STATE_USED);
+        mDatabase.saveToken(token);
+
+        return true;
     }
 
     @Override

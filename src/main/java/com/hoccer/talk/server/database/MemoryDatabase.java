@@ -3,6 +3,7 @@ package com.hoccer.talk.server.database;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.model.TalkMessage;
+import com.hoccer.talk.model.TalkToken;
 import com.hoccer.talk.server.ITalkServerDatabase;
 
 import java.util.Hashtable;
@@ -23,12 +24,11 @@ public class MemoryDatabase implements ITalkServerDatabase {
     private Hashtable<String, Vector<TalkDelivery>> mDeliveriesByMessageId
             = new Hashtable<String, Vector<TalkDelivery>>();
 
+    private Hashtable<String, TalkToken> mTokensBySecret
+            = new Hashtable<String, TalkToken>();
+
 
     public MemoryDatabase() {
-        mClientsById = new Hashtable<String, TalkClient>();
-        mMessagesById = new Hashtable<String, TalkMessage>();
-        mDeliveriesByClientId = new Hashtable<String, Vector<TalkDelivery>>();
-        mDeliveriesByMessageId = new Hashtable<String, Vector<TalkDelivery>>();
     }
 
     @Override
@@ -104,6 +104,20 @@ public class MemoryDatabase implements ITalkServerDatabase {
         if(!messageVec.contains(delivery)) {
             messageVec.add(delivery);
         }
+    }
+
+    @Override
+    public TalkToken findTokenByPurposeAndSecret(String purpose, String secret) {
+        TalkToken res = mTokensBySecret.get(secret);
+        if(res != null && res.getPurpose().equals(purpose)) {
+            return res;
+        }
+        return null;
+    }
+
+    @Override
+    public void saveToken(TalkToken token) {
+        mTokensBySecret.put(token.getSecret(), token);
     }
 
 }

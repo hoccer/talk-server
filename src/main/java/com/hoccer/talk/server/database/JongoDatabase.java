@@ -3,6 +3,7 @@ package com.hoccer.talk.server.database;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.model.TalkMessage;
+import com.hoccer.talk.model.TalkToken;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
@@ -29,6 +30,8 @@ public class JongoDatabase implements ITalkServerDatabase {
     MongoCollection mClients;
     MongoCollection mMessages;
     MongoCollection mDeliveries;
+    MongoCollection mTokens;
+    MongoCollection mRelationships;
 
     public JongoDatabase() {
         initialize();
@@ -50,6 +53,8 @@ public class JongoDatabase implements ITalkServerDatabase {
         mClients = mJongo.getCollection("client");
         mMessages = mJongo.getCollection("message");
         mDeliveries = mJongo.getCollection("delivery");
+        mTokens = mJongo.getCollection("token");
+        mRelationships = mJongo.getCollection("relationship");
     }
 
     @Override
@@ -129,6 +134,26 @@ public class JongoDatabase implements ITalkServerDatabase {
     @Override
     public void saveDelivery(TalkDelivery delivery) {
         mDeliveries.save(delivery);
+    }
+
+    @Override
+    public TalkToken findTokenByPurposeAndSecret(String purpose, String secret) {
+        TalkToken res = null;
+        Iterator<TalkToken> it =
+                mTokens.find("{purpose:#,secret:#}", purpose, secret)
+                       .as(TalkToken.class).iterator();
+        if(it.hasNext()) {
+            res = it.next();
+            if(it.hasNext()) {
+                throw new RuntimeException("Duplicate token");
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public void saveToken(TalkToken token) {
+        mTokens.save(token);
     }
 
 }
