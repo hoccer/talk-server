@@ -27,16 +27,7 @@ public class TalkServerMain {
 
     private void run() {
         // select and instantiate database backend
-        ITalkServerDatabase db = null;
-        if(database.equals("jongo")) {
-            db = new JongoDatabase();
-        }
-        if(database.equals("memory")) {
-            db = new MemoryDatabase();
-        }
-        if(db == null) {
-            throw new RuntimeException("Invalid database backend: " + database);
-        }
+        ITalkServerDatabase db = initializeDatabase();
 
         // create the talk server
         TalkServer ts = new TalkServer(db);
@@ -62,6 +53,16 @@ public class TalkServerMain {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private ITalkServerDatabase initializeDatabase() {
+        if(database.equals("jongo")) {
+            return new JongoDatabase();
+        }
+        if(database.equals("memory")) {
+            return new MemoryDatabase();
+        }
+        throw new RuntimeException("Unknown database backend: " + database);
     }
 
 	public static void main(String[] args) {
