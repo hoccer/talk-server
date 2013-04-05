@@ -1,10 +1,7 @@
 package com.hoccer.talk.server.rpc;
 
 import com.hoccer.talk.logging.HoccerLoggers;
-import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.model.TalkDelivery;
-import com.hoccer.talk.model.TalkMessage;
-import com.hoccer.talk.model.TalkToken;
+import com.hoccer.talk.model.*;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
@@ -207,13 +204,37 @@ public class TalkRpcHandler implements ITalkRpcServer {
             return false;
         }
 
+        // get relevant client IDs
+        String myId = mConnection.getClientId();
+        String otherId = token.getClientId();
+
+        // log about it
         LOG.info("performing token-based pairing between " + mConnection.getClientId() + " and " + token.getClientId());
+
+        // set up relationships
+        setRelationship(myId, otherId, TalkRelationship.STATE_FRIEND);
+        setRelationship(otherId, myId, TalkRelationship.STATE_FRIEND);
 
         // invalidate the token
         token.setState(TalkToken.STATE_USED);
         mDatabase.saveToken(token);
 
         return true;
+    }
+
+    private void setRelationship(String thisClientId, String otherClientId, String state) {
+        if(!TalkRelationship.isValidState(state)) {
+            throw new RuntimeException("Invalid state " + state);
+        }
+        LOG.info("relationship between " + thisClientId + " and " + otherClientId + " is now " + state);
+        TalkRelationship relationship = mDatabase.findRelationshipBetween(thisClientId, otherClientId);
+        if(relationship == null) {
+            relationship = new TalkRelationship();
+        }
+        relationship.setClientId(thisClientId);
+        relationship.setOtherClientId(otherClientId);
+        relationship.setState(state);
+        mDatabase.saveRelationship(relationship);
     }
 
     @Override
