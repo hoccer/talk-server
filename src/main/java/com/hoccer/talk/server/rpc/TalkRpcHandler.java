@@ -243,9 +243,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         logCall("deliveryRequest(" + deliveries.length + " deliveries)");
 
+        // who is doing this again?
+        String clientId = mConnection.getClientId();
+
         // generate a message id
         String messageId = UUID.randomUUID().toString();
-        message.setSenderId(mConnection.getClientId());
+        message.setSenderId(clientId);
         message.setMessageId(messageId);
 
         // walk deliveries and determine which to accept,
@@ -257,7 +260,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             d.setMessageId(messageId);
 
             // reject messages to self
-            if (receiverId.equals(mConnection.getClientId())) {
+            if (receiverId.equals(clientId)) {
                 LOG.info("delivery rejected: send to self");
                 // mark delivery failed
                 d.setState(TalkDelivery.STATE_FAILED);
@@ -270,6 +273,24 @@ public class TalkRpcHandler implements ITalkRpcServer {
             if (receiver == null) {
                 LOG.info("delivery rejected: client " + receiverId + " does not exist");
                 // mark delivery failed
+                d.setState(TalkDelivery.STATE_FAILED);
+                continue;
+            }
+
+            // find relationship between clients, if there is one
+            TalkRelationship relationship = mDatabase.findRelationshipBetween(receiverId, clientId);
+
+            // reject if there is no relationship
+            if (relationship == null) {
+                LOG.info("delivery rejected: client " + receiverId + " has no relationship with sender");
+                d.setState(TalkDelivery.STATE_FAILED);
+                continue;
+            }
+
+            // reject unless befriended
+            if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
+                LOG.info("delivery rejected: client " + receiverId
+                        + " is not a friend of sender (relationship is " + relationship.getState() + ")");
                 d.setState(TalkDelivery.STATE_FAILED);
                 continue;
             }
