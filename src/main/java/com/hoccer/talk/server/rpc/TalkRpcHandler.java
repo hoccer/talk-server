@@ -106,7 +106,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void identify(String clientId) {
         logCall("identify(" + clientId + ")");
+
+        // client is now considered to be logged in
         mConnection.identifyClient(clientId);
+
+        // tell the client if it doesn't have push
+        if(!mConnection.getClient().isPushCapable()) {
+            mConnection.getClientRpc().pushNotRegistered();
+        }
+
+        // attempt to deliver anything we might have
         mServer.getDeliveryAgent().triggerDelivery(mConnection.getClientId());
     }
 
