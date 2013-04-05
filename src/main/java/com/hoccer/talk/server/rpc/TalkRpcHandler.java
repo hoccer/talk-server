@@ -234,6 +234,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         relationship.setClientId(thisClientId);
         relationship.setOtherClientId(otherClientId);
         relationship.setState(state);
+        relationship.setLastChanged(new Date());
         mDatabase.saveRelationship(relationship);
     }
 
