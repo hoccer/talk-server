@@ -2,6 +2,7 @@ package com.hoccer.talk.server;
 
 import com.hoccer.talk.model.*;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -31,6 +32,7 @@ public interface ITalkServerDatabase {
     public void saveToken(TalkToken token);
 
     public List<TalkRelationship> findRelationships(String client);
+    public List<TalkRelationship> findRelationshipsChangedAfter(String client, Date lastKnown);
     public TalkRelationship findRelationshipBetween(String client, String otherClient);
     public void saveRelationship(TalkRelationship relationship);
 

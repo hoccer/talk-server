@@ -10,6 +10,7 @@ import org.jongo.MongoCollection;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,6 +18,8 @@ import java.util.List;
  * Database implementation using the Jongo mapper to MongoDB
  *
  * This is intended as the production backend.
+ *
+ * XXX this should use findOne() instead of find() where appropriate
  *
  */
 public class JongoDatabase implements ITalkServerDatabase {
@@ -182,6 +185,18 @@ public class JongoDatabase implements ITalkServerDatabase {
             if(it.hasNext()) {
                 throw new RuntimeException("Multiple relationships between " + client + " and " + otherClient);
             }
+        }
+        return res;
+    }
+
+    @Override
+    public List<TalkRelationship> findRelationshipsChangedAfter(String client, Date lastKnown) {
+        List<TalkRelationship> res = new ArrayList<TalkRelationship>();
+        Iterator<TalkRelationship> it =
+                mRelationships.find("{clientId:#,lastChanged: {$gt:#}}", client, lastKnown)
+                              .as(TalkRelationship.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
         }
         return res;
     }

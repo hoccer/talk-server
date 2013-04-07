@@ -3,9 +3,7 @@ package com.hoccer.talk.server.database;
 import com.hoccer.talk.model.*;
 import com.hoccer.talk.server.ITalkServerDatabase;
 
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * This is a simple in-memory implementation of the Talk database
@@ -150,6 +148,20 @@ public class MemoryDatabase implements ITalkServerDatabase {
             }
         }
         return null;
+    }
+
+    @Override
+    public List<TalkRelationship> findRelationshipsChangedAfter(String client, Date lastKnown) {
+        List<TalkRelationship> res = new ArrayList<TalkRelationship>();
+        Vector<TalkRelationship> relationships = mRelationshipsByClientId.get(client);
+        if(relationships != null) {
+            for(TalkRelationship r: relationships) {
+                if(r.getLastChanged().after(lastKnown)) {
+                    res.add(r);
+                }
+            }
+        }
+        return res;
     }
 
     @Override

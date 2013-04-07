@@ -104,6 +104,27 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public TalkRelationship[] getRelationships(Date lastKnown) {
+        requireIdentification();
+
+        logCall("getRelationships(" + lastKnown.toString() + ")");
+
+        // query the db
+        List<TalkRelationship> relationships =
+                mDatabase.findRelationshipsChangedAfter(mConnection.getClientId(), lastKnown);
+
+        // build the result array
+        TalkRelationship[] res = new TalkRelationship[relationships.size()];
+        int idx = 0;
+        for(TalkRelationship r: relationships) {
+            res[idx++] = r;
+        }
+
+        // return the bunch
+        return res;
+    }
+
+    @Override
     public void identify(String clientId) {
         logCall("identify(" + clientId + ")");
 
