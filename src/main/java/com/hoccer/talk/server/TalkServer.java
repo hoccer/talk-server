@@ -82,6 +82,10 @@ public class TalkServer {
         return mDeliveryAgent;
     }
 
+    public boolean isClientConnected(String clientId) {
+        return getClientConnection(clientId) != null;
+    }
+
     public TalkRpcConnection getClientConnection(String clientId) {
         return mConnectionsByClientId.get(clientId);
     }
