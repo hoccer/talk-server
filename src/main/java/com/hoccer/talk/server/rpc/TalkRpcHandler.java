@@ -141,6 +141,19 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public void updatePresence(TalkPresence presence) {
+        TalkPresence existing = mDatabase.findPresenceForClient(mConnection.getClientId());
+        if(existing == null) {
+            existing = new TalkPresence();
+        }
+        existing.setClientId(mConnection.getClientId());
+        existing.setClientName(presence.getClientName());
+        existing.setClientStatus(presence.getClientStatus());
+        existing.setTimestamp(new Date());
+        mDatabase.savePresence(existing);
+    }
+
+    @Override
     public String generateToken(String tokenPurpose, int secondsValid) {
         requireIdentification();
 

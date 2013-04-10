@@ -31,6 +31,9 @@ public interface ITalkServerDatabase {
     public TalkToken findTokenByPurposeAndSecret(String purpose, String secret);
     public void saveToken(TalkToken token);
 
+    public TalkPresence findPresenceForClient(String clientId);
+    public void savePresence(TalkPresence presence);
+
     public List<TalkRelationship> findRelationships(String client);
     public List<TalkRelationship> findRelationshipsChangedAfter(String client, Date lastKnown);
     public TalkRelationship findRelationshipBetween(String client, String otherClient);

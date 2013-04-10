@@ -39,6 +39,9 @@ public class MemoryDatabase implements ITalkServerDatabase {
     private Hashtable<String, Vector<TalkRelationship>> mRelationshipsByClientId
             = new Hashtable<String, Vector<TalkRelationship>>();
 
+    private Hashtable<String, TalkPresence> mPresencesByClientId
+            = new Hashtable<String, TalkPresence>();
+
 
     public MemoryDatabase() {
     }
@@ -116,6 +119,16 @@ public class MemoryDatabase implements ITalkServerDatabase {
         if(!messageVec.contains(delivery)) {
             messageVec.add(delivery);
         }
+    }
+
+    @Override
+    public TalkPresence findPresenceForClient(String clientId) {
+        return mPresencesByClientId.get(clientId);
+    }
+
+    @Override
+    public void savePresence(TalkPresence presence) {
+        mPresencesByClientId.put(presence.getClientId(), presence);
     }
 
     @Override
