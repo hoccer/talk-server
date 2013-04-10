@@ -168,6 +168,12 @@ public class MemoryDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkRelationship> findRelationshipsByOtherClient(String other) {
+        // XXX this is bad
+        return null;
+    }
+
+    @Override
     public TalkRelationship findRelationshipBetween(String client, String otherClient) {
         Vector<TalkRelationship> relationships = mRelationshipsByClientId.get(client);
         if(relationships != null) {

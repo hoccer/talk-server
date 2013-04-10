@@ -36,6 +36,7 @@ public interface ITalkServerDatabase {
     public List<TalkPresence> findPresencesChangedAfter(String clientId, Date lastKnown);
 
     public List<TalkRelationship> findRelationships(String client);
+    public List<TalkRelationship> findRelationshipsByOtherClient(String other);
     public List<TalkRelationship> findRelationshipsChangedAfter(String client, Date lastKnown);
     public TalkRelationship findRelationshipBetween(String client, String otherClient);
     public void saveRelationship(TalkRelationship relationship);

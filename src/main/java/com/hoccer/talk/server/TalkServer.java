@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.server.presence.PresenceAgent;
 import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.push.PushRequest;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
@@ -43,6 +44,9 @@ public class TalkServer {
     /** Push service agent */
 	PushAgent mPushAgent;
 
+    /** Presence update agent */
+    PresenceAgent mPresenceAgent;
+
     /** All connections (every connected websocket) */
 	Vector<TalkRpcConnection> mConnections =
 			new Vector<TalkRpcConnection>();
@@ -60,7 +64,8 @@ public class TalkServer {
 		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
         mDeliveryAgent = new DeliveryAgent(this);
 		mPushAgent = new PushAgent();
-	}
+        mPresenceAgent = new PresenceAgent(this);
+    }
 	
 	public ObjectMapper getMapper() {
 		return mMapper;
@@ -80,6 +85,10 @@ public class TalkServer {
 
     public DeliveryAgent getDeliveryAgent() {
         return mDeliveryAgent;
+    }
+
+    public PresenceAgent getPresenceAgent() {
+        return mPresenceAgent;
     }
 
     public boolean isClientConnected(String clientId) {

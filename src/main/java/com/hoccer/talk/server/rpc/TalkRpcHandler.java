@@ -146,16 +146,25 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         logCall("updatePresence()");
 
+        // find existing presence or create one
         TalkPresence existing = mDatabase.findPresenceForClient(mConnection.getClientId());
         if(existing == null) {
             existing = new TalkPresence();
         }
+
+        // update the presence with what we got
         existing.setClientId(mConnection.getClientId());
         existing.setClientName(presence.getClientName());
         existing.setClientStatus(presence.getClientStatus());
         existing.setTimestamp(new Date());
         existing.setAvatarUrl(presence.getAvatarUrl());
+        existing.setKeyFingerprint(presence.getKeyFingerprint());
+
+        // save the thing
         mDatabase.savePresence(existing);
+
+        // start updating other clients
+        mServer.getPresenceAgent().requestPresenceUpdate(existing);
     }
 
     @Override

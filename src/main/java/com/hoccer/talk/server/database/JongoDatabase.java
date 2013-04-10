@@ -204,6 +204,18 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkRelationship> findRelationshipsByOtherClient(String other) {
+        List<TalkRelationship> res = new ArrayList<TalkRelationship>();
+        Iterator<TalkRelationship> it =
+                mRelationships.find("{otherClientId:#}", other)
+                        .as(TalkRelationship.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
     public TalkRelationship findRelationshipBetween(String client, String otherClient) {
         TalkRelationship res = null;
         Iterator<TalkRelationship> it =
