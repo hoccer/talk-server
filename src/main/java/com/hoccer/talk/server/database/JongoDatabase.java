@@ -170,6 +170,23 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkPresence> findPresencesChangedAfter(String clientId, Date lastKnown) {
+        List<TalkPresence> res = new ArrayList<TalkPresence>();
+        List<TalkRelationship> rels = findRelationships(clientId);
+        for(TalkRelationship rel: rels) {
+            if(rel.getState().equals(TalkRelationship.STATE_FRIEND)) {
+                TalkPresence pres = findPresenceForClient(rel.getOtherClientId());
+                if(pres != null) {
+                    if(pres.getTimestamp().after(lastKnown)) {
+                        res.add(pres);
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
+    @Override
     public void savePresence(TalkPresence presence) {
         mPresences.save(presence);
     }

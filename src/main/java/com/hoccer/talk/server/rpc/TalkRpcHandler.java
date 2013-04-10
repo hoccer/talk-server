@@ -159,6 +159,25 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public TalkPresence[] getPresences(Date lastKnown) {
+        requireIdentification();
+
+        logCall("getPresences(" + lastKnown + ")");
+
+        // perform the query
+        List<TalkPresence> pres = mDatabase.findPresencesChangedAfter(mConnection.getClientId(), lastKnown);
+
+        // convert results to array
+        TalkPresence[] res = new TalkPresence[pres.size()];
+        for(int i = 0; i < res.length; i++) {
+            res[i] = pres.get(i);
+        }
+
+        // return it
+        return res;
+    }
+
+    @Override
     public String generateToken(String tokenPurpose, int secondsValid) {
         requireIdentification();
 
