@@ -142,6 +142,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     @Override
     public void updatePresence(TalkPresence presence) {
+        requireIdentification();
+
+        logCall("updatePresence()");
+
         TalkPresence existing = mDatabase.findPresenceForClient(mConnection.getClientId());
         if(existing == null) {
             existing = new TalkPresence();
