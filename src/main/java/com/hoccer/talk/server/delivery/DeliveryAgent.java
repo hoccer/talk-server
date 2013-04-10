@@ -25,61 +25,23 @@ public class DeliveryAgent {
 
     private TalkServer mServer;
 
-    private ITalkServerDatabase mDatabase;
-
     public DeliveryAgent(TalkServer server) {
         mExecutor = Executors.newSingleThreadScheduledExecutor();
         mServer = server;
-        mDatabase = mServer.getDatabase();
+    }
+
+    public TalkServer getServer() {
+        return mServer;
     }
 
     public void triggerDelivery(final String clientId) {
+        final DeliveryRequest request = new DeliveryRequest(this, clientId);
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                deliverIncomingMessages(clientId);
+                request.perform();
             }
         });
-    }
-
-    private void deliverIncomingMessages(String clientId) {
-        LOG.info("delivering for " + clientId);
-
-        // get all outstanding deliveries for the client - abort if none
-        List<TalkDelivery> deliveries = mDatabase.findDeliveriesForClient(clientId);
-        if(deliveries.size() == 0) {
-            LOG.info("no deliveries pending");
-            return;
-        } else {
-            LOG.info("client has " + deliveries.size() + " deliveries outstanding");
-        }
-
-        // deliver directly if connected
-        TalkRpcConnection connection = mServer.getClientConnection(clientId);
-        if(connection != null && connection.isLoggedIn()) {
-            LOG.info("performing direct delivery");
-            // perform deliveries one by one
-            for(TalkDelivery delivery: deliveries) {
-                LOG.info("delivery of " + delivery.getMessageId() + " in state " + delivery.getState());
-                // we only care about DELIVERING messages
-                if(delivery.getState().equals(TalkDelivery.STATE_DELIVERING)) {
-                    // get the matching message
-                    TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
-                    // post the notification for the client
-                    connection.getClientRpc().incomingDelivery(delivery, message);
-                }
-            }
-        }
-
-        // wake client using push services (XXX should only happen when idle for some time)
-        LOG.info("performing push");
-        // find client in database
-        TalkClient client = mDatabase.findClientById(clientId);
-        // send push request
-        if(client.isGcmCapable() || client.isApnsCapable()) {
-            mServer.getPushAgent().submitRequest(new PushRequest(client));
-        }
-
     }
 
 }
