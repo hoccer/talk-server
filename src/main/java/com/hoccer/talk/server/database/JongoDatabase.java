@@ -39,6 +39,7 @@ public class JongoDatabase implements ITalkServerDatabase {
     MongoCollection mTokens;
     MongoCollection mRelationships;
     MongoCollection mPresences;
+    MongoCollection mKeys;
 
     public JongoDatabase() {
         initialize();
@@ -63,6 +64,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         mTokens = mJongo.getCollection("token");
         mRelationships = mJongo.getCollection("relationship");
         mPresences = mJongo.getCollection("presence");
+        mKeys = mJongo.getCollection("key");
     }
 
     @Override
@@ -189,6 +191,16 @@ public class JongoDatabase implements ITalkServerDatabase {
     @Override
     public void savePresence(TalkPresence presence) {
         mPresences.save(presence);
+    }
+
+    @Override
+    public TalkKey findKey(String clientId, String keyId) {
+        return mKeys.findOne("{clientId:#,keyId:#}", clientId, keyId).as(TalkKey.class);
+    }
+
+    @Override
+    public void saveKey(TalkKey key) {
+        mKeys.save(key);
     }
 
     @Override

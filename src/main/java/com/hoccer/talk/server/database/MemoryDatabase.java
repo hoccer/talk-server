@@ -163,6 +163,16 @@ public class MemoryDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public TalkKey findKey(String clientId, String keyId) {
+        return null; // XXX
+    }
+
+    @Override
+    public void saveKey(TalkKey key) {
+        // XXX
+    }
+
+    @Override
     public List<TalkRelationship> findRelationships(String client) {
         return mRelationshipsByClientId.get(client);
     }

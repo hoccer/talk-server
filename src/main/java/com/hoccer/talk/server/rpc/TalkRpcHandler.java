@@ -158,7 +158,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         existing.setClientStatus(presence.getClientStatus());
         existing.setTimestamp(new Date());
         existing.setAvatarUrl(presence.getAvatarUrl());
-        existing.setKeyFingerprint(presence.getKeyFingerprint());
+        existing.setKeyId(presence.getKeyId());
 
         // save the thing
         mDatabase.savePresence(existing);
@@ -183,6 +183,38 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
 
         // return it
+        return res;
+    }
+
+    @Override
+    public void updateKey(TalkKey key) {
+        requireIdentification();
+
+        logCall("updateKey()");
+
+        key.setClientId(mConnection.getClientId());
+        key.setTimestamp(new Date());
+
+        // XXX should check if the content is ok
+
+        mDatabase.saveKey(key);
+    }
+
+    @Override
+    public TalkKey getKey(String clientId, String keyId) {
+        requireIdentification();
+
+        logCall("getKey(" + clientId + "," + keyId + ")");
+
+        TalkKey res = null;
+
+        TalkRelationship rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
+        if(rel != null && rel.getState().equals(TalkRelationship.STATE_FRIEND)) {
+            res = mDatabase.findKey(clientId, keyId);
+        } else {
+            throw new RuntimeException("Given client is not your friend");
+        }
+
         return res;
     }
 

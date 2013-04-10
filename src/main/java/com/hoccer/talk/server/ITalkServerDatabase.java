@@ -35,6 +35,9 @@ public interface ITalkServerDatabase {
     public void savePresence(TalkPresence presence);
     public List<TalkPresence> findPresencesChangedAfter(String clientId, Date lastKnown);
 
+    public TalkKey findKey(String clientId, String keyId);
+    public void saveKey(TalkKey key);
+
     public List<TalkRelationship> findRelationships(String client);
     public List<TalkRelationship> findRelationshipsByOtherClient(String other);
     public List<TalkRelationship> findRelationshipsChangedAfter(String client, Date lastKnown);
