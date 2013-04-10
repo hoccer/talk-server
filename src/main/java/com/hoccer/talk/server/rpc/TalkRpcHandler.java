@@ -154,6 +154,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         existing.setClientName(presence.getClientName());
         existing.setClientStatus(presence.getClientStatus());
         existing.setTimestamp(new Date());
+        existing.setAvatarUrl(presence.getAvatarUrl());
         mDatabase.savePresence(existing);
     }
 
