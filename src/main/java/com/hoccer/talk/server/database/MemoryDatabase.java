@@ -93,6 +93,18 @@ public class MemoryDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkDelivery> findDeliveriesForClientInState(String clientId, String state) {
+        List<TalkDelivery> res = new ArrayList<TalkDelivery>();
+        List<TalkDelivery> lst = mDeliveriesByClientId.get(clientId);
+        for(TalkDelivery d: lst) {
+            if(d.getState().equals(state)) {
+                res.add(d);
+            }
+        }
+        return res;
+    }
+
+    @Override
     public List<TalkDelivery> findDeliveriesForMessage(String messageId) {
         return mDeliveriesByMessageId.get(messageId);
     }
