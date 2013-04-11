@@ -39,7 +39,8 @@ public class DeliveryRequest {
         LOG.info("delivering for " + clientId);
 
         // get all outstanding deliveries for the client - abort if none
-        List<TalkDelivery> deliveries = mDatabase.findDeliveriesForClient(clientId);
+        List<TalkDelivery> deliveries =
+                mDatabase.findDeliveriesForClientInState(clientId, TalkDelivery.STATE_DELIVERING);
         if(deliveries.size() == 0) {
             LOG.info("no deliveries pending");
             return;
