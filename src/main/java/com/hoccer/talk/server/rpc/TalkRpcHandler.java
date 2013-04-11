@@ -278,7 +278,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             BufferedReader r = new BufferedReader(new InputStreamReader(s));
             String line = r.readLine();
             LOG.info("pwline " + line);
-            if(line.length() == 20) {
+            if(line.length() == 10) {
                 result = line;
             }
         } catch (IOException ioe) {
