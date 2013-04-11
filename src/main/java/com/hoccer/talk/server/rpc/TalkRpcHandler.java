@@ -271,7 +271,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     private String genPw() {
         String result = null;
-        ProcessBuilder pb = new ProcessBuilder("pwgen", "20", "1");
+        ProcessBuilder pb = new ProcessBuilder("pwgen", "10", "1");
         try {
             Process p = pb.start();
             InputStream s = p.getInputStream();
