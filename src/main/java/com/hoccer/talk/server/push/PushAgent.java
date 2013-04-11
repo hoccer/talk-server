@@ -1,6 +1,7 @@
 package com.hoccer.talk.server.push;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -9,6 +10,9 @@ import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Sender;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.model.TalkDelivery;
+import com.hoccer.talk.server.ITalkServerDatabase;
+import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
@@ -21,12 +25,17 @@ public class PushAgent {
 
 	private ExecutorService mExecutor;
 
+    TalkServer mServer;
+    ITalkServerDatabase mDatabase;
+
 	private Sender mGcmSender;
 
     private ApnsService mApnsService;
 	
-	public PushAgent() {
+	public PushAgent(TalkServer server) {
 		mExecutor = Executors.newSingleThreadExecutor();
+        mServer = server;
+        mDatabase = mServer.getDatabase();
         if(TalkServerConfiguration.GCM_ENABLE) {
             initializeGcm();
         }
@@ -89,7 +98,11 @@ public class PushAgent {
         LOG.info("push for " + request.getClient().getClientId() + " (APNS)");
         TalkClient client = request.getClient();
         PayloadBuilder b = APNS.newPayload();
-        int messageCount = 23;
+        List<TalkDelivery> deliveries =
+                mDatabase.findDeliveriesForClientInState(
+                                client.getClientId(),
+                                TalkDelivery.STATE_DELIVERING);
+        int messageCount = (deliveries == null) ? 0 : deliveries.size();
         if (messageCount > 1) {
             b.localizedKey("apn_new_messages");
             b.localizedArguments(String.valueOf(messageCount));

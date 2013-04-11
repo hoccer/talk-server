@@ -63,7 +63,7 @@ public class TalkServer {
 		mMapper = createObjectMapper();
 		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
         mDeliveryAgent = new DeliveryAgent(this);
-		mPushAgent = new PushAgent();
+		mPushAgent = new PushAgent(this);
         mPresenceAgent = new PresenceAgent(this);
     }
 	
