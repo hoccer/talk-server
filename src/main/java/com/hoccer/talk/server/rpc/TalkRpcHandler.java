@@ -164,7 +164,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mDatabase.savePresence(existing);
 
         // start updating other clients
-        mServer.getPresenceAgent().requestPresenceUpdate(mConnection.getClientId(), TalkPresence.STATUS_ONLINE);
+        mServer.getPresenceAgent().requestPresenceUpdate(mConnection.getClientId(), TalkPresence.CONN_STATUS_ONLINE);
     }
 
     @Override
@@ -176,9 +176,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // perform the query
         List<TalkPresence> pres = mDatabase.findPresencesChangedAfter(mConnection.getClientId(), lastKnown);
 
-        // convert results to array
+        // update connection status and convert results to array
         TalkPresence[] res = new TalkPresence[pres.size()];
         for(int i = 0; i < res.length; i++) {
+            TalkPresence p = pres.get(i);
+            p.setConnectionStatus(mServer.isClientConnected(p.getClientId())
+                                    ? TalkPresence.CONN_STATUS_ONLINE : TalkPresence.CONN_STATUS_OFFLINE);
             res[i] = pres.get(i);
         }
 

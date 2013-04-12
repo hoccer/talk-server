@@ -28,13 +28,13 @@ public class PresenceAgent {
         mDatabase = mServer.getDatabase();
     }
 
-    public void requestPresenceUpdate(final String clientId, final String clientStatus) {
+    public void requestPresenceUpdate(final String clientId, final String connStatus) {
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 TalkPresence presence = mDatabase.findPresenceForClient(clientId);
                 if(presence != null) {
-                    presence.setClientStatus(clientStatus);
+                    presence.setConnectionStatus(connStatus);
                     performPresenceUpdate(presence);
                 }
             }
