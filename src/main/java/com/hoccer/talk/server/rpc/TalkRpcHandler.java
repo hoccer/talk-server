@@ -391,6 +391,26 @@ public class TalkRpcHandler implements ITalkRpcServer {
         throw new RuntimeException("You are not paired with client " + clientId);
     }
 
+    @Override
+    public void depairClient(String clientId) {
+        requireIdentification();
+
+        logCall("depairClient(" + clientId + ")");
+
+        TalkRelationship rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
+        if(rel == null) {
+            return;
+        }
+
+        String oldState = rel.getState();
+
+        if(oldState.equals(TalkRelationship.STATE_NONE)) {
+            return;
+        }
+
+        setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_NONE);
+    }
+
     private void setRelationship(String thisClientId, String otherClientId, String state) {
         if(!TalkRelationship.isValidState(state)) {
             throw new RuntimeException("Invalid state " + state);
