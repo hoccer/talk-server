@@ -49,12 +49,36 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public String srpRegister(String verifier, String salt) {
+        logCall("srpRegister(" + verifier + "," + salt + ")");
+
+        if(mConnection.isLoggedIn()) {
+            throw new RuntimeException("Can't register while logged in");
+        }
+
+        String clientId = UUID.randomUUID().toString();
+
+        // XXX check verifier and salt for viability
+
+        TalkClient client = new TalkClient();
+        client.setClientId(clientId);
+        client.setSrpSalt(salt);
+        client.setSrpVerifier(verifier);
+
+        mDatabase.saveClient(client);
+
+        return clientId;
+    }
+
+    @Override
     public String srpPhase1(String clientId, String A) {
+        logCall("srpPhase1(" + clientId + "," + A + ")");
         throw new RuntimeException("Nope, authentication isn't implemented yet");
     }
 
     @Override
     public String srpPhase2(String M1) {
+        logCall("srpPhase2(" + M1 + ")");
         throw new RuntimeException("Nope, authentication isn't implemented yet");
     }
 
