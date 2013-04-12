@@ -53,6 +53,9 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
      */
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
+        //if(protocol.equals("com.hoccer.talk.v1")) {
+        //}
+
         // create JSON-RPC connection (this implements the websocket interface)
 		JsonRpcWsConnection connection = new JsonRpcWsConnection(mMapper);
 		connection.setServer(mRpcServer);
