@@ -350,15 +350,21 @@ public class TalkRpcHandler implements ITalkRpcServer {
         logCall("blockClient(" + clientId + ")");
 
         TalkRelationship rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
+        if(rel == null) {
+            throw new RuntimeException("You are not paired with client " + clientId);
+        }
 
         String oldState = rel.getState();
 
         if(oldState.equals(TalkRelationship.STATE_FRIEND)) {
             setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_BLOCKED);
+            return;
         }
         if(oldState.equals(TalkRelationship.STATE_BLOCKED)) {
             return;
         }
+
+        throw new RuntimeException("You are not paired with client " + clientId);
     }
 
     @Override
@@ -368,6 +374,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
         logCall("unblockClient(" + clientId + ")");
 
         TalkRelationship rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
+        if(rel == null) {
+            throw new RuntimeException("You are not paired with client " + clientId);
+        }
 
         String oldState = rel.getState();
 
@@ -376,7 +385,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         if(oldState.equals(TalkRelationship.STATE_BLOCKED)) {
             setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_FRIEND);
+            return;
         }
+
+        throw new RuntimeException("You are not paired with client " + clientId);
     }
 
     private void setRelationship(String thisClientId, String otherClientId, String state) {
