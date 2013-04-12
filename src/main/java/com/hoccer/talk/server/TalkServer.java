@@ -4,6 +4,7 @@ import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hoccer.talk.logging.HoccerLoggers;
+import com.hoccer.talk.model.TalkPresence;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.database.MemoryDatabase;
 import com.hoccer.talk.server.delivery.DeliveryAgent;
@@ -116,7 +117,9 @@ public class TalkServer {
     }
 	
 	public void identifyClient(TalkClient client, TalkRpcConnection connection) {
-		mConnectionsByClientId.put(client.getClientId(), connection);
+        String clientId = client.getClientId();
+		mConnectionsByClientId.put(clientId, connection);
+        mPresenceAgent.requestPresenceUpdate(clientId, TalkPresence.STATUS_ONLINE);
 	}
 	
 	public void connectionOpened(TalkRpcConnection connection) {
@@ -135,6 +138,7 @@ public class TalkServer {
                     mConnectionsByClientId.remove(clientId);
                 }
             }
+            mPresenceAgent.requestPresenceUpdate(clientId, TalkPresence.STATUS_OFFLINE);
         }
 	}
 	
