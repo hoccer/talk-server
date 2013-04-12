@@ -343,6 +343,42 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return true;
     }
 
+    @Override
+    public void blockClient(String clientId) {
+        requireIdentification();
+
+        logCall("blockClient(" + clientId + ")");
+
+        TalkRelationship rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
+
+        String oldState = rel.getState();
+
+        if(oldState.equals(TalkRelationship.STATE_FRIEND)) {
+            setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_BLOCKED);
+        }
+        if(oldState.equals(TalkRelationship.STATE_BLOCKED)) {
+            return;
+        }
+    }
+
+    @Override
+    public void unblockClient(String clientId) {
+        requireIdentification();
+
+        logCall("unblockClient(" + clientId + ")");
+
+        TalkRelationship rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
+
+        String oldState = rel.getState();
+
+        if(oldState.equals(TalkRelationship.STATE_FRIEND)) {
+            return;
+        }
+        if(oldState.equals(TalkRelationship.STATE_BLOCKED)) {
+            setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_FRIEND);
+        }
+    }
+
     private void setRelationship(String thisClientId, String otherClientId, String state) {
         if(!TalkRelationship.isValidState(state)) {
             throw new RuntimeException("Invalid state " + state);
