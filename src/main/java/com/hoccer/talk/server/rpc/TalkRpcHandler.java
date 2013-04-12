@@ -49,6 +49,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public String srpPhase1(String clientId, String A) {
+        throw new RuntimeException("Nope, authentication isn't implemented yet");
+    }
+
+    @Override
+    public String srpPhase2(String M1) {
+        throw new RuntimeException("Nope, authentication isn't implemented yet");
+    }
+
+    @Override
     public void registerGcm(String registeredPackage, String registrationId) {
         requireIdentification();
         logCall("registerGcm(" + registeredPackage + "," + registrationId + ")");
