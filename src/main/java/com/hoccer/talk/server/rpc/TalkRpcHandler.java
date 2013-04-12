@@ -49,6 +49,24 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public String generateId() {
+        logCall("generateId()");
+
+        if(mConnection.isLoggedIn()) {
+            throw new RuntimeException("Can't register while logged in");
+        }
+        if(mConnection.isRegistering()) {
+            throw new RuntimeException("Can't register more than one identity per connection");
+        }
+
+        String clientId = UUID.randomUUID().toString();
+
+        mConnection.beginRegistration(clientId);
+
+        return clientId;
+    }
+
+    @Override
     public String srpRegister(String verifier, String salt) {
         logCall("srpRegister(" + verifier + "," + salt + ")");
 
@@ -56,7 +74,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
             throw new RuntimeException("Can't register while logged in");
         }
 
-        String clientId = UUID.randomUUID().toString();
+        String clientId = mConnection.getUnregisteredClientId();
+
+        if(clientId == null) {
+            throw new RuntimeException("You need to generate an id before registering");
+        }
 
         // XXX check verifier and salt for viability
 

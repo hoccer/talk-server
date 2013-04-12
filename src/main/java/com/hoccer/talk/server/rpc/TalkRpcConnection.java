@@ -42,6 +42,9 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
     /** Client object (if logged in) */
     TalkClient mClient;
 
+    /** Client id provided for client registration */
+    String mUnregisteredClientId;
+
     /**
      * Construct a connection for the given server using the given connection
      *
@@ -117,6 +120,20 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
     }
 
     /**
+     * Returns true if the client is engaging in registration
+     */
+    public boolean isRegistering() {
+        return mUnregisteredClientId != null;
+    }
+
+    /**
+     * Returns the client id this connection is currently registering
+     */
+    public String getUnregisteredClientId() {
+        return mUnregisteredClientId;
+    }
+
+    /**
      * Callback: underlying connection is now open
      * @param connection
      */
@@ -157,6 +174,14 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
         } else {
             mServer.identifyClient(mClient, this);
         }
+    }
+
+    /**
+     * Begins the registration process under the given client id
+     */
+    public void beginRegistration(String clientId) {
+        LOG.info("[" + getConnectionId() + "] begins registration as " + clientId);
+        mUnregisteredClientId = clientId;
     }
 
 }
