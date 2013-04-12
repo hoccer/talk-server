@@ -5,9 +5,16 @@ import com.hoccer.talk.model.*;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
+import org.bouncycastle.crypto.CryptoException;
+import org.bouncycastle.crypto.agreement.srp.SRP6Server;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.jcajce.provider.digest.GOST3411;
+import org.bouncycastle.jce.provider.JCEMac;
 
 
 import java.io.*;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -95,7 +102,21 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public String srpPhase1(String clientId, String A) {
         logCall("srpPhase1(" + clientId + "," + A + ")");
-        throw new RuntimeException("Nope, authentication isn't implemented yet");
+
+        SRP6Server s = new SRP6Server();
+
+        s.init(null, null, null, new SHA256Digest(), new SecureRandom());
+
+        BigInteger credentials = s.generateServerCredentials();
+
+        BigInteger secret = null;
+        try {
+            secret = s.calculateSecret(new BigInteger(A));
+        } catch (CryptoException e) {
+            throw new RuntimeException(e);
+        }
+
+        return credentials.toString();
     }
 
     @Override
