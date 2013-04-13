@@ -30,9 +30,6 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 	/** JSON-RPC connection object */
 	JsonRpcConnection mConnection;
 	
-	/** JSON-RPC handler object */
-    TalkRpcHandler mHandler;
-	
 	/** RPC interface to client */
 	ITalkRpcClient mClientRpc;
 	
@@ -144,10 +141,6 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 		mLastActivity = System.currentTimeMillis();
         // tell the server about the connection
 		mServer.connectionOpened(this);
-        // create a fresh handler object
-        mHandler = new TalkRpcHandler(mServer, this);
-        // register the handler with the connection
-        mConnection.setHandler(mHandler);
     }
 
     /**

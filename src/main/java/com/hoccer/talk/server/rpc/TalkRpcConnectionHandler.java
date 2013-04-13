@@ -2,6 +2,7 @@ package com.hoccer.talk.server.rpc;
 
 import javax.servlet.http.HttpServletRequest;
 
+import better.jsonrpc.client.JsonRpcClient;
 import better.jsonrpc.server.JsonRpcServer;
 import java.util.logging.Logger;
 
@@ -57,10 +58,12 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
         //}
 
         // create JSON-RPC connection (this implements the websocket interface)
-		JsonRpcWsConnection connection = new JsonRpcWsConnection(mMapper);
-		connection.setServer(mRpcServer);
+		JsonRpcWsConnection connection = new JsonRpcWsConnection();
         // create talk high-level connection object
 		TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection);
+        // configure the connection
+        connection.bindClient(new JsonRpcClient(mMapper));
+        connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
         // return the raw connection (will be called by server for incoming messages)
 		return connection;
 	}
