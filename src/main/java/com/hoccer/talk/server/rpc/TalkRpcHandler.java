@@ -469,13 +469,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
             return;
         }
 
-        String oldState = rel.getState();
-
-        if(oldState.equals(TalkRelationship.STATE_NONE)) {
-            return;
-        }
-
         setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_NONE);
+        setRelationship(clientId, mConnection.getClientId(), TalkRelationship.STATE_NONE);
     }
 
     private void setRelationship(String thisClientId, String otherClientId, String state) {
