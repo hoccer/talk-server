@@ -5,13 +5,11 @@ import com.hoccer.talk.model.*;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
-import com.hoccer.talk.util.SRP6Parameters;
-import com.hoccer.talk.util.SRP6VerifyingServer;
+import com.hoccer.talk.srp.SRP6Parameters;
+import com.hoccer.talk.srp.SRP6VerifyingServer;
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.agreement.srp.SRP6Server;
 import org.bouncycastle.crypto.digests.SHA1Digest;
-import org.bouncycastle.crypto.digests.SHA256Digest;
 
 
 import java.io.*;
