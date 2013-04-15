@@ -158,12 +158,22 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      */
     public void identifyClient(String clientId) {
         LOG.info("[" + getConnectionId() + "] logged in as " + clientId);
+
+        // mark connection as logged in
         mClient = mServer.getDatabase().findClientById(clientId);
         if(mClient == null) {
             throw new RuntimeException("Client does not exist");
         } else {
             mServer.identifyClient(mClient, this);
         }
+
+        // tell the client if it doesn't have push
+        if(!mClient.isPushCapable()) {
+            mClientRpc.pushNotRegistered();
+        }
+
+        // attempt to deliver anything we might have
+        mServer.getDeliveryAgent().triggerDelivery(mClient.getClientId());
     }
 
     /**
