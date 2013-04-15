@@ -5,11 +5,13 @@ import com.hoccer.talk.model.*;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
+import com.hoccer.talk.util.SRP6Parameters;
+import com.hoccer.talk.util.SRP6VerifyingServer;
 import org.bouncycastle.crypto.CryptoException;
+import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.agreement.srp.SRP6Server;
+import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.jcajce.provider.digest.GOST3411;
-import org.bouncycastle.jce.provider.JCEMac;
 
 
 import java.io.*;
@@ -30,6 +32,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private static final Logger LOG =
             HoccerLoggers.getLogger(TalkRpcHandler.class);
 
+    private static final Digest SRP_DIGEST = new SHA1Digest();
+    private static final SecureRandom SRP_RANDOM = new SecureRandom();
+    private static final SRP6Parameters SRP_PARAMETERS = SRP6Parameters.CONSTANTS_1024;
+
     /** Reference to server */
     private TalkServer mServer;
 
@@ -38,6 +44,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     /** Reference to connection object */
     private TalkRpcConnection mConnection;
+
+    /** SRP authentication state */
+    private SRP6VerifyingServer mSrpServer;
+
+    /** SRP authenticating user */
+    private TalkClient mSrpClient;
 
     public TalkRpcHandler(TalkServer pServer, TalkRpcConnection pConnection) {
         mServer = pServer;
@@ -99,30 +111,112 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return clientId;
     }
 
+    private static byte[] fromHexString(final String encoded) {
+        if ((encoded.length() % 2) != 0) {
+            throw new IllegalArgumentException("Input string must contain an even number of characters");
+        }
+
+        final byte result[] = new byte[encoded.length()/2];
+        final char enc[] = encoded.toCharArray();
+        for (int i = 0; i < enc.length; i += 2) {
+            StringBuilder curr = new StringBuilder(2);
+            curr.append(enc[i]).append(enc[i + 1]);
+            result[i/2] = (byte) Integer.parseInt(curr.toString(), 16);
+        }
+        return result;
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        final char[] hexArray = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+        char[] hexChars = new char[bytes.length * 2];
+        int v;
+        for ( int j = 0; j < bytes.length; j++ ) {
+            v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
     @Override
     public String srpPhase1(String clientId, String A) {
         logCall("srpPhase1(" + clientId + "," + A + ")");
 
-        SRP6Server s = new SRP6Server();
+        // XXX does not verify ((A % N) != 0)
 
-        s.init(null, null, null, new SHA256Digest(), new SecureRandom());
+        // check if we aren't logged in already
+        if(mConnection.isLoggedIn()) {
+            throw new RuntimeException("Can't authenticate while logged in");
+        }
 
-        BigInteger credentials = s.generateServerCredentials();
+        // create SRP state
+        if(mSrpServer == null) {
+            mSrpServer = new SRP6VerifyingServer();
+        } else {
+            throw new RuntimeException("Can only attempt SRP once per connection");
+        }
 
-        BigInteger secret = null;
+        // get client object
+        mSrpClient = mDatabase.findClientById(clientId);
+        if(mSrpClient == null) {
+            throw new RuntimeException("No such client");
+        }
+
+        // initialize SRP state
+        mSrpServer.initVerifiable(
+                SRP_PARAMETERS.N, SRP_PARAMETERS.g,
+                new BigInteger(mSrpClient.getSrpVerifier(), 16),
+                clientId.getBytes(),
+                fromHexString(mSrpClient.getSrpSalt()),
+                SRP_DIGEST, SRP_RANDOM
+        );
+
+        // generate server credentials
+        BigInteger credentials = mSrpServer.generateServerCredentials();
+
+        // computer secret / verify client credentials
         try {
-            secret = s.calculateSecret(new BigInteger(A));
+            mSrpServer.calculateSecret(new BigInteger(A));
         } catch (CryptoException e) {
             throw new RuntimeException(e);
         }
 
+        // return our credentials for the client
         return credentials.toString();
     }
 
     @Override
     public String srpPhase2(String M1) {
         logCall("srpPhase2(" + M1 + ")");
-        throw new RuntimeException("Nope, authentication isn't implemented yet");
+
+        // check if we aren't logged in already
+        if(mConnection.isLoggedIn()) {
+            throw new RuntimeException("Can't authenticate while logged in");
+        }
+
+        // verify we are in a good state to do phase2
+        if(mSrpServer == null) {
+            throw new RuntimeException("Need to perform phase 1 first");
+        }
+        if(mSrpClient == null) {
+            throw new RuntimeException("Internal error in SRP phase 2");
+        }
+
+        // perform the verification
+        byte[] M2 = mSrpServer.verifyClient(fromHexString(M1));
+        if(M2 == null) {
+            throw new RuntimeException("Verification failed");
+        }
+
+        // we are now logged in
+        mConnection.identifyClient(mSrpClient.getClientId());
+
+        // clear SRP state
+        mSrpClient = null;
+        mSrpServer = null;
+
+        // return server evidence for client to check
+        return bytesToHex(M2);
     }
 
     @Override
