@@ -169,18 +169,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
-    public String[] getAllClients() {
-        logCall("getAllClients()");
-        List<String> ri = mServer.getAllClients();
-        String[] r = new String[ri.size()];
-        int i = 0;
-        for (String s : ri) {
-            r[i++] = s;
-        }
-        return r;
-    }
-
-    @Override
     public TalkRelationship[] getRelationships(Date lastKnown) {
         requireIdentification();
 
