@@ -53,10 +53,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 		mServer = server;
 		mConnection = connection;
         // create a json-rpc proxy for client notifications
-		mClientRpc = ProxyUtil.createClientProxy(
-				ITalkRpcClient.class.getClassLoader(),
-				ITalkRpcClient.class,
-				mConnection);
+		mClientRpc = (ITalkRpcClient)connection.makeProxy(ITalkRpcClient.class);
         // register ourselves for connection events
 		mConnection.addListener(this);
 	}
