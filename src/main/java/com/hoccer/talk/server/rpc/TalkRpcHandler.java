@@ -168,7 +168,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 fromHexString(mSrpClient.getSrpSalt()),
                 SRP_DIGEST, SRP_RANDOM
         );
-
         // generate server credentials
         BigInteger credentials = mSrpServer.generateServerCredentials();
 
@@ -180,7 +179,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
 
         // return our credentials for the client
-        return credentials.toString();
+        return credentials.toString(16);
     }
 
     @Override
