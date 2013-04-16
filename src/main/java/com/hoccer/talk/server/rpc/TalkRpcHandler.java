@@ -174,7 +174,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         // computer secret / verify client credentials
         try {
-            mSrpServer.calculateSecret(new BigInteger(A));
+            mSrpServer.calculateSecret(new BigInteger(A, 16));
         } catch (CryptoException e) {
             throw new RuntimeException(e);
         }
