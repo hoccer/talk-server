@@ -44,22 +44,22 @@ public class DeliveryRequest {
             rpc = connection.getClientRpc();
         }
 
-        // get all outstanding deliveries for the client - abort if none
-        List<TalkDelivery> deliveries =
+        // get all outstanding deliveries for the client
+        List<TalkDelivery> inDeliveries =
                 mDatabase.findDeliveriesForClientInState(mClientId, TalkDelivery.STATE_DELIVERING);
-        if(deliveries.size() > 0) {
+        if(inDeliveries.size() > 0) {
             // we need to push if we don't succeed
             needToNotify = true;
             // deliver if we can
             if(currentlyConnected) {
-                for(TalkDelivery delivery: deliveries) {
+                for(TalkDelivery delivery: inDeliveries) {
                     // get the matching message
                     TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
                     // post the delivery for the client
                     try {
                         rpc.incomingDelivery(delivery, message);
                     } catch (Exception e) {
-                        LOG.log(Level.INFO, "Exception while notifying", e);
+                        LOG.log(Level.INFO, "Exception calling incomingDelivery()", e);
                         //currentlyConnected = false; XXX do this when we can differentiate
                     }
                     // check for disconnects
@@ -74,7 +74,31 @@ public class DeliveryRequest {
             }
         }
 
-        // XXX get all outstanding out-deliveries and update
+        List<TalkDelivery> outDeliveries =
+                mDatabase.findDeliveriesFromClient(mClientId);
+        if(outDeliveries.size() > 0) {
+            if(currentlyConnected) {
+                for(TalkDelivery delivery: outDeliveries) {
+                    // if the delivery is not confirmed
+                    if(!delivery.getState().equals(TalkDelivery.STATE_CONFIRMED)) {
+                        // notify it
+                        try {
+                            rpc.outgoingDelivery(delivery);
+                        } catch (Exception e) {
+                            LOG.log(Level.INFO, "Exception calling outgoingDelivery()");
+                        }
+                    }
+                    // check for disconnects
+                    if(!connection.isConnected()) {
+                        currentlyConnected = false;
+                    }
+                    // we lost the connection somehow
+                    if(!currentlyConnected) {
+                        break;
+                    }
+                }
+            }
+        }
 
         // initiate push delivery if needed
         if(needToNotify && !currentlyConnected) {
