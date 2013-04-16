@@ -648,16 +648,32 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public TalkDelivery deliveryConfirm(String messageId) {
         requireIdentification();
-        logCall("confirmDelivery(" + messageId + ")");
+        logCall("deliveryConfirm(" + messageId + ")");
         String clientId = mConnection.getClientId();
         TalkDelivery d = mDatabase.findDelivery(messageId, clientId);
-        if (d == null) {
-            LOG.info("confirmation ignored: no delivery of message "
-                    + messageId + " for client " + clientId);
-        } else {
-            LOG.info("confirmation accepted: message "
-                    + messageId + " for client " + clientId);
-            setDeliveryState(d, TalkDelivery.STATE_DELIVERED);
+        if (d != null) {
+            if(d.getState().equals(TalkDelivery.STATE_DELIVERING)) {
+                LOG.info("confirmed " + messageId + " for " + clientId);
+                setDeliveryState(d, TalkDelivery.STATE_DELIVERED);
+            } else {
+                LOG.info("reconfirmed " + messageId + " for " + clientId);
+            }
+        }
+        return d;
+    }
+
+    @Override
+    public TalkDelivery deliveryAcknowledge(String messageId, String recipientId) {
+        requireIdentification();
+        logCall("deliveryAcknowledge(" + messageId + "," + recipientId + ")");
+        TalkDelivery d = mDatabase.findDelivery(messageId, recipientId);
+        if (d != null) {
+            if(d.getState().equals(TalkDelivery.STATE_DELIVERED)) {
+                LOG.info("acknowledged " + messageId + " for " + recipientId);
+                setDeliveryState(d, TalkDelivery.STATE_CONFIRMED);
+            } else {
+                LOG.info("reacknowledged " + messageId + " for " + recipientId);
+            }
         }
         return d;
     }
