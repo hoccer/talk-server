@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import com.google.android.gcm.server.Message;
@@ -23,7 +25,7 @@ public class PushAgent {
 
     private static final Logger LOG = HoccerLoggers.getLogger(PushAgent.class);
 
-	private ExecutorService mExecutor;
+	private ScheduledExecutorService mExecutor;
 
     TalkServer mServer;
     ITalkServerDatabase mDatabase;
@@ -33,7 +35,7 @@ public class PushAgent {
     private ApnsService mApnsService;
 	
 	public PushAgent(TalkServer server) {
-		mExecutor = Executors.newSingleThreadExecutor();
+		mExecutor = Executors.newScheduledThreadPool(2);
         mServer = server;
         mDatabase = mServer.getDatabase();
         if(TalkServerConfiguration.GCM_ENABLE) {
@@ -44,13 +46,35 @@ public class PushAgent {
         }
     }
 
+    public void submitRequest(TalkClient client) {
+        final PushRequest request = new PushRequest(this, client);
+        mExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                request.perform();
+            }
+        }, 5, TimeUnit.SECONDS);
+    }
+
+    public ITalkServerDatabase getDatabase() {
+        return mDatabase;
+    }
+
+    public Sender getGcmSender() {
+        return mGcmSender;
+    }
+
+    public ApnsService getApnsService() {
+        return mApnsService;
+    }
+
     private void initializeGcm() {
-        LOG.info("initializing push support for GCM");
+        LOG.info("GCM support enabled");
         mGcmSender = new Sender(TalkServerConfiguration.GCM_API_KEY);
     }
 
     private void initializeApns() {
-        LOG.info("initializing push support for APNS");
+        LOG.info("APNS support enabled");
         ApnsServiceBuilder apnsServiceBuilder = APNS.newService()
                 .withCert(TalkServerConfiguration.APNS_CERT_PATH,
                           TalkServerConfiguration.APNS_CERT_PASSWORD);
@@ -59,59 +83,5 @@ public class PushAgent {
         }
         mApnsService = apnsServiceBuilder.build();
     }
-	
-	public void submitRequest(final PushRequest request) {
-		mExecutor.execute(new Runnable() {
-			@Override
-			public void run() {
-				performRequest(request);
-			}
-		});
-	}
 
-	private void performRequest(PushRequest request) {
-		TalkClient client = request.getClient();
-        if(TalkServerConfiguration.GCM_ENABLE && client.isGcmCapable()) {
-            performRequestViaGcm(request);
-        } else if(TalkServerConfiguration.APNS_ENABLE && client.isApnsCapable()) {
-            performRequestViaApns(request);
-        }
-	}
-
-    private void performRequestViaGcm(PushRequest request) {
-        LOG.info("push for " + request.getClient().getClientId() + " (GCM)");
-        TalkClient client = request.getClient();
-        Message message = new Message.Builder()
-                .collapseKey("com.hoccer.talk.wake")
-                .timeToLive(TalkServerConfiguration.GCM_WAKE_TTL)
-                .restrictedPackageName(client.getGcmPackage())
-                .dryRun(true)
-                .build();
-        try {
-            mGcmSender.send(message, client.getGcmRegistration(), 10);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void performRequestViaApns(PushRequest request) {
-        LOG.info("push for " + request.getClient().getClientId() + " (APNS)");
-        TalkClient client = request.getClient();
-        PayloadBuilder b = APNS.newPayload();
-        List<TalkDelivery> deliveries =
-                mDatabase.findDeliveriesForClientInState(
-                                client.getClientId(),
-                                TalkDelivery.STATE_DELIVERING);
-        int messageCount = (deliveries == null) ? 0 : deliveries.size();
-        if (messageCount > 1) {
-            b.localizedKey("apn_new_messages");
-            b.localizedArguments(String.valueOf(messageCount));
-        } else {
-            b.localizedKey("apn_one_new_message");
-        }
-        b.badge(messageCount);
-        b.sound("default");
-        mApnsService.push(client.getApnsToken(), b.build());
-    }
-	
 }

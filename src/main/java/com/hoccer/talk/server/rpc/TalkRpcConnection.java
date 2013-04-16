@@ -8,7 +8,6 @@ import com.hoccer.talk.rpc.ITalkRpcClient;
 import java.util.logging.Logger;
 
 import better.jsonrpc.core.JsonRpcConnection;
-import better.jsonrpc.util.ProxyUtil;
 
 import com.hoccer.talk.server.TalkServer;
 
@@ -178,7 +177,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
         }
 
         // attempt to deliver anything we might have
-        mServer.getDeliveryAgent().triggerDelivery(mClient.getClientId());
+        mServer.getDeliveryAgent().requestDelivery(mClient.getClientId());
     }
 
     /**

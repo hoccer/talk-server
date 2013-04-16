@@ -582,6 +582,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
             String receiverId = d.getReceiverId();
             // initialize the mid field
             d.setMessageId(messageId);
+            // set the sender for easier db retrieval
+            d.setSenderId(clientId);
 
             // reject messages to self
             if (receiverId.equals(clientId)) {
@@ -635,7 +637,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 // save the delivery object
                 mDatabase.saveDelivery(ds);
                 // initiate delivery
-                mServer.getDeliveryAgent().triggerDelivery(ds.getReceiverId());
+                mServer.getDeliveryAgent().requestDelivery(ds.getReceiverId());
             }
         }
 
@@ -655,10 +657,15 @@ public class TalkRpcHandler implements ITalkRpcServer {
         } else {
             LOG.info("confirmation accepted: message "
                     + messageId + " for client " + clientId);
-            d.setState(TalkDelivery.STATE_DELIVERED);
-            mDatabase.saveDelivery(d);
+            setDeliveryState(d, TalkDelivery.STATE_DELIVERED);
         }
         return d;
+    }
+
+    private void setDeliveryState(TalkDelivery delivery, String state) {
+        delivery.setState(state);
+        mDatabase.saveDelivery(delivery);
+        mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId());
     }
 
 }
