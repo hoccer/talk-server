@@ -235,4 +235,15 @@ public class MemoryDatabase implements ITalkServerDatabase {
             clientVec.add(relationship);
         }
     }
+
+    @Override
+    public List<TalkDelivery> findDeliveriesFromClientInState(String clientId, String state) {
+        return null; // XXX
+    }
+
+    @Override
+    public List<TalkDelivery> findDeliveriesFromClient(String clientId) {
+        return null; // XXX
+    }
+
 }

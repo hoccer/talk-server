@@ -26,6 +26,8 @@ public interface ITalkServerDatabase {
     public TalkDelivery findDelivery(String messageId, String clientId);
     public List<TalkDelivery> findDeliveriesForClient(String clientId);
     public List<TalkDelivery> findDeliveriesForClientInState(String clientId, String state);
+    public List<TalkDelivery> findDeliveriesFromClient(String clientId);
+    public List<TalkDelivery> findDeliveriesFromClientInState(String clientId, String state);
     public List<TalkDelivery> findDeliveriesForMessage(String messageId);
     public void saveDelivery(TalkDelivery delivery);
 

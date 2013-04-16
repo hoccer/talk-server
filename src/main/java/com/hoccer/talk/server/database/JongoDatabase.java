@@ -130,10 +130,34 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkDelivery> findDeliveriesFromClient(String clientId) {
+        List<TalkDelivery> res = new ArrayList<TalkDelivery>();
+        Iterator<TalkDelivery> it =
+                mDeliveries.find("{senderId:#}", clientId)
+                        .as(TalkDelivery.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
     public List<TalkDelivery> findDeliveriesForClientInState(String clientId, String state) {
         List<TalkDelivery> res = new ArrayList<TalkDelivery>();
         Iterator<TalkDelivery> it =
                 mDeliveries.find("{receiverId:#,state:#}", clientId, state)
+                        .as(TalkDelivery.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
+    public List<TalkDelivery> findDeliveriesFromClientInState(String clientId, String state) {
+        List<TalkDelivery> res = new ArrayList<TalkDelivery>();
+        Iterator<TalkDelivery> it =
+                mDeliveries.find("{senderId:#,state:#}", clientId, state)
                         .as(TalkDelivery.class).iterator();
         while(it.hasNext()) {
             res.add(it.next());
