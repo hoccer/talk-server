@@ -2,6 +2,7 @@ package com.hoccer.talk.server.rpc;
 
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.model.TalkPresence;
 import com.hoccer.talk.rpc.ITalkRpcClient;
 
 import java.util.logging.Logger;
@@ -147,6 +148,10 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 	@Override
 	public void onClose(JsonRpcConnection connection) {
         LOG.info("[" + getConnectionId() + "] connection closed");
+        // update presences
+        if(isLoggedIn()) {
+            mServer.getPresenceAgent().requestPresenceUpdate(getClientId(), TalkPresence.CONN_STATUS_OFFLINE);
+        }
         // invalidate the time of last activity
 		mLastActivity = -1;
         // tell the server about the disconnect
