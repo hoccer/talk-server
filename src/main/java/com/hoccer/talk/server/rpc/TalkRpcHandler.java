@@ -344,6 +344,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         logCall("updateKey()");
 
+        TalkKey k = mDatabase.findKey(mConnection.getClientId(), key.getKeyId());
+        if(k != null) {
+            return;
+        }
+
         key.setClientId(mConnection.getClientId());
         key.setTimestamp(new Date());
 
