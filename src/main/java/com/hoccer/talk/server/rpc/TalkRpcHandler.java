@@ -684,13 +684,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
-    public TalkDelivery deliveryAbort(String receiverId, String messageId) {
+    public TalkDelivery deliveryAbort(String messageId, String recipientId) {
         requireIdentification();
-        logCall("deliveryAbort(" + receiverId + "," + messageId);
+        logCall("deliveryAbort(" + messageId + "," + recipientId);
         String clientId = mConnection.getClientId();
-        TalkDelivery delivery = mDatabase.findDelivery(messageId, receiverId);
+        TalkDelivery delivery = mDatabase.findDelivery(messageId, recipientId);
         if(delivery != null) {
-            if(receiverId.equals(clientId)) {
+            if(recipientId.equals(clientId)) {
                 // abort incoming delivery, regardless of sender
                 setDeliveryState(delivery, TalkDelivery.STATE_FAILED);
             } else {
