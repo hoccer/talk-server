@@ -693,11 +693,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
         if(delivery != null) {
             if(recipientId.equals(clientId)) {
                 // abort incoming delivery, regardless of sender
-                setDeliveryState(delivery, TalkDelivery.STATE_FAILED);
+                setDeliveryState(delivery, TalkDelivery.STATE_ABORTED);
             } else {
                 // abort outgoing delivery iff we are the actual sender
                 if(delivery.getSenderId().equals(clientId)) {
-                    setDeliveryState(delivery, TalkDelivery.STATE_FAILED);
+                    setDeliveryState(delivery, TalkDelivery.STATE_ABORTED);
                 }
             }
         }
