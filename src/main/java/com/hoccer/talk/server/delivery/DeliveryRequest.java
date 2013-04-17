@@ -80,7 +80,7 @@ public class DeliveryRequest {
             if(currentlyConnected) {
                 for(TalkDelivery delivery: outDeliveries) {
                     // if the delivery is not confirmed
-                    if(!delivery.getState().equals(TalkDelivery.STATE_CONFIRMED)) {
+                    if(delivery.getState().equals(TalkDelivery.STATE_DELIVERED)) {
                         // notify it
                         try {
                             rpc.outgoingDelivery(delivery);
