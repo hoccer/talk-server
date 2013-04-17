@@ -707,9 +707,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private void setDeliveryState(TalkDelivery delivery, String state) {
         delivery.setState(state);
         mDatabase.saveDelivery(delivery);
-        // XXX only do this when really needed
-        mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId());
-        mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId());
+        if(state.equals(TalkDelivery.STATE_DELIVERED)) {
+            mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId());
+        }
+        if(state.equals(TalkDelivery.STATE_DELIVERING)) {
+            mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId());
+        }
     }
 
 }
