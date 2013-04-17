@@ -10,6 +10,7 @@ import com.hoccer.talk.srp.SRP6VerifyingServer;
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA1Digest;
+import org.bouncycastle.crypto.digests.SHA256Digest;
 
 
 import java.io.*;
@@ -30,7 +31,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private static final Logger LOG =
             HoccerLoggers.getLogger(TalkRpcHandler.class);
 
-    private static final Digest SRP_DIGEST = new SHA1Digest();
+    private static final Digest SRP_DIGEST = new SHA256Digest();
     private static final SecureRandom SRP_RANDOM = new SecureRandom();
     private static final SRP6Parameters SRP_PARAMETERS = SRP6Parameters.CONSTANTS_1024;
 
