@@ -564,6 +564,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         relationship.setState(state);
         relationship.setLastChanged(new Date());
         mDatabase.saveRelationship(relationship);
+        mServer.getPresenceAgent().requestRelationshipUpdate(relationship);
     }
 
     @Override

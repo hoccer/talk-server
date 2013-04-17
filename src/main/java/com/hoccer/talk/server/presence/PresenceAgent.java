@@ -54,4 +54,16 @@ public class PresenceAgent {
         }
     }
 
+    public void requestRelationshipUpdate(final TalkRelationship relationship) {
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                TalkRpcConnection clientConnection = mServer.getClientConnection(relationship.getClientId());
+                if(clientConnection != null && clientConnection.isLoggedIn()) {
+                    clientConnection.getClientRpc().relationshipUpdated(relationship);
+                }
+            }
+        });
+    }
+
 }
