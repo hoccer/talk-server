@@ -261,6 +261,15 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public void hintApnsUnreadMessage(int numUnreadMessages) {
+        requireIdentification();
+        logCall("hintApnsUnreadMessages(" + numUnreadMessages + ")");
+        TalkClient client = mConnection.getClient();
+        client.setApnsUnreadMessages(numUnreadMessages);
+        mDatabase.saveClient(client);
+    }
+
+    @Override
     public TalkRelationship[] getRelationships(Date lastKnown) {
         requireIdentification();
 

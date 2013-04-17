@@ -65,7 +65,9 @@ public class PushRequest {
                 database.findDeliveriesForClientInState(
                         mClient.getClientId(),
                         TalkDelivery.STATE_DELIVERING);
-        int messageCount = (deliveries == null) ? 0 : deliveries.size();
+        int messageCount = 0;
+        messageCount += mClient.getApnsUnreadMessages();
+        messageCount += (deliveries == null) ? 0 : deliveries.size();
         if (messageCount > 1) {
             b.localizedKey("apn_new_messages");
             b.localizedArguments(String.valueOf(messageCount));
