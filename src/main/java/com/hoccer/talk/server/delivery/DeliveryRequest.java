@@ -75,18 +75,15 @@ public class DeliveryRequest {
         }
 
         List<TalkDelivery> outDeliveries =
-                mDatabase.findDeliveriesFromClient(mClientId);
+                mDatabase.findDeliveriesFromClientInState(mClientId, TalkDelivery.STATE_DELIVERED);
         if(outDeliveries.size() > 0) {
             if(currentlyConnected) {
                 for(TalkDelivery delivery: outDeliveries) {
-                    // if the delivery is not confirmed
-                    if(delivery.getState().equals(TalkDelivery.STATE_DELIVERED)) {
-                        // notify it
-                        try {
-                            rpc.outgoingDelivery(delivery);
-                        } catch (Exception e) {
-                            LOG.log(Level.INFO, "Exception calling outgoingDelivery()");
-                        }
+                    // notify it
+                    try {
+                        rpc.outgoingDelivery(delivery);
+                    } catch (Exception e) {
+                        LOG.log(Level.INFO, "Exception calling outgoingDelivery()");
                     }
                     // check for disconnects
                     if(!connection.isConnected()) {
