@@ -54,18 +54,20 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
      */
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
-        //if(protocol.equals("com.hoccer.talk.v1")) {
-        //}
+        if(protocol.equals("com.hoccer.talk.v1")) {
+            // create JSON-RPC connection (this implements the websocket interface)
+            JsonRpcWsConnection connection = new JsonRpcWsConnection();
+            // create talk high-level connection object
+            TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection);
+            // configure the connection
+            connection.bindClient(new JsonRpcClient(mMapper));
+            connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
+            // return the raw connection (will be called by server for incoming messages)
+            return connection;
+        }
 
-        // create JSON-RPC connection (this implements the websocket interface)
-		JsonRpcWsConnection connection = new JsonRpcWsConnection();
-        // create talk high-level connection object
-		TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection);
-        // configure the connection
-        connection.bindClient(new JsonRpcClient(mMapper));
-        connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
-        // return the raw connection (will be called by server for incoming messages)
-		return connection;
+        log.info("new connection with unknown protocol " + protocol);
+        return null;
 	}
 
 }
