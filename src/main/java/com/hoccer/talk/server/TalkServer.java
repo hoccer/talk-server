@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.server.presence.PresenceAgent;
+import com.hoccer.talk.server.update.UpdateAgent;
 import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
 
@@ -44,7 +44,7 @@ public class TalkServer {
 	PushAgent mPushAgent;
 
     /** Presence update agent */
-    PresenceAgent mPresenceAgent;
+    UpdateAgent mUpdateAgent;
 
     /** All connections (every connected websocket) */
 	Vector<TalkRpcConnection> mConnections =
@@ -63,7 +63,7 @@ public class TalkServer {
 		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
         mDeliveryAgent = new DeliveryAgent(this);
 		mPushAgent = new PushAgent(this);
-        mPresenceAgent = new PresenceAgent(this);
+        mUpdateAgent = new UpdateAgent(this);
     }
 	
 	public ObjectMapper getMapper() {
@@ -86,8 +86,8 @@ public class TalkServer {
         return mDeliveryAgent;
     }
 
-    public PresenceAgent getPresenceAgent() {
-        return mPresenceAgent;
+    public UpdateAgent getUpdateAgent() {
+        return mUpdateAgent;
     }
 
     public boolean isClientConnected(String clientId) {
@@ -117,7 +117,7 @@ public class TalkServer {
 	public void identifyClient(TalkClient client, TalkRpcConnection connection) {
         String clientId = client.getClientId();
 		mConnectionsByClientId.put(clientId, connection);
-        mPresenceAgent.requestPresenceUpdate(clientId, TalkPresence.CONN_STATUS_ONLINE);
+        mUpdateAgent.requestPresenceUpdate(clientId, TalkPresence.CONN_STATUS_ONLINE);
 	}
 	
 	public void connectionOpened(TalkRpcConnection connection) {
@@ -136,7 +136,7 @@ public class TalkServer {
                     mConnectionsByClientId.remove(clientId);
                 }
             }
-            mPresenceAgent.requestPresenceUpdate(clientId, TalkPresence.CONN_STATUS_OFFLINE);
+            mUpdateAgent.requestPresenceUpdate(clientId, TalkPresence.CONN_STATUS_OFFLINE);
         }
 	}
 	

@@ -9,7 +9,6 @@ import com.hoccer.talk.srp.SRP6Parameters;
 import com.hoccer.talk.srp.SRP6VerifyingServer;
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
 
@@ -322,7 +321,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mDatabase.savePresence(existing);
 
         // start updating other clients
-        mServer.getPresenceAgent().requestPresenceUpdate(mConnection.getClientId(), TalkPresence.CONN_STATUS_ONLINE);
+        mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId(), TalkPresence.CONN_STATUS_ONLINE);
     }
 
     @Override
@@ -573,7 +572,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         relationship.setState(state);
         relationship.setLastChanged(new Date());
         mDatabase.saveRelationship(relationship);
-        mServer.getPresenceAgent().requestRelationshipUpdate(relationship);
+        mServer.getUpdateAgent().requestRelationshipUpdate(relationship);
     }
 
     @Override

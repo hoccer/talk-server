@@ -1,4 +1,4 @@
-package com.hoccer.talk.server.presence;
+package com.hoccer.talk.server.update;
 
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkPresence;
@@ -12,9 +12,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 
-public class PresenceAgent {
+public class UpdateAgent {
 
-    private static final Logger LOG = HoccerLoggers.getLogger(PresenceAgent.class);
+    private static final Logger LOG = HoccerLoggers.getLogger(UpdateAgent.class);
 
     private ScheduledExecutorService mExecutor;
 
@@ -22,7 +22,7 @@ public class PresenceAgent {
 
     private ITalkServerDatabase mDatabase;
 
-    public PresenceAgent(TalkServer server) {
+    public UpdateAgent(TalkServer server) {
         mExecutor = Executors.newSingleThreadScheduledExecutor();
         mServer = server;
         mDatabase = mServer.getDatabase();
