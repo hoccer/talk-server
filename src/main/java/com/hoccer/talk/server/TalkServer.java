@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.server.ping.PingAgent;
 import com.hoccer.talk.server.update.UpdateAgent;
 import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
@@ -46,6 +47,9 @@ public class TalkServer {
     /** Presence update agent */
     UpdateAgent mUpdateAgent;
 
+    /** Ping measurement agent */
+    PingAgent mPingAgent;
+
     /** All connections (every connected websocket) */
 	Vector<TalkRpcConnection> mConnections =
 			new Vector<TalkRpcConnection>();
@@ -64,6 +68,7 @@ public class TalkServer {
         mDeliveryAgent = new DeliveryAgent(this);
 		mPushAgent = new PushAgent(this);
         mUpdateAgent = new UpdateAgent(this);
+        mPingAgent = new PingAgent(this);
     }
 	
 	public ObjectMapper getMapper() {
@@ -88,6 +93,10 @@ public class TalkServer {
 
     public UpdateAgent getUpdateAgent() {
         return mUpdateAgent;
+    }
+
+    public PingAgent getPingAgent() {
+        return mPingAgent;
     }
 
     public boolean isClientConnected(String clientId) {

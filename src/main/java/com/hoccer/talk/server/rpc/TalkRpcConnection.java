@@ -184,6 +184,9 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 
         // attempt to deliver anything we might have
         mServer.getDeliveryAgent().requestDelivery(mClient.getClientId());
+
+        // request a ping in a few seconds
+        mServer.getPingAgent().requestPing(mClient.getClientId());
     }
 
     /**
