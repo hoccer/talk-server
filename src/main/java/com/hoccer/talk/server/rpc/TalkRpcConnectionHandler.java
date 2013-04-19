@@ -58,7 +58,7 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
             // create JSON-RPC connection (this implements the websocket interface)
             JsonRpcWsConnection connection = new JsonRpcWsConnection();
             // create talk high-level connection object
-            TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection);
+            TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection, request);
             // configure the connection
             connection.bindClient(new JsonRpcClient(mMapper));
             connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));

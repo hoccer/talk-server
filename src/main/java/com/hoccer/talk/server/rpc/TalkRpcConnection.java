@@ -11,6 +11,8 @@ import better.jsonrpc.core.JsonRpcConnection;
 
 import com.hoccer.talk.server.TalkServer;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Connection object representing one JSON-RPC connection each
  *
@@ -29,6 +31,9 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 
 	/** JSON-RPC connection object */
 	JsonRpcConnection mConnection;
+
+    /** HTTP request that created this WS connection */
+    HttpServletRequest mInitialRequest;
 	
 	/** RPC interface to client */
 	ITalkRpcClient mClientRpc;
@@ -48,10 +53,11 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      * @param server that we are part of
      * @param connection that we should handle
      */
-	public TalkRpcConnection(TalkServer server, JsonRpcConnection connection) {
+	public TalkRpcConnection(TalkServer server, JsonRpcConnection connection, HttpServletRequest request) {
         // remember stuff
 		mServer = server;
 		mConnection = connection;
+        mInitialRequest = request;
         // create a json-rpc proxy for client notifications
 		mClientRpc = (ITalkRpcClient)connection.makeProxy(ITalkRpcClient.class);
         // register ourselves for connection events
