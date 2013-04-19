@@ -117,7 +117,7 @@ public class TalkServer {
 	public void identifyClient(TalkClient client, TalkRpcConnection connection) {
         String clientId = client.getClientId();
 		mConnectionsByClientId.put(clientId, connection);
-        mUpdateAgent.requestPresenceUpdate(clientId, TalkPresence.CONN_STATUS_ONLINE);
+        mUpdateAgent.requestPresenceUpdate(clientId);
 	}
 	
 	public void connectionOpened(TalkRpcConnection connection) {
@@ -136,7 +136,7 @@ public class TalkServer {
                     mConnectionsByClientId.remove(clientId);
                 }
             }
-            mUpdateAgent.requestPresenceUpdate(clientId, TalkPresence.CONN_STATUS_OFFLINE);
+            mUpdateAgent.requestPresenceUpdate(clientId);
         }
 	}
 	

@@ -28,12 +28,15 @@ public class UpdateAgent {
         mDatabase = mServer.getDatabase();
     }
 
-    public void requestPresenceUpdate(final String clientId, final String connStatus) {
+    public void requestPresenceUpdate(final String clientId) {
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 TalkPresence presence = mDatabase.findPresenceForClient(clientId);
                 if(presence != null) {
+                    boolean isConnected = mServer.isClientConnected(clientId);
+                    String connStatus = isConnected ? TalkPresence.CONN_STATUS_ONLINE
+                                                    : TalkPresence.CONN_STATUS_OFFLINE;
                     presence.setConnectionStatus(connStatus);
                     performPresenceUpdate(presence);
                 }

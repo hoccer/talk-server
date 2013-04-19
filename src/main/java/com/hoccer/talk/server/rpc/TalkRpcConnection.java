@@ -149,7 +149,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
         LOG.info("[" + getConnectionId() + "] connection closed");
         // update presences
         if(isLoggedIn()) {
-            mServer.getUpdateAgent().requestPresenceUpdate(getClientId(), TalkPresence.CONN_STATUS_OFFLINE);
+            mServer.getUpdateAgent().requestPresenceUpdate(getClientId());
         }
         // invalidate the time of last activity
 		mLastActivity = -1;

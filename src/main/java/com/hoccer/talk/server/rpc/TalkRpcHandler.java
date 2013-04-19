@@ -321,7 +321,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mDatabase.savePresence(existing);
 
         // start updating other clients
-        mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId(), TalkPresence.CONN_STATUS_ONLINE);
+        mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId());
     }
 
     @Override
