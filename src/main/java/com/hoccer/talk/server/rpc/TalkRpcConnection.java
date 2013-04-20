@@ -120,6 +120,13 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
     }
 
     /**
+     * Returns the remote network address of the client
+     */
+    public String getRemoteAddress() {
+        return mInitialRequest.getRemoteAddr();
+    }
+
+    /**
      * Returns true if the client is engaging in registration
      */
     public boolean isRegistering() {
@@ -139,7 +146,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      */
 	@Override
 	public void onOpen(JsonRpcConnection connection) {
-        LOG.info("[" + getConnectionId() + "] connection opened");
+        LOG.info("[" + getConnectionId() + "] connection opened by " + getRemoteAddress());
         // reset the time of last activity
 		mLastActivity = System.currentTimeMillis();
         // tell the server about the connection
