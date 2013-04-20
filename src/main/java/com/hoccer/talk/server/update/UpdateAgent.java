@@ -32,12 +32,17 @@ public class UpdateAgent {
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
+                // retrieve the current presence of the client
                 TalkPresence presence = mDatabase.findPresenceForClient(clientId);
+                // if we actually have a presence
                 if(presence != null) {
+                    // determine the connection status of the client
                     boolean isConnected = mServer.isClientConnected(clientId);
                     String connStatus = isConnected ? TalkPresence.CONN_STATUS_ONLINE
                                                     : TalkPresence.CONN_STATUS_OFFLINE;
+                    // update the presence with the connection status
                     presence.setConnectionStatus(connStatus);
+                    // propagate the presence to all friends
                     performPresenceUpdate(presence);
                 }
             }
@@ -46,11 +51,17 @@ public class UpdateAgent {
 
     private void performPresenceUpdate(TalkPresence presence) {
         String clientId = presence.getClientId();
+        // find relationships where others call us friend
         List<TalkRelationship> rels = mDatabase.findRelationshipsByOtherClient(clientId);
+        // for each such relationship
         for(TalkRelationship rel: rels) {
+            // if the relation is friendly
             if(rel.getState().equals(TalkRelationship.STATE_FRIEND)) {
+                // look for a connection by the other client
                 TalkRpcConnection connection = mServer.getClientConnection(rel.getClientId());
+                // and if the corresponding client is online
                 if(connection != null && connection.isLoggedIn()) {
+                    // tell the client about the new presence
                     connection.getClientRpc().presenceUpdated(presence);
                 }
             }
