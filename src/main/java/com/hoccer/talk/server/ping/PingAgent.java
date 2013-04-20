@@ -8,6 +8,7 @@ import com.hoccer.talk.server.rpc.TalkRpcConnection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class PingAgent {
@@ -24,7 +25,6 @@ public class PingAgent {
     }
 
     public void requestPing(final String clientId) {
-        LOG.info("requesting ping " + clientId);
         mExecutor.schedule(new Runnable() {
             @Override
             public void run() {
@@ -32,15 +32,15 @@ public class PingAgent {
                 if(conn != null) {
                     long start, end;
                     ITalkRpcClient rpc = conn.getClientRpc();
-                    LOG.info("pinging " + clientId);
                     try {
                         start = System.currentTimeMillis();
                         rpc.ping();
                         end = System.currentTimeMillis();
                         long duration = end - start;
-                        LOG.info("ping " + clientId + " took " + duration + " msecs ");
+                        LOG.info("ping on " + clientId + " at " + conn.getRemoteAddress()
+                                    + " took " + duration + " msecs");
                     } catch (Throwable t) {
-                        t.printStackTrace();
+                        LOG.log(Level.INFO, "exception in ping on " + clientId, t);
                     }
                 }
             }
