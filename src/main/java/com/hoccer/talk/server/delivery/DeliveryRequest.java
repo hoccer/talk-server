@@ -108,7 +108,7 @@ public class DeliveryRequest {
         // find client in database
         TalkClient client = mDatabase.findClientById(mClientId);
         // send push request
-        if(client.isGcmCapable() || client.isApnsCapable()) {
+        if(client.isPushCapable()) {
             mServer.getPushAgent().submitRequest(client);
         } else {
             LOG.info("push unconfigured for " + mClientId);
