@@ -137,7 +137,7 @@ public class TalkServer {
         // remove connection from list
 		mConnections.remove(connection);
         // remove connection from table
-        if(connection.isLoggedIn()) {
+        if(connection.getClientId() != null) {
             String clientId = connection.getClientId();
             mConnectionsByClientId.remove(clientId);
             mUpdateAgent.requestPresenceUpdate(clientId);
