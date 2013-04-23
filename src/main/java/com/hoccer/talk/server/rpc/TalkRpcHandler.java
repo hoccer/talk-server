@@ -160,6 +160,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
             throw new RuntimeException("No such client");
         }
 
+        // verify SRP registration
+        if(mSrpClient.getSrpVerifier() == null || mSrpClient.getSrpSalt() == null) {
+            throw new RuntimeException("No such client");
+        }
+
         // initialize SRP state
         mSrpServer.initVerifiable(
                 SRP_PARAMETERS.N, SRP_PARAMETERS.g,
