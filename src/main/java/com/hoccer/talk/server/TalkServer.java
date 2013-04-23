@@ -136,15 +136,10 @@ public class TalkServer {
 	public void connectionClosed(TalkRpcConnection connection) {
         // remove connection from list
 		mConnections.remove(connection);
-        // remove connection from table (being extra careful not to mess it up)
+        // remove connection from table
         if(connection.isLoggedIn()) {
             String clientId = connection.getClientId();
-            if(mConnectionsByClientId.contains(clientId)) {
-                TalkRpcConnection storedConnection = mConnectionsByClientId.get(clientId);
-                if(storedConnection == connection) {
-                    mConnectionsByClientId.remove(clientId);
-                }
-            }
+            mConnectionsByClientId.remove(clientId);
             mUpdateAgent.requestPresenceUpdate(clientId);
         }
 	}
