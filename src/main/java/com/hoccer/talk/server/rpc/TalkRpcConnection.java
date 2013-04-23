@@ -160,10 +160,6 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 	@Override
 	public void onClose(JsonRpcConnection connection) {
         LOG.info("[" + getConnectionId() + "] connection closed");
-        // update presences
-        if(isLoggedIn()) {
-            mServer.getUpdateAgent().requestPresenceUpdate(getClientId());
-        }
         // invalidate the time of last activity
 		mLastActivity = -1;
         // tell the server about the disconnect
