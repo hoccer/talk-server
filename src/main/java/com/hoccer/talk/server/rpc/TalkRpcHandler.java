@@ -589,6 +589,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // who is doing this again?
         String clientId = mConnection.getClientId();
 
+        // get the current date for stamping
+        Date currentDate = new Date();
+
         // generate a message id
         String messageId = UUID.randomUUID().toString();
         message.setSenderId(clientId);
@@ -644,6 +647,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
             LOG.info("delivery accepted: client " + receiverId);
             // mark delivery as in progress
             d.setState(TalkDelivery.STATE_DELIVERING);
+            // set delivery timestamps
+            d.setTimeAccepted(currentDate);
+            d.setTimeChanged(currentDate);
             // delivery accepted, remember as such
             acceptedDeliveries.add(d);
         }
@@ -719,6 +725,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     private void setDeliveryState(TalkDelivery delivery, String state) {
         delivery.setState(state);
+        delivery.setTimeChanged(new Date());
         mDatabase.saveDelivery(delivery);
         if(state.equals(TalkDelivery.STATE_DELIVERED)) {
             mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId());
