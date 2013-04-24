@@ -140,8 +140,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public String srpPhase1(String clientId, String A) {
         logCall("srpPhase1(" + clientId + "," + A + ")");
 
-        // XXX does not verify ((A % N) != 0)
-
         // check if we aren't logged in already
         if(mConnection.isLoggedIn()) {
             throw new RuntimeException("Can't authenticate while logged in");
