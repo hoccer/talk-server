@@ -28,12 +28,12 @@ public class DeliveryAgent {
     public void requestDelivery(String clientId) {
         LOG.info("requesting " + clientId);
         final DeliveryRequest request = new DeliveryRequest(this, clientId);
-        mExecutor.schedule(new Runnable() {
+        mExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 request.perform();
             }
-        }, 1, TimeUnit.SECONDS);
+        });
     }
 
 }

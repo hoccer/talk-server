@@ -5,6 +5,7 @@ import com.hoccer.talk.server.ITalkServerDatabase;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
 
+import com.mongodb.WriteConcern;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 
@@ -46,6 +47,8 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     private void initialize() {
+        WriteConcern wc = WriteConcern.JOURNALED;
+
         // create connection pool
         try {
             mMongo = new Mongo();
@@ -58,13 +61,13 @@ public class JongoDatabase implements ITalkServerDatabase {
         // create object mapper
         mJongo = new Jongo(mDb);
         // create collection accessors
-        mClients = mJongo.getCollection("client");
-        mMessages = mJongo.getCollection("message");
-        mDeliveries = mJongo.getCollection("delivery");
-        mTokens = mJongo.getCollection("token");
-        mRelationships = mJongo.getCollection("relationship");
-        mPresences = mJongo.getCollection("presence");
-        mKeys = mJongo.getCollection("key");
+        mClients = mJongo.getCollection("client").withWriteConcern(wc);
+        mMessages = mJongo.getCollection("message").withWriteConcern(wc);
+        mDeliveries = mJongo.getCollection("delivery").withWriteConcern(wc);
+        mTokens = mJongo.getCollection("token").withWriteConcern(wc);
+        mRelationships = mJongo.getCollection("relationship").withWriteConcern(wc);
+        mPresences = mJongo.getCollection("presence").withWriteConcern(wc);
+        mKeys = mJongo.getCollection("key").withWriteConcern(wc);
     }
 
     @Override
