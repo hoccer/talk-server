@@ -7,10 +7,11 @@ import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.srp.SRP6Parameters;
 import com.hoccer.talk.srp.SRP6VerifyingServer;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
-
 
 import java.io.*;
 import java.math.BigInteger;
@@ -30,6 +31,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private static final Logger LOG =
             HoccerLoggers.getLogger(TalkRpcHandler.class);
 
+    private static Hex HEX = new Hex();
     private final Digest SRP_DIGEST = new SHA256Digest();
     private static final SecureRandom SRP_RANDOM = new SecureRandom();
     private static final SRP6Parameters SRP_PARAMETERS = SRP6Parameters.CONSTANTS_1024;
@@ -109,33 +111,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return clientId;
     }
 
-    private static byte[] fromHexString(final String encoded) {
-        if ((encoded.length() % 2) != 0) {
-            throw new IllegalArgumentException("Input string must contain an even number of characters");
-        }
-
-        final byte result[] = new byte[encoded.length()/2];
-        final char enc[] = encoded.toCharArray();
-        for (int i = 0; i < enc.length; i += 2) {
-            StringBuilder curr = new StringBuilder(2);
-            curr.append(enc[i]).append(enc[i + 1]);
-            result[i/2] = (byte) Integer.parseInt(curr.toString(), 16);
-        }
-        return result;
-    }
-
-    private static String bytesToHex(byte[] bytes) {
-        final char[] hexArray = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
-        char[] hexChars = new char[bytes.length * 2];
-        int v;
-        for ( int j = 0; j < bytes.length; j++ ) {
-            v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
-    }
-
     @Override
     public String srpPhase1(String clientId, String A) {
         logCall("srpPhase1(" + clientId + "," + A + ")");
@@ -163,14 +138,23 @@ public class TalkRpcHandler implements ITalkRpcServer {
             throw new RuntimeException("No such client");
         }
 
+        // parse the salt from DB
+        byte[] salt = null;
+        try {
+            salt = (byte[]) HEX.decode(mSrpClient.getSrpSalt());
+        } catch (DecoderException e) {
+            throw new RuntimeException(e);
+        }
+
         // initialize SRP state
         mSrpServer.initVerifiable(
                 SRP_PARAMETERS.N, SRP_PARAMETERS.g,
                 new BigInteger(mSrpClient.getSrpVerifier(), 16),
                 clientId.getBytes(),
-                fromHexString(mSrpClient.getSrpSalt()),
+                salt,
                 SRP_DIGEST, SRP_RANDOM
         );
+
         // generate server credentials
         BigInteger credentials = mSrpServer.generateServerCredentials();
 
@@ -202,8 +186,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
             throw new RuntimeException("Internal error in SRP phase 2");
         }
 
+        // parse the string given by the client
+        byte[] M1b = null;
+        try {
+            M1b = (byte[]) HEX.decode(M1);
+        } catch (DecoderException e) {
+            throw new RuntimeException(e);
+        }
+
         // perform the verification
-        byte[] M2 = mSrpServer.verifyClient(fromHexString(M1));
+        byte[] M2 = mSrpServer.verifyClient(M1b);
         if(M2 == null) {
             throw new RuntimeException("Verification failed");
         }
@@ -216,7 +208,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mSrpServer = null;
 
         // return server evidence for client to check
-        return bytesToHex(M2);
+        return Hex.encodeHexString(M2);
     }
 
     @Override
