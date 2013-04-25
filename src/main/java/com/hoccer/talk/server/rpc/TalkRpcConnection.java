@@ -1,5 +1,6 @@
 package com.hoccer.talk.server.rpc;
 
+import better.jsonrpc.websocket.JsonRpcWsConnection;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkPresence;
@@ -30,7 +31,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 	TalkServer mServer;
 
 	/** JSON-RPC connection object */
-	JsonRpcConnection mConnection;
+	JsonRpcWsConnection mConnection;
 
     /** HTTP request that created this WS connection */
     HttpServletRequest mInitialRequest;
@@ -53,7 +54,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      * @param server that we are part of
      * @param connection that we should handle
      */
-	public TalkRpcConnection(TalkServer server, JsonRpcConnection connection, HttpServletRequest request) {
+	public TalkRpcConnection(TalkServer server, JsonRpcWsConnection connection, HttpServletRequest request) {
         // remember stuff
 		mServer = server;
 		mConnection = connection;
@@ -165,6 +166,14 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
         // tell the server about the disconnect
 		mServer.connectionClosed(this);
 	}
+
+    /**
+     * Disconnect the underlying connection and finish up
+     */
+    public void disconnect() {
+        mClient = null;
+        mConnection.disconnect();
+    }
 
     /**
      * Called by handler when the client has logged in

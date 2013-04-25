@@ -142,6 +142,10 @@ public class TalkServer {
             mConnectionsByClientId.remove(clientId);
             mUpdateAgent.requestPresenceUpdate(clientId);
         }
+        // disconnect if we still are
+        if(connection.isConnected()) {
+            connection.disconnect();
+        }
 	}
 	
 }
