@@ -35,7 +35,7 @@ public class PushAgent {
     private ApnsService mApnsService;
 	
 	public PushAgent(TalkServer server) {
-		mExecutor = Executors.newScheduledThreadPool(2);
+		mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PUSH);
         mServer = server;
         mDatabase = mServer.getDatabase();
         if(TalkServerConfiguration.GCM_ENABLE) {

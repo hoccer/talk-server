@@ -5,6 +5,7 @@ import com.hoccer.talk.model.TalkPresence;
 import com.hoccer.talk.model.TalkRelationship;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
+import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class UpdateAgent {
     private ITalkServerDatabase mDatabase;
 
     public UpdateAgent(TalkServer server) {
-        mExecutor = Executors.newSingleThreadScheduledExecutor();
+        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_UPDATE);
         mServer = server;
         mDatabase = mServer.getDatabase();
     }

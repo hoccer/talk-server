@@ -3,6 +3,7 @@ package com.hoccer.talk.server.ping;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.rpc.ITalkRpcClient;
 import com.hoccer.talk.server.TalkServer;
+import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
 
 import java.util.concurrent.Executors;
@@ -21,7 +22,7 @@ public class PingAgent {
 
     public PingAgent(TalkServer server) {
         mServer = server;
-        mExecutor = Executors.newScheduledThreadPool(8);
+        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PING);;
     }
 
     public void requestPing(final String clientId) {

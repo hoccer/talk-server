@@ -23,4 +23,9 @@ public class TalkServerConfiguration {
     /** Put APNS into sandbox mode */
     public static final boolean APNS_USE_SANDBOX = true;
 
+    public static final int THREADS_DELIVERY = 2;
+    public static final int THREADS_UPDATE = 2;
+    public static final int THREADS_PUSH = 2;
+    public static final int THREADS_PING = 2;
+
 }
