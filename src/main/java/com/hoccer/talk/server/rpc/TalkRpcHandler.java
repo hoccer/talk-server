@@ -30,7 +30,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private static final Logger LOG =
             HoccerLoggers.getLogger(TalkRpcHandler.class);
 
-    private static final Digest SRP_DIGEST = new SHA256Digest();
+    private final Digest SRP_DIGEST = new SHA256Digest();
     private static final SecureRandom SRP_RANDOM = new SecureRandom();
     private static final SRP6Parameters SRP_PARAMETERS = SRP6Parameters.CONSTANTS_1024;
 
