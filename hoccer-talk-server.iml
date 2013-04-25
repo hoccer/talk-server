@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="better-jsonrpc-annotations" />
     <orderEntry type="library" name="Maven: com.j256.ormlite:ormlite-core:4.43" level="project" />
     <orderEntry type="library" name="Maven: org.bouncycastle:bcprov-jdk15on:1.48" level="project" />
+    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.7" level="project" />
     <orderEntry type="module" module-name="hoccer-talk-srp" />
     <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-server:8.1.10.v20130312" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.jetty.orbit:javax.servlet:3.0.0.v201112011016" level="project" />
