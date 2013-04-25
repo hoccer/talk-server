@@ -18,7 +18,7 @@ public class TalkServerConfiguration {
     public static final String APNS_CERT_PATH = "HoccerTalkApplePushNotificationDev.p12";
 
     /** APNS certificate password */
-    public static final String APNS_CERT_PASSWORD = "Mf)LW*L#/\"dlco\\/;ns{";
+    public static final String APNS_CERT_PASSWORD = "JON)?PFAT3BhCx4?fNr_Iv";
 
     /** Put APNS into sandbox mode */
     public static final boolean APNS_USE_SANDBOX = true;
