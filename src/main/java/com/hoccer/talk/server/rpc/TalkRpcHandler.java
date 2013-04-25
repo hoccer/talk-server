@@ -220,6 +220,15 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public TalkServerInfo hello(TalkClientInfo clientInfo) {
+        requireIdentification();
+        logCall("hello()");
+        TalkServerInfo si = new TalkServerInfo();
+        si.setServerTime(new Date());
+        return si;
+    }
+
+    @Override
     public void registerGcm(String registeredPackage, String registrationId) {
         requireIdentification();
         logCall("registerGcm(" + registeredPackage + "," + registrationId + ")");
