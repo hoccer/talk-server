@@ -74,63 +74,90 @@ public class TalkServer {
         mUpdateAgent = new UpdateAgent(this);
         mPingAgent = new PingAgent(this);
     }
-	
+
+    /** @return the object mapper used by this server */
 	public ObjectMapper getMapper() {
 		return mMapper;
 	}
-	
+
+    /** @return the JSON-RPC server */
 	public JsonRpcServer getRpcServer() {
 		return mRpcServer;
 	}
 
+    /** @return the configuration of this server */
     public TalkServerConfiguration getConfiguration() {
         return mConfiguration;
     }
 
+    /** @return the database accessor of this server */
     public ITalkServerDatabase getDatabase() {
         return mDatabase;
     }
 
+    /** @return the push agent of this server */
     public PushAgent getPushAgent() {
         return mPushAgent;
     }
 
+    /** @return the delivery agent of this server */
     public DeliveryAgent getDeliveryAgent() {
         return mDeliveryAgent;
     }
 
+    /** @return the update agent of this server */
     public UpdateAgent getUpdateAgent() {
         return mUpdateAgent;
     }
 
+    /** @return the ping agent of this server */
     public PingAgent getPingAgent() {
         return mPingAgent;
     }
 
+    /**
+     * Check if the given client is connected
+     *
+     * @param clientId of the client to check for
+     * @return true if the client is connected
+     */
     public boolean isClientConnected(String clientId) {
         return getClientConnection(clientId) != null;
     }
 
+    /**
+     * Retrieve the connection of the given client
+     *
+     * @param clientId of the client to check for
+     * @return connection of the client or null
+     */
     public TalkRpcConnection getClientConnection(String clientId) {
         return mConnectionsByClientId.get(clientId);
     }
 
-    private ObjectMapper createObjectMapper() {
-        ObjectMapper result = new ObjectMapper();
-        result.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        return result;
-    }
-	
+    /**
+     * Notify the server of a successful login
+     * @param client that was logged in
+     * @param connection the client is on
+     */
 	public void identifyClient(TalkClient client, TalkRpcConnection connection) {
         String clientId = client.getClientId();
 		mConnectionsByClientId.put(clientId, connection);
         mUpdateAgent.requestPresenceUpdate(clientId);
 	}
-	
+
+    /**
+     * Register a new connection with the server
+     * @param connection to be registered
+     */
 	public void connectionOpened(TalkRpcConnection connection) {
 		mConnections.add(connection);
 	}
 
+    /**
+     * Unregister a connection from the server
+     * @param connection to be removed
+     */
 	public void connectionClosed(TalkRpcConnection connection) {
         // remove connection from list
 		mConnections.remove(connection);
@@ -145,5 +172,12 @@ public class TalkServer {
             connection.disconnect();
         }
 	}
+
+    /** Creates the object mapper for this server */
+    private ObjectMapper createObjectMapper() {
+        ObjectMapper result = new ObjectMapper();
+        result.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        return result;
+    }
 	
 }
