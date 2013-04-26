@@ -120,16 +120,6 @@ public class TalkServer {
         result.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return result;
     }
-
-    /** XXX highly temporary */
-    public List<String> getAllClients() {
-        Enumeration<String> k = mConnectionsByClientId.keys();
-        List<String> r = new ArrayList<String>();
-        while(k.hasMoreElements()) {
-            r.add(k.nextElement());
-        }
-        return r;
-    }
 	
 	public void identifyClient(TalkClient client, TalkRpcConnection connection) {
         String clientId = client.getClientId();
