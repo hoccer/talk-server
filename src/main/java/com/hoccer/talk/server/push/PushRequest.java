@@ -23,9 +23,12 @@ public class PushRequest {
 
 	TalkClient mClient;
 
+    TalkServerConfiguration mConfig;
+
 	public PushRequest(PushAgent agent, TalkClient client) {
         mAgent = agent;
 		mClient = client;
+        mConfig = mAgent.getConfiguration();
 	}
 	
 	public TalkClient getClient() {
@@ -33,9 +36,9 @@ public class PushRequest {
 	}
 
     public void perform() {
-        if(TalkServerConfiguration.GCM_ENABLE && mClient.isGcmCapable()) {
+        if(mConfig.ismGcmEnabled() && mClient.isGcmCapable()) {
             performGcm();
-        } else if(TalkServerConfiguration.APNS_ENABLE && mClient.isApnsCapable()) {
+        } else if(mConfig.ismApnsEnabled() && mClient.isApnsCapable()) {
             performApns();
         }
     }
@@ -44,7 +47,7 @@ public class PushRequest {
         LOG.info("push GCM " + mClient.getClientId());
         Message message = new Message.Builder()
                 .collapseKey("com.hoccer.talk.wake")
-                .timeToLive(TalkServerConfiguration.GCM_WAKE_TTL)
+                .timeToLive(mConfig.getmGcmWakeTtl())
                 .restrictedPackageName(mClient.getGcmPackage())
                 .dryRun(true)
                 .build();

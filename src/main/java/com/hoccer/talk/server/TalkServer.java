@@ -35,6 +35,9 @@ public class TalkServer {
     /** JSON-RPC server instance */
 	JsonRpcServer mRpcServer;
 
+    /** Server configuration */
+    TalkServerConfiguration mConfiguration;
+
     /** Database accessor */
     ITalkServerDatabase mDatabase;
 
@@ -61,7 +64,8 @@ public class TalkServer {
     /**
      * Create and initialize a Hoccer Talk server
      */
-	public TalkServer(ITalkServerDatabase database) {
+	public TalkServer(TalkServerConfiguration configuration, ITalkServerDatabase database) {
+        mConfiguration = configuration;
         mDatabase = database;
 		mMapper = createObjectMapper();
 		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
@@ -78,6 +82,10 @@ public class TalkServer {
 	public JsonRpcServer getRpcServer() {
 		return mRpcServer;
 	}
+
+    public TalkServerConfiguration getConfiguration() {
+        return mConfiguration;
+    }
 
     public ITalkServerDatabase getDatabase() {
         return mDatabase;

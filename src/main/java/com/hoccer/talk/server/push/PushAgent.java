@@ -1,25 +1,19 @@
 package com.hoccer.talk.server.push;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Sender;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.ApnsServiceBuilder;
-import com.notnoop.apns.PayloadBuilder;
 
 public class PushAgent {
 
@@ -28,6 +22,7 @@ public class PushAgent {
 	private ScheduledExecutorService mExecutor;
 
     TalkServer mServer;
+    TalkServerConfiguration mConfig;
     ITalkServerDatabase mDatabase;
 
 	private Sender mGcmSender;
@@ -38,10 +33,11 @@ public class PushAgent {
 		mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PUSH);
         mServer = server;
         mDatabase = mServer.getDatabase();
-        if(TalkServerConfiguration.GCM_ENABLE) {
+        mConfig = mServer.getConfiguration();
+        if(mConfig.ismGcmEnabled()) {
             initializeGcm();
         }
-        if(TalkServerConfiguration.APNS_ENABLE) {
+        if(mConfig.ismApnsEnabled()) {
             initializeApns();
         }
     }
@@ -54,6 +50,10 @@ public class PushAgent {
                 request.perform();
             }
         }, 5, TimeUnit.SECONDS);
+    }
+
+    public TalkServerConfiguration getConfiguration() {
+        return mConfig;
     }
 
     public ITalkServerDatabase getDatabase() {
@@ -70,15 +70,15 @@ public class PushAgent {
 
     private void initializeGcm() {
         LOG.info("GCM support enabled");
-        mGcmSender = new Sender(TalkServerConfiguration.GCM_API_KEY);
+        mGcmSender = new Sender(mConfig.getmGcmApiKey());
     }
 
     private void initializeApns() {
         LOG.info("APNS support enabled");
         ApnsServiceBuilder apnsServiceBuilder = APNS.newService()
-                .withCert(TalkServerConfiguration.APNS_CERT_PATH,
-                          TalkServerConfiguration.APNS_CERT_PASSWORD);
-        if(TalkServerConfiguration.APNS_USE_SANDBOX) {
+                .withCert(mConfig.getmApnsCertPath(),
+                          mConfig.getmApnsCertPassword());
+        if(mConfig.ismApnsSandbox()) {
             apnsServiceBuilder = apnsServiceBuilder.withSandboxDestination();
         }
         mApnsService = apnsServiceBuilder.build();
