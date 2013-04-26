@@ -80,6 +80,8 @@ public class PushAgent {
                           mConfig.getmApnsCertPassword());
         if(mConfig.ismApnsSandbox()) {
             apnsServiceBuilder = apnsServiceBuilder.withSandboxDestination();
+        } else {
+            apnsServiceBuilder = apnsServiceBuilder.withProductionDestination();
         }
         mApnsService = apnsServiceBuilder.build();
     }
