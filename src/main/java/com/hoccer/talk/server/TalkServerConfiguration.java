@@ -26,6 +26,10 @@ public class TalkServerConfiguration {
     private String  mApnsCertPath = "HoccerTalkApplePushNotificationDev.p12";
     private String  mApnsCertPassword = "password";
 
+    private String mDatabaseBackend = "jongo";
+
+    private String mJongoDb = "talk";
+
     public TalkServerConfiguration() {
     }
 
@@ -38,6 +42,10 @@ public class TalkServerConfiguration {
         // GCM
         mGcmEnabled = properties.getProperty(PROPERTY_PREFIX + ".gcm.enabled", "false").equals("true");
         mGcmApiKey  = properties.getProperty(PROPERTY_PREFIX + ".gcm.apikey", "ABCD");
+        // Database
+        mDatabaseBackend = properties.getProperty(PROPERTY_PREFIX + ".db.backend", "jongo");
+        // Jongo
+        mJongoDb = properties.getProperty(PROPERTY_PREFIX + ".jongo.db", "talk");
     }
 
     public boolean ismGcmEnabled() {
@@ -66,6 +74,14 @@ public class TalkServerConfiguration {
 
     public String getmApnsCertPassword() {
         return mApnsCertPassword;
+    }
+
+    public String getDatabaseBackend() {
+        return mDatabaseBackend;
+    }
+
+    public String getJongoDb() {
+        return mJongoDb;
     }
 
 }

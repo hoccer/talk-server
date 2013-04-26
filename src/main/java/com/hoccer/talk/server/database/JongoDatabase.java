@@ -1,7 +1,9 @@
 package com.hoccer.talk.server.database;
 
+import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.*;
 import com.hoccer.talk.server.ITalkServerDatabase;
+import com.hoccer.talk.server.TalkServerConfiguration;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
 
@@ -14,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Database implementation using the Jongo mapper to MongoDB
@@ -24,6 +27,11 @@ import java.util.List;
  *
  */
 public class JongoDatabase implements ITalkServerDatabase {
+
+    private static final Logger LOG = HoccerLoggers.getLogger(JongoDatabase.class);
+
+    /** Configuration instance */
+    TalkServerConfiguration mConfig;
 
     /** Mongo connection pool */
     Mongo mMongo;
@@ -42,11 +50,16 @@ public class JongoDatabase implements ITalkServerDatabase {
     MongoCollection mPresences;
     MongoCollection mKeys;
 
-    public JongoDatabase() {
+    public JongoDatabase(TalkServerConfiguration configuration) {
+        mConfig = configuration;
         initialize();
     }
 
     private void initialize() {
+        String dbname = mConfig.getJongoDb();
+        LOG.info("Initializing jongo with database " + dbname);
+
+        // write concern for all collections
         WriteConcern wc = WriteConcern.JOURNALED;
 
         // create connection pool
@@ -57,7 +70,7 @@ public class JongoDatabase implements ITalkServerDatabase {
             return;
         }
         // create db accessor
-        mDb = mMongo.getDB("talk");
+        mDb = mMongo.getDB(dbname);
         // create object mapper
         mJongo = new Jongo(mDb);
         // create collection accessors

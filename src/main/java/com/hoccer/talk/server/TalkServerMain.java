@@ -34,16 +34,12 @@ public class TalkServerMain {
                description = "Port to listen on")
     int port = 8080;
 
-    @Parameter(names={"-d", "-database"},
-               description = "Database backend to use (memory or jongo)")
-    String database = "jongo";
-
     private void run() {
         // load configuration
         TalkServerConfiguration config = initializeConfiguration();
 
         // select and instantiate database backend
-        ITalkServerDatabase db = initializeDatabase();
+        ITalkServerDatabase db = initializeDatabase(config);
 
         // log about server init
         LOG.info("Initializing talk server");
@@ -104,15 +100,16 @@ public class TalkServerMain {
         return configuration;
     }
 
-    private ITalkServerDatabase initializeDatabase() {
+    private ITalkServerDatabase initializeDatabase(TalkServerConfiguration config) {
         LOG.info("Determining database");
-        if(database.equals("jongo")) {
-            return new JongoDatabase();
+        String backend = config.getDatabaseBackend();
+        if(backend.equals("jongo")) {
+            return new JongoDatabase(config);
         }
-        if(database.equals("memory")) {
+        if(backend.equals("memory")) {
             return new MemoryDatabase();
         }
-        throw new RuntimeException("Unknown database backend: " + database);
+        throw new RuntimeException("Unknown database backend: " + backend);
     }
 
 	public static void main(String[] args) {
