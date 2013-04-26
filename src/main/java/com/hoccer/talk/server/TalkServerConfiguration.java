@@ -48,31 +48,31 @@ public class TalkServerConfiguration {
         mJongoDb = properties.getProperty(PROPERTY_PREFIX + ".jongo.db", "talk");
     }
 
-    public boolean ismGcmEnabled() {
+    public boolean isGcmEnabled() {
         return mGcmEnabled;
     }
 
-    public String getmGcmApiKey() {
+    public String getGcmApiKey() {
         return mGcmApiKey;
     }
 
-    public int getmGcmWakeTtl() {
+    public int getGcmWakeTtl() {
         return mGcmWakeTtl;
     }
 
-    public boolean ismApnsEnabled() {
+    public boolean isApnsEnabled() {
         return mApnsEnabled;
     }
 
-    public boolean ismApnsSandbox() {
+    public boolean isApnsSandbox() {
         return mApnsSandbox;
     }
 
-    public String getmApnsCertPath() {
+    public String getApnsCertPath() {
         return mApnsCertPath;
     }
 
-    public String getmApnsCertPassword() {
+    public String getApnsCertPassword() {
         return mApnsCertPassword;
     }
 

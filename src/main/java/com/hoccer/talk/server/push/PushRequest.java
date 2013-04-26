@@ -36,9 +36,9 @@ public class PushRequest {
 	}
 
     public void perform() {
-        if(mConfig.ismGcmEnabled() && mClient.isGcmCapable()) {
+        if(mConfig.isGcmEnabled() && mClient.isGcmCapable()) {
             performGcm();
-        } else if(mConfig.ismApnsEnabled() && mClient.isApnsCapable()) {
+        } else if(mConfig.isApnsEnabled() && mClient.isApnsCapable()) {
             performApns();
         }
     }
@@ -47,7 +47,7 @@ public class PushRequest {
         LOG.info("push GCM " + mClient.getClientId());
         Message message = new Message.Builder()
                 .collapseKey("com.hoccer.talk.wake")
-                .timeToLive(mConfig.getmGcmWakeTtl())
+                .timeToLive(mConfig.getGcmWakeTtl())
                 .restrictedPackageName(mClient.getGcmPackage())
                 .dryRun(true)
                 .build();

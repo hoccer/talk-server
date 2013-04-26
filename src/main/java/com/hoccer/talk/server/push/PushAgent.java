@@ -34,10 +34,10 @@ public class PushAgent {
         mServer = server;
         mDatabase = mServer.getDatabase();
         mConfig = mServer.getConfiguration();
-        if(mConfig.ismGcmEnabled()) {
+        if(mConfig.isGcmEnabled()) {
             initializeGcm();
         }
-        if(mConfig.ismApnsEnabled()) {
+        if(mConfig.isApnsEnabled()) {
             initializeApns();
         }
     }
@@ -70,15 +70,15 @@ public class PushAgent {
 
     private void initializeGcm() {
         LOG.info("GCM support enabled");
-        mGcmSender = new Sender(mConfig.getmGcmApiKey());
+        mGcmSender = new Sender(mConfig.getGcmApiKey());
     }
 
     private void initializeApns() {
         LOG.info("APNS support enabled");
         ApnsServiceBuilder apnsServiceBuilder = APNS.newService()
-                .withCert(mConfig.getmApnsCertPath(),
-                          mConfig.getmApnsCertPassword());
-        if(mConfig.ismApnsSandbox()) {
+                .withCert(mConfig.getApnsCertPath(),
+                          mConfig.getApnsCertPassword());
+        if(mConfig.isApnsSandbox()) {
             apnsServiceBuilder = apnsServiceBuilder.withSandboxDestination();
         } else {
             apnsServiceBuilder = apnsServiceBuilder.withProductionDestination();
