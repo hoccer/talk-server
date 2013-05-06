@@ -489,8 +489,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         LOG.info("performing token-based pairing between " + mConnection.getClientId() + " and " + token.getClientId());
 
         // set up relationships
-        setRelationship(myId, otherId, TalkRelationship.STATE_FRIEND);
-        setRelationship(otherId, myId, TalkRelationship.STATE_FRIEND);
+        setRelationship(myId, otherId, TalkRelationship.STATE_FRIEND, true);
+        setRelationship(otherId, myId, TalkRelationship.STATE_FRIEND, true);
 
         // invalidate the token
         token.setState(TalkToken.STATE_USED);
@@ -513,7 +513,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         String oldState = rel.getState();
 
         if(oldState.equals(TalkRelationship.STATE_FRIEND)) {
-            setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_BLOCKED);
+            setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_BLOCKED, true);
             return;
         }
         if(oldState.equals(TalkRelationship.STATE_BLOCKED)) {
@@ -540,7 +540,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             return;
         }
         if(oldState.equals(TalkRelationship.STATE_BLOCKED)) {
-            setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_FRIEND);
+            setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_FRIEND, true);
             return;
         }
 
@@ -558,11 +558,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
             return;
         }
 
-        setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_NONE);
-        setRelationship(clientId, mConnection.getClientId(), TalkRelationship.STATE_NONE);
+        setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_NONE, false);
+        setRelationship(clientId, mConnection.getClientId(), TalkRelationship.STATE_NONE, true);
     }
 
-    private void setRelationship(String thisClientId, String otherClientId, String state) {
+    private void setRelationship(String thisClientId, String otherClientId, String state, boolean notify) {
         if(!TalkRelationship.isValidState(state)) {
             throw new RuntimeException("Invalid state " + state);
         }
@@ -576,7 +576,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
         relationship.setState(state);
         relationship.setLastChanged(new Date());
         mDatabase.saveRelationship(relationship);
-        mServer.getUpdateAgent().requestRelationshipUpdate(relationship);
+        if(notify) {
+            mServer.getUpdateAgent().requestRelationshipUpdate(relationship);
+        }
     }
 
     @Override
