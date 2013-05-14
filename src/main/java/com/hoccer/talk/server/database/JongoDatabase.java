@@ -100,6 +100,18 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public TalkClient findClientByApnsToken(String apnsToken) {
+        Iterator<TalkClient> it =
+                mClients.find("{apnsToken:#}", apnsToken)
+                        .as(TalkClient.class).iterator();
+        if(it.hasNext()) {
+            return it.next();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
     public void saveClient(TalkClient client) {
         mClients.save(client);
     }

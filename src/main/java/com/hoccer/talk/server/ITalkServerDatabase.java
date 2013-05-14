@@ -18,6 +18,7 @@ import java.util.List;
 public interface ITalkServerDatabase {
 
     public TalkClient findClientById(String clientId);
+    public TalkClient findClientByApnsToken(String apnsToken);
     public void saveClient(TalkClient client);
 
     public TalkMessage findMessageById(String messageId);

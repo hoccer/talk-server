@@ -246,4 +246,8 @@ public class MemoryDatabase implements ITalkServerDatabase {
         return null; // XXX
     }
 
+    @Override
+    public TalkClient findClientByApnsToken(String apnsToken) {
+        return null;
+    }
 }
