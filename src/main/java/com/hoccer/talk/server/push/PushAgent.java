@@ -1,5 +1,7 @@
 package com.hoccer.talk.server.push;
 
+import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -84,6 +86,22 @@ public class PushAgent {
             apnsServiceBuilder = apnsServiceBuilder.withProductionDestination();
         }
         mApnsService = apnsServiceBuilder.build();
+        invalidateApns();
+    }
+
+    private void invalidateApns() {
+        LOG.info("APNS retrieving inactive devices");
+        Map<String, Date> inactive = mApnsService.getInactiveDevices();
+        LOG.info("APNS reports " + inactive.size() + " inactive devices");
+        for(String token: inactive.keySet()) {
+            TalkClient client = mDatabase.findClientByApnsToken(token);
+            if(client == null) {
+                LOG.info("unknown inactive APNS client with token " + token);
+            } else {
+                LOG.info("client inactive on APNS since " + inactive.get(token) + ": " + client.getClientId());
+                client.setApnsToken(null);
+            }
+        }
     }
 
 }
