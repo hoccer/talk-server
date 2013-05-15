@@ -46,13 +46,8 @@
     <!-- JSON-RPC stack -->
     <dependency>
       <groupId>better</groupId>
-      <artifactId>better-jsonrpc-common</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>better</groupId>
       <artifactId>better-jsonrpc-websocket</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>${better.jsonrpc.version}</version>
     </dependency>
 
     <!-- Command line parsing -->
@@ -80,28 +75,28 @@
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
       <artifactId>json-simple</artifactId>
-      <version>1.1.1</version>
+      <version>${json-simple.version}</version>
     </dependency>
 
     <!-- APNS library -->
     <dependency>
       <groupId>com.notnoop.apns</groupId>
       <artifactId>apns</artifactId>
-      <version>0.2.1-SNAPSHOT</version>
+      <version>${apns.version}</version>
     </dependency>
 
     <!-- Mongodb driver -->
     <dependency>
         <groupId>org.mongodb</groupId>
         <artifactId>mongo-java-driver</artifactId>
-        <version>2.10.1</version>
+        <version>${mongo.version}</version>
     </dependency>
 
     <!-- Mongodb mapper -->
     <dependency>
         <groupId>org.jongo</groupId>
         <artifactId>jongo</artifactId>
-        <version>0.4</version>
+        <version>${jongo.version}</version>
     </dependency>
 
   </dependencies>
