@@ -744,7 +744,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         gm.setClientId(mConnection.getClientId());
         gm.setGroupId(UUID.randomUUID().toString());
         gm.setRole(TalkGroupMember.ROLE_ADMIN);
-        mDatabase.saveGroupMember(gm);
+        changedGroupMember(gm);
         return gm.getGroupId();
     }
 
@@ -752,7 +752,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void deleteGroup(String groupId) {
         requireIdentification();
         logCall("deleteGroup(" + groupId + ")");
-        TalkGroupMember adminMember = requiredGroupMember(groupId);
+        requiredGroupAdmin(groupId);
 
         // walk the group and make everyone have a "none" relationship to it
         List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
@@ -766,15 +766,20 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void addGroupMember(TalkGroupMember member) {
         requireIdentification();
         logCall("addGroupMember(" + member.getGroupId() + "/" + member.getClientId() + ")");
-        TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
-
+        requiredGroupAdmin(member.getGroupId());
+        TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
+        if(targetMember != null) {
+            throw new RuntimeException("Already a member");
+        }
+        mDatabase.saveGroupMember(targetMember);
+        changedGroupMember(member);
     }
 
     @Override
     public void removeGroupMember(TalkGroupMember member) {
         requireIdentification();
         logCall("removeGroupMember(" + member.getGroupId() + "/" + member.getClientId() + ")");
-        TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
+        requiredGroupAdmin(member.getGroupId());
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
         if(targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
@@ -787,12 +792,15 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void updateGroupMember(TalkGroupMember member) {
         requireIdentification();
         logCall("updateGroupMember(" + member.getGroupId() + "/" + member.getClientId() + ")");
-        TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
+        requiredGroupAdmin(member.getGroupId());
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
         if(targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
         }
-        // XXX update fields
+        targetMember.setRole(member.getRole());
+        targetMember.setGroupKeyCipherText(member.getGroupKeyCipherText());
+        targetMember.setInvitationSecret(member.getInvitationSecret());
+        targetMember.setPubkeyId(member.getInvitationSecret());
         changedGroupMember(targetMember);
     }
 
@@ -800,13 +808,19 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public TalkGroupMember[] getGroupMembers(String groupId, Date lastKnown) {
         requireIdentification();
         logCall("getGroupMembers(" + groupId + "/" + lastKnown + ")");
-        TalkGroupMember adminMember = requiredGroupMember(groupId);
+        requiredGroupMember(groupId);
 
-        return new TalkGroupMember[0];
+        List<TalkGroupMember> members = mDatabase.findGroupMembersByIdChangedAfter(groupId, lastKnown);
+        TalkGroupMember[] res = new TalkGroupMember[members.size()];
+        for(int i = 0; i < res.length; i++) {
+            res[i] = members.get(i);
+        }
+        return res;
     }
 
     private void changedGroupMember(TalkGroupMember member) {
         mDatabase.saveGroupMember(member);
+        mServer.getGroupAgent().requestGroupUpdate(member.getGroupId(), member.getClientId());
     }
 
     private TalkGroupMember requiredGroupAdmin(String groupId) {

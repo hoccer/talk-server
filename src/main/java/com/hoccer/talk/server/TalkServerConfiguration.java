@@ -10,6 +10,7 @@ public class TalkServerConfiguration {
     private static final Logger LOG = HoccerLoggers.getLogger(TalkServerConfiguration.class);
 
     public static final int THREADS_DELIVERY = 1;
+    public static final int THREADS_GROUP = 1;
     public static final int THREADS_UPDATE = 1;
     public static final int THREADS_PUSH = 1;
     public static final int THREADS_PING = 2;
