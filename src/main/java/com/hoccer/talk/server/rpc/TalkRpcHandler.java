@@ -751,6 +751,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void deleteGroup(String groupId) {
         requireIdentification();
         TalkGroupMember adminMember = requiredGroupMember(groupId);
+
+        // walk the group and make everyone have a "none" relationship to it
+        List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
+        for(TalkGroupMember member: members) {
+            member.setRole(TalkGroupMember.ROLE_NONE);
+            changedGroupMember(member);
+        }
     }
 
     @Override
@@ -764,14 +771,24 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void removeGroupMember(TalkGroupMember member) {
         requireIdentification();
         TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
-
+        TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
+        if(targetMember == null) {
+            throw new RuntimeException("Client is not a member of group");
+        }
+        targetMember.setRole(TalkGroupMember.ROLE_NONE);
+        changedGroupMember(targetMember);
     }
 
     @Override
     public void updateGroupMember(TalkGroupMember member) {
         requireIdentification();
         TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
-
+        TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
+        if(targetMember == null) {
+            throw new RuntimeException("Client is not a member of group");
+        }
+        // XXX update fields
+        changedGroupMember(targetMember);
     }
 
     @Override
@@ -780,6 +797,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         TalkGroupMember adminMember = requiredGroupMember(groupId);
 
         return new TalkGroupMember[0];
+    }
+
+    private void changedGroupMember(TalkGroupMember member) {
+        mDatabase.saveGroupMember(member);
     }
 
     private TalkGroupMember requiredGroupAdmin(String groupId) {
