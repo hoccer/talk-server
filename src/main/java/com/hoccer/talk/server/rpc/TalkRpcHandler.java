@@ -736,4 +736,68 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
     }
 
+    @Override
+    public String createGroup(String groupTag) {
+        requireIdentification();
+        TalkGroupMember gm = new TalkGroupMember();
+        gm.setClientId(mConnection.getClientId());
+        gm.setGroupId(UUID.randomUUID().toString());
+        gm.setRole(TalkGroupMember.ROLE_ADMIN);
+        mDatabase.saveGroupMember(gm);
+        return gm.getGroupId();
+    }
+
+    @Override
+    public void deleteGroup(String groupId) {
+        requireIdentification();
+        TalkGroupMember adminMember = requiredGroupMember(groupId);
+    }
+
+    @Override
+    public void addGroupMember(TalkGroupMember member) {
+        requireIdentification();
+        TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
+
+    }
+
+    @Override
+    public void removeGroupMember(TalkGroupMember member) {
+        requireIdentification();
+        TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
+
+    }
+
+    @Override
+    public void updateGroupMember(TalkGroupMember member) {
+        requireIdentification();
+        TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
+
+    }
+
+    @Override
+    public TalkGroupMember[] getGroupMembers(String groupId, Date lastKnown) {
+        requireIdentification();
+        TalkGroupMember adminMember = requiredGroupMember(groupId);
+
+        return new TalkGroupMember[0];
+    }
+
+    private TalkGroupMember requiredGroupAdmin(String groupId) {
+        TalkGroupMember gm = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
+        if(gm != null && (gm.getRole().equals(TalkGroupMember.ROLE_ADMIN))) {
+            return gm;
+        }
+        throw new RuntimeException("Client is not an admin in group " + groupId);
+    }
+
+    private TalkGroupMember requiredGroupMember(String groupId) {
+        TalkGroupMember gm = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
+        if(gm != null &&
+                (gm.getRole().equals(TalkGroupMember.ROLE_ADMIN)
+                   || gm.getRole().equals(TalkGroupMember.ROLE_MEMBER))) {
+            return gm;
+        }
+        throw new RuntimeException("Client is not a member in group " + groupId);
+    }
+
 }
