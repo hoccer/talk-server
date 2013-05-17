@@ -800,7 +800,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         targetMember.setRole(member.getRole());
         targetMember.setGroupKeyCipherText(member.getGroupKeyCipherText());
         targetMember.setInvitationSecret(member.getInvitationSecret());
-        targetMember.setPubkeyId(member.getInvitationSecret());
         changedGroupMember(targetMember);
     }
 
