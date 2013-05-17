@@ -739,6 +739,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public String createGroup(String groupTag) {
         requireIdentification();
+        logCall("createGroup(" + groupTag + ")");
         TalkGroupMember gm = new TalkGroupMember();
         gm.setClientId(mConnection.getClientId());
         gm.setGroupId(UUID.randomUUID().toString());
@@ -750,6 +751,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void deleteGroup(String groupId) {
         requireIdentification();
+        logCall("deleteGroup(" + groupId + ")");
         TalkGroupMember adminMember = requiredGroupMember(groupId);
 
         // walk the group and make everyone have a "none" relationship to it
@@ -763,6 +765,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void addGroupMember(TalkGroupMember member) {
         requireIdentification();
+        logCall("addGroupMember(" + member.getGroupId() + "/" + member.getClientId() + ")");
         TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
 
     }
@@ -770,6 +773,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void removeGroupMember(TalkGroupMember member) {
         requireIdentification();
+        logCall("removeGroupMember(" + member.getGroupId() + "/" + member.getClientId() + ")");
         TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
         if(targetMember == null) {
@@ -782,6 +786,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroupMember(TalkGroupMember member) {
         requireIdentification();
+        logCall("updateGroupMember(" + member.getGroupId() + "/" + member.getClientId() + ")");
         TalkGroupMember adminMember = requiredGroupAdmin(member.getGroupId());
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
         if(targetMember == null) {
@@ -794,6 +799,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public TalkGroupMember[] getGroupMembers(String groupId, Date lastKnown) {
         requireIdentification();
+        logCall("getGroupMembers(" + groupId + "/" + lastKnown + ")");
         TalkGroupMember adminMember = requiredGroupMember(groupId);
 
         return new TalkGroupMember[0];
