@@ -330,6 +330,18 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkGroupMember> findGroupMembersByIdChangedAfter(String groupId, Date lastKnown) {
+        List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
+        Iterator<TalkGroupMember> it =
+                mGroupMembers.find("{groupId:#,lastChanged: {$gt:#}}", groupId, lastKnown)
+                        .as(TalkGroupMember.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
     public TalkGroupMember findGroupMemberForClient(String groupId, String clientId) {
         return mGroupMembers.findOne("{groupId:#,clientId:#}", groupId, clientId)
                              .as(TalkGroupMember.class);
