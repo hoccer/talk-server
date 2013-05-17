@@ -49,6 +49,8 @@ public class JongoDatabase implements ITalkServerDatabase {
     MongoCollection mRelationships;
     MongoCollection mPresences;
     MongoCollection mKeys;
+    MongoCollection mGroupMembers;
+
 
     public JongoDatabase(TalkServerConfiguration configuration) {
         mConfig = configuration;
@@ -81,6 +83,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         mRelationships = mJongo.getCollection("relationship").withWriteConcern(wc);
         mPresences = mJongo.getCollection("presence").withWriteConcern(wc);
         mKeys = mJongo.getCollection("key").withWriteConcern(wc);
+        mGroupMembers = mJongo.getCollection("groupMember").withWriteConcern(wc);
     }
 
     @Override
@@ -322,4 +325,28 @@ public class JongoDatabase implements ITalkServerDatabase {
     public void saveRelationship(TalkRelationship relationship) {
         mRelationships.save(relationship);
     }
+
+    @Override
+    public List<TalkGroupMember> findGroupMembersById(String groupId) {
+        List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
+        Iterator<TalkGroupMember> it =
+                mGroupMembers.find("{groupId:#}", groupId)
+                                .as(TalkGroupMember.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
+    public TalkGroupMember findGroupMemberForClient(String groupId, String clientId) {
+        return mGroupMembers.findOne("{groupId:#,clientId:#}", groupId, clientId)
+                             .as(TalkGroupMember.class);
+    }
+
+    @Override
+    public void saveGroupMember(TalkGroupMember groupMember) {
+        mGroupMembers.save(groupMember);
+    }
+
 }

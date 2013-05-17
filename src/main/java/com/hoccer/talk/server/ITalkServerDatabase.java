@@ -48,4 +48,8 @@ public interface ITalkServerDatabase {
     public TalkRelationship findRelationshipBetween(String client, String otherClient);
     public void saveRelationship(TalkRelationship relationship);
 
+    public List<TalkGroupMember> findGroupMembersById(String groupId);
+    public TalkGroupMember findGroupMemberForClient(String groupId, String clientId);
+    public void saveGroupMember(TalkGroupMember groupMember);
+
 }

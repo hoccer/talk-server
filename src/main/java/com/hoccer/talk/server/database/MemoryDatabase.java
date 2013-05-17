@@ -250,4 +250,18 @@ public class MemoryDatabase implements ITalkServerDatabase {
     public TalkClient findClientByApnsToken(String apnsToken) {
         return null;
     }
+
+    @Override
+    public List<TalkGroupMember> findGroupMembersById(String groupId) {
+        return null;
+    }
+
+    @Override
+    public TalkGroupMember findGroupMemberForClient(String groupId, String clientId) {
+        return null;
+    }
+
+    @Override
+    public void saveGroupMember(TalkGroupMember groupMember) {
+    }
 }
