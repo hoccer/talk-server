@@ -820,7 +820,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     private void changedGroupMember(TalkGroupMember member) {
         mDatabase.saveGroupMember(member);
-        mServer.getGroupAgent().requestGroupUpdate(member.getGroupId(), member.getClientId());
+        mServer.getUpdateAgent().requestGroupUpdate(member.getGroupId(), member.getClientId());
     }
 
     private TalkGroupMember requiredGroupAdmin(String groupId) {

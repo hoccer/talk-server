@@ -1,8 +1,10 @@
 package com.hoccer.talk.server.update;
 
 import com.hoccer.talk.logging.HoccerLoggers;
+import com.hoccer.talk.model.TalkGroupMember;
 import com.hoccer.talk.model.TalkPresence;
 import com.hoccer.talk.model.TalkRelationship;
+import com.hoccer.talk.rpc.ITalkRpcClient;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
@@ -76,6 +78,36 @@ public class UpdateAgent {
                 TalkRpcConnection clientConnection = mServer.getClientConnection(relationship.getClientId());
                 if(clientConnection != null && clientConnection.isLoggedIn()) {
                     clientConnection.getClientRpc().relationshipUpdated(relationship);
+                }
+            }
+        });
+    }
+
+    public void requestGroupUpdate(final String groupId, final String clientId) {
+        LOG.info("requesting group update " + groupId + "/" + clientId);
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                TalkGroupMember updatedMember = mDatabase.findGroupMemberForClient(groupId, clientId);
+                if(updatedMember == null) {
+                    return;
+                }
+                List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
+                for(TalkGroupMember member: members) {
+                    String memberRole = member.getRole();
+                    if(memberRole.equals(TalkGroupMember.ROLE_MEMBER)
+                            || memberRole.equals(TalkGroupMember.ROLE_ADMIN)) {
+                        TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
+                        if(connection == null || !connection.isConnected()) {
+                            continue;
+                        }
+                        ITalkRpcClient rpc = connection.getClientRpc();
+                        try {
+                            rpc.groupMemberUpdated(updatedMember);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
         });

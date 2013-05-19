@@ -4,14 +4,12 @@ import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hoccer.talk.logging.HoccerLoggers;
-import com.hoccer.talk.model.TalkPresence;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.delivery.DeliveryAgent;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.server.group.GroupAgent;
 import com.hoccer.talk.server.ping.PingAgent;
 import com.hoccer.talk.server.update.UpdateAgent;
 import com.hoccer.talk.server.push.PushAgent;
@@ -45,9 +43,6 @@ public class TalkServer {
     /** Delivery agent */
     DeliveryAgent mDeliveryAgent;
 
-    /** Group update agent */
-    GroupAgent mGroupAgent;
-
     /** Push service agent */
 	PushAgent mPushAgent;
 
@@ -74,7 +69,6 @@ public class TalkServer {
 		mMapper = createObjectMapper();
 		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
         mDeliveryAgent = new DeliveryAgent(this);
-        mGroupAgent = new GroupAgent(this);
 		mPushAgent = new PushAgent(this);
         mUpdateAgent = new UpdateAgent(this);
         mPingAgent = new PingAgent(this);
@@ -108,11 +102,6 @@ public class TalkServer {
     /** @return the delivery agent of this server */
     public DeliveryAgent getDeliveryAgent() {
         return mDeliveryAgent;
-    }
-
-    /** @return  the group agent of this server */
-    public GroupAgent getGroupAgent() {
-        return mGroupAgent;
     }
 
     /** @return the update agent of this server */
