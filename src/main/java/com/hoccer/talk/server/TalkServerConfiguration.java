@@ -1,8 +1,11 @@
 package com.hoccer.talk.server;
 
-import com.hoccer.talk.logging.HoccerLoggers;
 import org.apache.log4j.Logger;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Properties;
 
 public class TalkServerConfiguration {
@@ -31,6 +34,8 @@ public class TalkServerConfiguration {
 
     private String mJongoDb = "talk";
 
+    private String mFilecacheControlUrl = "http://localhost:8081/control";
+
     public TalkServerConfiguration() {
     }
 
@@ -47,6 +52,8 @@ public class TalkServerConfiguration {
         mDatabaseBackend = properties.getProperty(PROPERTY_PREFIX + ".db.backend", "jongo");
         // Jongo
         mJongoDb = properties.getProperty(PROPERTY_PREFIX + ".jongo.db", "talk");
+        // Filecache
+        mFilecacheControlUrl = properties.getProperty(PROPERTY_PREFIX + ".filecache.controlUrl", mFilecacheControlUrl);
     }
 
     public boolean isGcmEnabled() {
@@ -83,6 +90,16 @@ public class TalkServerConfiguration {
 
     public String getJongoDb() {
         return mJongoDb;
+    }
+
+    public URI getFilecacheControlUrl() {
+        URI url = null;
+        try {
+            url = new URI(mFilecacheControlUrl);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return url;
     }
 
 }

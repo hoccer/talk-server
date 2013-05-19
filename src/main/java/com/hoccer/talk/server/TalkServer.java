@@ -9,6 +9,7 @@ import com.hoccer.talk.server.delivery.DeliveryAgent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.server.filecache.FilecacheClient;
 import com.hoccer.talk.server.ping.PingAgent;
 import com.hoccer.talk.server.update.UpdateAgent;
 import com.hoccer.talk.server.push.PushAgent;
@@ -52,6 +53,8 @@ public class TalkServer {
     /** Ping measurement agent */
     PingAgent mPingAgent;
 
+    FilecacheClient mFilecacheClient;
+
     /** All connections (every connected websocket) */
 	Vector<TalkRpcConnection> mConnections =
 			new Vector<TalkRpcConnection>();
@@ -72,6 +75,7 @@ public class TalkServer {
 		mPushAgent = new PushAgent(this);
         mUpdateAgent = new UpdateAgent(this);
         mPingAgent = new PingAgent(this);
+        mFilecacheClient = new FilecacheClient(this);
     }
 
     /** @return the object mapper used by this server */
@@ -112,6 +116,10 @@ public class TalkServer {
     /** @return the ping agent of this server */
     public PingAgent getPingAgent() {
         return mPingAgent;
+    }
+
+    public FilecacheClient getFilecacheClient() {
+        return mFilecacheClient;
     }
 
     /**
