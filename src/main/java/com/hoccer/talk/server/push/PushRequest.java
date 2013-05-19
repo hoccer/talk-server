@@ -21,30 +21,35 @@ public class PushRequest {
 
     PushAgent mAgent;
 
+    String mClientId;
 	TalkClient mClient;
 
     TalkServerConfiguration mConfig;
 
-	public PushRequest(PushAgent agent, TalkClient client) {
+	public PushRequest(PushAgent agent, String clientId) {
         mAgent = agent;
-		mClient = client;
         mConfig = mAgent.getConfiguration();
-	}
-	
-	public TalkClient getClient() {
-		return mClient;
+        mClientId = clientId;
 	}
 
     public void perform() {
+        LOG.info("performing push request for " + mClientId);
+        // get up-to-date client object
+        mClient = mAgent.getDatabase().findClientById(mClientId);
+        if(mClient == null) {
+            return;
+        }
+        // try to perform push
         if(mConfig.isGcmEnabled() && mClient.isGcmCapable()) {
             performGcm();
         } else if(mConfig.isApnsEnabled() && mClient.isApnsCapable()) {
             performApns();
+        } else {
+            LOG.info("push not executed for " + mClientId);
         }
     }
 
     private void performGcm() {
-        LOG.info("push GCM " + mClient.getClientId());
         Message message = new Message.Builder()
                 .collapseKey("com.hoccer.talk.wake")
                 .timeToLive(mConfig.getGcmWakeTtl())
@@ -60,7 +65,6 @@ public class PushRequest {
     }
 
     private void performApns() {
-        LOG.info("push APNS " + mClient.getClientId());
         ITalkServerDatabase database = mAgent.getDatabase();
         ApnsService apnsService = mAgent.getApnsService();
         PayloadBuilder b = APNS.newPayload();

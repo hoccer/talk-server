@@ -1,6 +1,7 @@
 package com.hoccer.talk.server.push;
 
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -30,12 +31,15 @@ public class PushAgent {
 	private Sender mGcmSender;
 
     private ApnsService mApnsService;
+
+    Hashtable<String, PushRequest> mOutstanding;
 	
 	public PushAgent(TalkServer server) {
 		mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PUSH);
         mServer = server;
         mDatabase = mServer.getDatabase();
         mConfig = mServer.getConfiguration();
+        mOutstanding = new Hashtable<String, PushRequest>();
         if(mConfig.isGcmEnabled()) {
             initializeGcm();
         }
@@ -45,13 +49,41 @@ public class PushAgent {
     }
 
     public void submitRequest(TalkClient client) {
-        final PushRequest request = new PushRequest(this, client);
-        mExecutor.schedule(new Runnable() {
-            @Override
-            public void run() {
-                request.perform();
+        long now = System.currentTimeMillis();
+
+        // bail if no push
+        if(!client.isPushCapable()) {
+            return;
+        }
+
+        // determine delay
+        Date lastPush = client.getTimeLastPush();
+        if(lastPush == null) {
+            lastPush = new Date();
+        }
+        long delta = Math.max(0, now - lastPush.getTime());
+        long delay = 0;
+        if(delta < 5000) {
+            delay = 5000 - delta;
+        }
+        client.setTimeLastPush(new Date());
+        mDatabase.saveClient(client);
+
+        // schedule the request
+        final String clientId = client.getClientId();
+        synchronized (mOutstanding) {
+            if(!mOutstanding.contains(clientId)) {
+                final PushRequest request = new PushRequest(this, clientId);
+                mExecutor.schedule(new Runnable() {
+                    @Override
+                    public void run() {
+                        mOutstanding.remove(clientId);
+                        request.perform();
+                    }
+                }, delay, TimeUnit.MILLISECONDS);
+                mOutstanding.put(clientId, request);
             }
-        }, 5, TimeUnit.SECONDS);
+        }
     }
 
     public TalkServerConfiguration getConfiguration() {
