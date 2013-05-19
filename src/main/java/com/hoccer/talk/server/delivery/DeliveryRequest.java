@@ -9,6 +9,7 @@ import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
 
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,11 +54,19 @@ public class DeliveryRequest {
             // deliver if we can
             if(currentlyConnected) {
                 for(TalkDelivery delivery: inDeliveries) {
+                    // rate limit
+                    long now = System.currentTimeMillis();
+                    long delta = Math.max(0, now - delivery.getTimeUpdatedIn().getTime());
+                    if(delta < 5000) {
+                        continue;
+                    }
                     // get the matching message
                     TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
                     // post the delivery for the client
                     try {
                         rpc.incomingDelivery(delivery, message);
+                        delivery.setTimeUpdatedIn(new Date());
+                        mDatabase.saveDelivery(delivery);
                     } catch (Exception e) {
                         LOG.log(Level.INFO, "Exception calling incomingDelivery()", e);
                         //currentlyConnected = false; XXX do this when we can differentiate
@@ -79,9 +88,17 @@ public class DeliveryRequest {
         if(outDeliveries.size() > 0) {
             if(currentlyConnected) {
                 for(TalkDelivery delivery: outDeliveries) {
+                    // rate limit
+                    long now = System.currentTimeMillis();
+                    long delta = Math.max(0, now - delivery.getTimeUpdatedOut().getTime());
+                    if(delta < 5000) {
+                        continue;
+                    }
                     // notify it
                     try {
                         rpc.outgoingDelivery(delivery);
+                        delivery.setTimeUpdatedOut(new Date());
+                        mDatabase.saveDelivery(delivery);
                     } catch (Exception e) {
                         LOG.log(Level.INFO, "Exception calling outgoingDelivery()");
                     }
