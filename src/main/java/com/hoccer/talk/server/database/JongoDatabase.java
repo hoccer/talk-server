@@ -49,6 +49,7 @@ public class JongoDatabase implements ITalkServerDatabase {
     MongoCollection mRelationships;
     MongoCollection mPresences;
     MongoCollection mKeys;
+    MongoCollection mGroups;
     MongoCollection mGroupMembers;
 
 
@@ -83,6 +84,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         mRelationships = mJongo.getCollection("relationship").withWriteConcern(wc);
         mPresences = mJongo.getCollection("presence").withWriteConcern(wc);
         mKeys = mJongo.getCollection("key").withWriteConcern(wc);
+        mGroups = mJongo.getCollection("group").withWriteConcern(wc);
         mGroupMembers = mJongo.getCollection("groupMember").withWriteConcern(wc);
     }
 
@@ -318,11 +320,50 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public TalkGroup findGroupById(String groupId) {
+        return mGroups.findOne("{groupId:#}", groupId).as(TalkGroup.class);
+    }
+
+    @Override
+    public List<TalkGroup> findGroupsByClientIdChangedAfter(String clientId, Date lastKnown) {
+        // XXX dirty hack / indirect query
+        List<TalkGroup> res = new ArrayList<TalkGroup>();
+        List<TalkGroupMember> members = findGroupMembersForClient(clientId);
+        for(TalkGroupMember member: members) {
+            String memberRole = member.getRole();
+            if(memberRole.equals(TalkGroupMember.ROLE_MEMBER) || memberRole.equals(TalkGroupMember.ROLE_ADMIN)) {
+                TalkGroup group = findGroupById(member.getGroupId());
+                if(group.getLastChanged().after(lastKnown)) {
+                    res.add(group);
+                }
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public void saveGroup(TalkGroup group) {
+        mGroups.save(group);
+    }
+
+    @Override
     public List<TalkGroupMember> findGroupMembersById(String groupId) {
         List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
         Iterator<TalkGroupMember> it =
                 mGroupMembers.find("{groupId:#}", groupId)
                                 .as(TalkGroupMember.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
+    public List<TalkGroupMember> findGroupMembersForClient(String clientId) {
+        List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
+        Iterator<TalkGroupMember> it =
+                mGroupMembers.find("{clientId:#}", clientId)
+                        .as(TalkGroupMember.class).iterator();
         while(it.hasNext()) {
             res.add(it.next());
         }

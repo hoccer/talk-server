@@ -1,6 +1,5 @@
 package com.hoccer.talk.server.rpc;
 
-import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.*;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
@@ -741,12 +740,34 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public String createGroup(String groupTag) {
         requireIdentification();
         logCall("createGroup(" + groupTag + ")");
-        TalkGroupMember gm = new TalkGroupMember();
-        gm.setClientId(mConnection.getClientId());
-        gm.setGroupId(UUID.randomUUID().toString());
-        gm.setRole(TalkGroupMember.ROLE_ADMIN);
-        changedGroupMember(gm);
-        return gm.getGroupId();
+        TalkGroup group = new TalkGroup();
+        group.setGroupId(UUID.randomUUID().toString());
+        TalkGroupMember groupAdmin = new TalkGroupMember();
+        groupAdmin.setClientId(mConnection.getClientId());
+        groupAdmin.setGroupId(group.getGroupId());
+        groupAdmin.setRole(TalkGroupMember.ROLE_ADMIN);
+        changedGroup(group);
+        changedGroupMember(groupAdmin);
+        return group.getGroupId();
+    }
+
+    @Override
+    public TalkGroup[] getGroups(Date lastKnown) {
+        requireIdentification();
+        logCall("getGroups(" + lastKnown + ")");
+        List<TalkGroup> groups = mDatabase.findGroupsByClientIdChangedAfter(mConnection.getClientId(), lastKnown);
+
+        return null;
+    }
+
+    @Override
+    public void updateGroup(TalkGroup group) {
+        requireIdentification();
+        requiredGroupAdmin(group.getGroupId());
+        logCall("updateGroup(" + group.getGroupId() + ")");
+        TalkGroup targetGroup = mDatabase.findGroupById(group.getGroupId());
+        targetGroup.setGroupName(group.getGroupName());
+        changedGroup(targetGroup);
     }
 
     @Override
@@ -818,9 +839,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return res;
     }
 
+    private void changedGroup(TalkGroup group) {
+        group.setLastChanged(new Date());
+        mDatabase.saveGroup(group);
+        mServer.getUpdateAgent().requestGroupUpdate(group.getGroupId());
+    }
+
     private void changedGroupMember(TalkGroupMember member) {
+        member.setLastChanged(new Date());
         mDatabase.saveGroupMember(member);
-        mServer.getUpdateAgent().requestGroupUpdate(member.getGroupId(), member.getClientId());
+        mServer.getUpdateAgent().requestGroupMembershipUpdate(member.getGroupId(), member.getClientId());
     }
 
     private TalkGroupMember requiredGroupAdmin(String groupId) {

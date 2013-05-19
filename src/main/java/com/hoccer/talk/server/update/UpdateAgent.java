@@ -1,6 +1,7 @@
 package com.hoccer.talk.server.update;
 
 import com.hoccer.talk.logging.HoccerLoggers;
+import com.hoccer.talk.model.TalkGroup;
 import com.hoccer.talk.model.TalkGroupMember;
 import com.hoccer.talk.model.TalkPresence;
 import com.hoccer.talk.model.TalkRelationship;
@@ -83,7 +84,36 @@ public class UpdateAgent {
         });
     }
 
-    public void requestGroupUpdate(final String groupId, final String clientId) {
+    public void requestGroupUpdate(final String groupId) {
+        LOG.info("requesting group update " + groupId);
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                TalkGroup updatedGroup = mDatabase.findGroupById(groupId);
+                if(updatedGroup != null) {
+                    List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
+                    for(TalkGroupMember member: members) {
+                        String memberRole = member.getRole();
+                        if(memberRole.equals(TalkGroupMember.ROLE_MEMBER)
+                                || memberRole.equals(TalkGroupMember.ROLE_ADMIN)) {
+                            TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
+                            if(connection == null || !connection.isConnected()) {
+                                continue;
+                            }
+                            ITalkRpcClient rpc = connection.getClientRpc();
+                            try {
+                                rpc.groupUpdated(updatedGroup);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    public void requestGroupMembershipUpdate(final String groupId, final String clientId) {
         LOG.info("requesting group update " + groupId + "/" + clientId);
         mExecutor.execute(new Runnable() {
             @Override

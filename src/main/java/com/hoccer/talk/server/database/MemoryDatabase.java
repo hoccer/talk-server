@@ -269,4 +269,23 @@ public class MemoryDatabase implements ITalkServerDatabase {
     @Override
     public void saveGroupMember(TalkGroupMember groupMember) {
     }
+
+    @Override
+    public TalkGroup findGroupById(String groupId) {
+        return null;
+    }
+
+    @Override
+    public void saveGroup(TalkGroup group) {
+    }
+
+    @Override
+    public List<TalkGroup> findGroupsByClientIdChangedAfter(String clientId, Date lastKnown) {
+        return null;
+    }
+
+    @Override
+    public List<TalkGroupMember> findGroupMembersForClient(String clientId) {
+        return null;
+    }
 }
