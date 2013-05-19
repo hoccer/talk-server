@@ -3,13 +3,14 @@ package com.hoccer.talk.server.rpc;
 import better.jsonrpc.websocket.JsonRpcWsConnection;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.model.TalkPresence;
 import com.hoccer.talk.rpc.ITalkRpcClient;
 
+import java.util.Date;
 import java.util.logging.Logger;
 
 import better.jsonrpc.core.JsonRpcConnection;
 
+import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 
 import javax.servlet.http.HttpServletRequest;
@@ -181,13 +182,19 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
     public void identifyClient(String clientId) {
         LOG.info("[" + getConnectionId() + "] logged in as " + clientId);
 
+        ITalkServerDatabase database = mServer.getDatabase();
+
         // mark connection as logged in
-        mClient = mServer.getDatabase().findClientById(clientId);
+        mClient = database.findClientById(clientId);
         if(mClient == null) {
             throw new RuntimeException("Client does not exist");
         } else {
             mServer.identifyClient(mClient, this);
         }
+
+        // update login time
+        mClient.setTimeLastLogin(new Date());
+        database.saveClient(mClient);
 
         // tell the client if it doesn't have push
         if(!mClient.isPushCapable()) {

@@ -105,6 +105,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         client.setClientId(clientId);
         client.setSrpSalt(salt);
         client.setSrpVerifier(verifier);
+        client.setTimeRegistered(new Date());
 
         mDatabase.saveClient(client);
 
