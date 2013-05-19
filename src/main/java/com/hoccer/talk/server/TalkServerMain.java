@@ -5,8 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -14,13 +12,16 @@ import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.MemoryDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.websocket.WebSocketHandler;
 
 public class TalkServerMain {
 
-    private static final Logger LOG = HoccerLoggers.getLogger(TalkServerMain.class);
+    private static final Logger LOG = Logger.getLogger(TalkServerMain.class);
 
     @Parameter(names={"-c", "-config"},
                description = "Configuration file to use")
@@ -68,7 +69,7 @@ public class TalkServerMain {
             s.join();
             LOG.info("Server has quit");
         } catch (Exception e) {
-            LOG.log(Level.SEVERE, "Exception in server", e);
+            LOG.error("Exception in server", e);
         }
     }
 
@@ -86,9 +87,9 @@ public class TalkServerMain {
                 properties = new Properties();
                 properties.load(configIn);
             } catch (FileNotFoundException e) {
-                LOG.log(Level.SEVERE, "Could not load configuration", e);
+                LOG.error("Could not load configuration", e);
             } catch (IOException e) {
-                LOG.log(Level.SEVERE, "Could not load configuration", e);
+                LOG.error("Could not load configuration", e);
             }
             // if we could load it then configure using it
             if(properties != null) {
@@ -113,8 +114,10 @@ public class TalkServerMain {
     }
 
 	public static void main(String[] args) {
+        BasicConfigurator.configure();
         TalkServerMain main = new TalkServerMain();
         JCommander commander = new JCommander(main, args);
+        PropertyConfigurator.configure(main.config);
         main.run();
 	}
 

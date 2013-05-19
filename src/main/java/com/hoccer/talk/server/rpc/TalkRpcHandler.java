@@ -9,6 +9,7 @@ import com.hoccer.talk.srp.SRP6Parameters;
 import com.hoccer.talk.srp.SRP6VerifyingServer;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.log4j.Logger;
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
@@ -17,7 +18,6 @@ import java.io.*;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * RPC handler for talk protocol communications
@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 public class TalkRpcHandler implements ITalkRpcServer {
 
     private static final Logger LOG =
-            HoccerLoggers.getLogger(TalkRpcHandler.class);
+            Logger.getLogger(TalkRpcHandler.class);
 
     private static Hex HEX = new Hex();
     private final Digest SRP_DIGEST = new SHA256Digest();
@@ -415,7 +415,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         String secret = null;
         do {
             if(secret != null) {
-                LOG.warning("Token generator returned existing token - regenerating");
+                LOG.warn("Token generator returned existing token - regenerating");
             }
             if(attempt++ > 3) {
                 throw new RuntimeException("Could not generate a token");

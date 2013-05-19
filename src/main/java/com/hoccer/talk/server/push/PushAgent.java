@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import com.google.android.gcm.server.Sender;
 import com.hoccer.talk.logging.HoccerLoggers;
@@ -17,10 +16,11 @@ import com.hoccer.talk.server.TalkServerConfiguration;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.ApnsServiceBuilder;
+import org.apache.log4j.Logger;
 
 public class PushAgent {
 
-    private static final Logger LOG = HoccerLoggers.getLogger(PushAgent.class);
+    private static final Logger LOG = Logger.getLogger(PushAgent.class);
 
 	private ScheduledExecutorService mExecutor;
 

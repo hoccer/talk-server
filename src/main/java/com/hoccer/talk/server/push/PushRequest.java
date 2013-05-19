@@ -10,14 +10,14 @@ import com.hoccer.talk.server.TalkServerConfiguration;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.PayloadBuilder;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class PushRequest {
 
-    private static final Logger LOG = HoccerLoggers.getLogger(PushAgent.class);
+    private static final Logger LOG = Logger.getLogger(PushAgent.class);
 
     PushAgent mAgent;
 

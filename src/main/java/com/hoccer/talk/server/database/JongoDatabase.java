@@ -8,6 +8,7 @@ import com.mongodb.DB;
 import com.mongodb.Mongo;
 
 import com.mongodb.WriteConcern;
+import org.apache.log4j.Logger;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 
@@ -16,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Database implementation using the Jongo mapper to MongoDB
@@ -28,7 +28,7 @@ import java.util.logging.Logger;
  */
 public class JongoDatabase implements ITalkServerDatabase {
 
-    private static final Logger LOG = HoccerLoggers.getLogger(JongoDatabase.class);
+    private static final Logger LOG = Logger.getLogger(JongoDatabase.class);
 
     /** Configuration instance */
     TalkServerConfiguration mConfig;

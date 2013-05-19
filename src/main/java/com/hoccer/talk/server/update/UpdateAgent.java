@@ -9,15 +9,15 @@ import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
+import org.apache.log4j.Logger;
 
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.logging.Logger;
 
 public class UpdateAgent {
 
-    private static final Logger LOG = HoccerLoggers.getLogger(UpdateAgent.class);
+    private static final Logger LOG = Logger.getLogger(UpdateAgent.class);
 
     private ScheduledExecutorService mExecutor;
 

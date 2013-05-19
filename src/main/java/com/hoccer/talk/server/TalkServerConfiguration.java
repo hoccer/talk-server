@@ -1,13 +1,13 @@
 package com.hoccer.talk.server;
 
 import com.hoccer.talk.logging.HoccerLoggers;
+import org.apache.log4j.Logger;
 
 import java.util.Properties;
-import java.util.logging.Logger;
 
 public class TalkServerConfiguration {
 
-    private static final Logger LOG = HoccerLoggers.getLogger(TalkServerConfiguration.class);
+    private static final Logger LOG = Logger.getLogger(TalkServerConfiguration.class);
 
     public static final int THREADS_DELIVERY = 1;
     public static final int THREADS_GROUP = 1;

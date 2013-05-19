@@ -5,16 +5,15 @@ import com.hoccer.talk.rpc.ITalkRpcClient;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
+import org.apache.log4j.Logger;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class PingAgent {
 
-    private static final Logger LOG = HoccerLoggers.getLogger(PingAgent.class);
+    private static final Logger LOG = Logger.getLogger(PingAgent.class);
 
     TalkServer mServer;
 
@@ -41,7 +40,7 @@ public class PingAgent {
                         LOG.info("ping on " + clientId + " at " + conn.getRemoteAddress()
                                     + " took " + duration + " msecs");
                     } catch (Throwable t) {
-                        LOG.log(Level.INFO, "exception in ping on " + clientId, t);
+                        LOG.info("exception in ping on " + clientId, t);
                     }
                 }
             }

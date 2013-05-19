@@ -8,15 +8,14 @@ import com.hoccer.talk.rpc.ITalkRpcClient;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
+import org.apache.log4j.Logger;
 
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class DeliveryRequest {
 
-    private static final Logger LOG = HoccerLoggers.getLogger(DeliveryRequest.class);
+    private static final Logger LOG = Logger.getLogger(DeliveryRequest.class);
 
     String mClientId;
 
@@ -68,7 +67,7 @@ public class DeliveryRequest {
                         delivery.setTimeUpdatedIn(new Date());
                         mDatabase.saveDelivery(delivery);
                     } catch (Exception e) {
-                        LOG.log(Level.INFO, "Exception calling incomingDelivery()", e);
+                        LOG.info("Exception calling incomingDelivery()", e);
                         //currentlyConnected = false; XXX do this when we can differentiate
                     }
                     // check for disconnects
@@ -100,7 +99,7 @@ public class DeliveryRequest {
                         delivery.setTimeUpdatedOut(new Date());
                         mDatabase.saveDelivery(delivery);
                     } catch (Exception e) {
-                        LOG.log(Level.INFO, "Exception calling outgoingDelivery()");
+                        LOG.info("Exception calling outgoingDelivery()");
                     }
                     // check for disconnects
                     if(!connection.isConnected()) {

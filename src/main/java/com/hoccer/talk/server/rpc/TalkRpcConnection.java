@@ -6,12 +6,12 @@ import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.ITalkRpcClient;
 
 import java.util.Date;
-import java.util.logging.Logger;
 
 import better.jsonrpc.core.JsonRpcConnection;
 
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
+import org.apache.log4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 public class TalkRpcConnection implements JsonRpcConnection.Listener {
 
     /** Logger for connection-related things */
-	private static final Logger LOG = HoccerLoggers.getLogger(TalkRpcConnection.class);
+	private static final Logger LOG = Logger.getLogger(TalkRpcConnection.class);
 	
 	/** Server this connection belongs to */
 	TalkServer mServer;

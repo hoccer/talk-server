@@ -3,15 +3,14 @@ package com.hoccer.talk.server.delivery;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
+import org.apache.log4j.Logger;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 public class DeliveryAgent {
 
-    private static final Logger LOG = HoccerLoggers.getLogger(DeliveryAgent.class);
+    private static final Logger LOG = Logger.getLogger(DeliveryAgent.class);
 
     private ScheduledExecutorService mExecutor;
 
