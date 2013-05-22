@@ -803,6 +803,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         groupAdmin.setClientId(mConnection.getClientId());
         groupAdmin.setGroupId(group.getGroupId());
         groupAdmin.setRole(TalkGroupMember.ROLE_ADMIN);
+        groupAdmin.setState(TalkGroupMember.STATE_JOINED);
         changedGroup(group);
         changedGroupMember(groupAdmin);
         return group.getGroupId();
@@ -834,15 +835,74 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void deleteGroup(String groupId) {
         requireIdentification();
-        logCall("deleteGroup(" + groupId + ")");
         requiredGroupAdmin(groupId);
+        logCall("deleteGroup(" + groupId + ")");
 
         // walk the group and make everyone have a "none" relationship to it
         List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
         for(TalkGroupMember member: members) {
-            member.setRole(TalkGroupMember.ROLE_NONE);
+            member.setState(TalkGroupMember.STATE_NONE);
             changedGroupMember(member);
         }
+    }
+
+    @Override
+    public void inviteGroupMember(String groupId, String clientId) {
+        requireIdentification();
+        requiredGroupAdmin(groupId);
+        logCall("inviteGroupMember(" + groupId + "/" + clientId + ")");
+        // check that the client exists
+        TalkClient client = mDatabase.findClientById(clientId);
+        if(client == null) {
+            throw new RuntimeException("No such client");
+        }
+        // XXX need to apply blocklist here?
+        // get or create the group member
+        TalkGroupMember member = mDatabase.findGroupMemberForClient(groupId, clientId);
+        if(member == null) {
+            member = new TalkGroupMember();
+        }
+        // perform the invite
+        if(member.getState().equals(TalkGroupMember.STATE_NONE)) {
+            member.setGroupId(groupId);
+            member.setClientId(clientId);
+            member.setState(TalkGroupMember.STATE_INVITED);
+            changedGroupMember(member);
+        }
+    }
+
+    @Override
+    public void joinGroup(String groupId) {
+        requireIdentification();
+        logCall("joinGroup(" + groupId + ")");
+
+        String clientId = mConnection.getClientId();
+
+        TalkGroupMember member = mDatabase.findGroupMemberForClient(groupId, clientId);
+        if(member == null) {
+            throw new RuntimeException("Group does not exist");
+        }
+
+        if(!member.getState().equals(TalkGroupMember.STATE_INVITED)) {
+            throw new RuntimeException("Not invited to group");
+        }
+
+        member.setState(TalkGroupMember.STATE_JOINED);
+
+        changedGroupMember(member);
+    }
+
+    @Override
+    public void leaveGroup(String groupId) {
+        requireIdentification();
+        TalkGroupMember member = requiredGroupMember(groupId);
+        logCall("leaveGroup(" + groupId + ")");
+        // set membership state to NONE
+        member.setState(TalkGroupMember.STATE_NONE);
+        // degrade anyone who leaves to member
+        member.setRole(TalkGroupMember.ROLE_MEMBER);
+        // save the whole thing
+        changedGroupMember(member);
     }
 
     @Override
@@ -867,7 +927,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         if(targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
         }
-        targetMember.setRole(TalkGroupMember.ROLE_NONE);
+        // set membership state to NONE
+        targetMember.setState(TalkGroupMember.STATE_NONE);
+        // degrade removed users to member
+        targetMember.setRole(TalkGroupMember.ROLE_MEMBER);
         changedGroupMember(targetMember);
     }
 
@@ -914,7 +977,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     private TalkGroupMember requiredGroupAdmin(String groupId) {
         TalkGroupMember gm = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
-        if(gm != null && (gm.getRole().equals(TalkGroupMember.ROLE_ADMIN))) {
+        if(gm != null && (gm.getRole().equals(TalkGroupMember.ROLE_ADMIN))
+                && (gm.getState().equals(TalkGroupMember.STATE_JOINED))) {
             return gm;
         }
         throw new RuntimeException("Client is not an admin in group " + groupId);
@@ -924,7 +988,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         TalkGroupMember gm = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
         if(gm != null &&
                 (gm.getRole().equals(TalkGroupMember.ROLE_ADMIN)
-                   || gm.getRole().equals(TalkGroupMember.ROLE_MEMBER))) {
+                   || gm.getRole().equals(TalkGroupMember.ROLE_MEMBER))
+                && (gm.getState().equals(TalkGroupMember.STATE_JOINED))) {
             return gm;
         }
         throw new RuntimeException("Client is not a member in group " + groupId);
@@ -935,7 +1000,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
         logCall("createFileForStorage(" + contentLength + ")");
         return mServer.getFilecacheClient()
-                .createFileForStorage(mConnection.getClientId(),"application/octet-stream",contentLength);
+                .createFileForStorage(mConnection.getClientId(), "application/octet-stream", contentLength);
     }
 
     @Override
@@ -943,7 +1008,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
         logCall("createFileForTransfer(" + contentLength + ")");
         return mServer.getFilecacheClient()
-                .createFileForTransfer(mConnection.getClientId(),"application/octet-stream",contentLength);
+                .createFileForTransfer(mConnection.getClientId(), "application/octet-stream", contentLength);
     }
 
 }
