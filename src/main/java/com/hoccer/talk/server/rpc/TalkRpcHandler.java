@@ -756,8 +756,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
         logCall("getGroups(" + lastKnown + ")");
         List<TalkGroup> groups = mDatabase.findGroupsByClientIdChangedAfter(mConnection.getClientId(), lastKnown);
-
-        return null;
+        TalkGroup[] res = new TalkGroup[groups.size()];
+        for(int i = 0; i < res.length; i++) {
+            res[i] = groups.get(i);
+        }
+        return res;
     }
 
     @Override
@@ -820,7 +823,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             throw new RuntimeException("Client is not a member of group");
         }
         targetMember.setRole(member.getRole());
-        targetMember.setGroupKeyCipherText(member.getGroupKeyCipherText());
+        targetMember.setEncryptedGroupKey(member.getEncryptedGroupKey());
         targetMember.setInvitationSecret(member.getInvitationSecret());
         changedGroupMember(targetMember);
     }
