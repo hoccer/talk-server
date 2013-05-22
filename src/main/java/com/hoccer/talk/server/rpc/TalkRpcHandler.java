@@ -737,10 +737,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
-    public String createGroup(String groupTag) {
+    public String createGroup(TalkGroup group) {
         requireIdentification();
-        logCall("createGroup(" + groupTag + ")");
-        TalkGroup group = new TalkGroup();
+        logCall("createGroup(" + group.getGroupTag() + ")");
         group.setGroupId(UUID.randomUUID().toString());
         TalkGroupMember groupAdmin = new TalkGroupMember();
         groupAdmin.setClientId(mConnection.getClientId());
@@ -770,6 +769,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         logCall("updateGroup(" + group.getGroupId() + ")");
         TalkGroup targetGroup = mDatabase.findGroupById(group.getGroupId());
         targetGroup.setGroupName(group.getGroupName());
+        targetGroup.setGroupAvatarUrl(group.getGroupAvatarUrl());
         changedGroup(targetGroup);
     }
 
