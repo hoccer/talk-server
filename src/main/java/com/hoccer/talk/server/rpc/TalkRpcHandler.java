@@ -590,9 +590,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // who is doing this again?
         String clientId = mConnection.getClientId();
 
-        // get the current date for stamping
-        Date currentDate = new Date();
-
         // generate a message id
         String messageId = UUID.randomUUID().toString();
         message.setSenderId(clientId);
@@ -602,57 +599,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // filling in missing things as we go
         Vector<TalkDelivery> acceptedDeliveries = new Vector<TalkDelivery>();
         for (TalkDelivery d : deliveries) {
-            String receiverId = d.getReceiverId();
-            // initialize the mid field
-            d.setMessageId(messageId);
-            // set the sender for easier db retrieval
-            d.setSenderId(clientId);
-
-            // reject messages to self
-            if (receiverId.equals(clientId)) {
-                LOG.info("delivery rejected: send to self");
-                // mark delivery failed
-                d.setState(TalkDelivery.STATE_FAILED);
-                continue;
-            }
-
-            // reject messages to nonexisting clients
-            //   XXX this check does not currently work because findClient() creates instances
-            TalkClient receiver = mDatabase.findClientById(receiverId);
-            if (receiver == null) {
-                LOG.info("delivery rejected: client " + receiverId + " does not exist");
-                // mark delivery failed
-                d.setState(TalkDelivery.STATE_FAILED);
-                continue;
-            }
-
-            // find relationship between clients, if there is one
-            TalkRelationship relationship = mDatabase.findRelationshipBetween(receiverId, clientId);
-
-            // reject if there is no relationship
-            if (relationship == null) {
-                LOG.info("delivery rejected: client " + receiverId + " has no relationship with sender");
-                d.setState(TalkDelivery.STATE_FAILED);
-                continue;
-            }
-
-            // reject unless befriended
-            if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
-                LOG.info("delivery rejected: client " + receiverId
-                        + " is not a friend of sender (relationship is " + relationship.getState() + ")");
-                d.setState(TalkDelivery.STATE_FAILED);
-                continue;
-            }
-
-            // all fine, delivery accepted
-            LOG.info("delivery accepted: client " + receiverId);
-            // mark delivery as in progress
-            d.setState(TalkDelivery.STATE_DELIVERING);
-            // set delivery timestamps
-            d.setTimeAccepted(currentDate);
-            d.setTimeChanged(currentDate);
-            // delivery accepted, remember as such
-            acceptedDeliveries.add(d);
+            // perform the delivery request
+            acceptedDeliveries.addAll(requestOneDelivery(message, d));
         }
 
         // process all accepted deliveries
@@ -669,6 +617,116 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         // done - return whatever we are left with
         return deliveries;
+    }
+
+    private Vector<TalkDelivery> requestOneDelivery(TalkMessage m, TalkDelivery d) {
+        Vector<TalkDelivery> result = new Vector<TalkDelivery>();
+
+        // get the current date for stamping
+        Date currentDate = new Date();
+        // who is doing this again?
+        String clientId = mConnection.getClientId();
+        // get the receiver
+        String receiverId = d.getReceiverId();
+
+        // if we don't have a receiver try group delivery
+        if(receiverId == null) {
+            String groupId = d.getGroupId();
+            // if
+            if(groupId == null) {
+                LOG.info("delivery rejected: no receiver");
+                d.setState(TalkDelivery.STATE_FAILED);
+                return result;
+            }
+            // check that group exists
+            TalkGroup group = mDatabase.findGroupById(groupId);
+            if(group == null) {
+                LOG.info("delivery rejected: no such group");
+                d.setState(TalkDelivery.STATE_FAILED);
+                return result;
+            }
+            // check that sender is member of group
+            TalkGroupMember clientMember = mDatabase.findGroupMemberForClient(groupId, clientId);
+            if(clientMember == null &&
+                    !(clientMember.getRole().equals(TalkGroupMember.ROLE_MEMBER)
+                            || clientMember.getRole().equals(TalkGroupMember.ROLE_ADMIN))) {
+                LOG.info("delivery rejected: not a member of group");
+                d.setState(TalkDelivery.STATE_FAILED);
+                return result;
+            }
+            // deliver to each group member
+            List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
+            for(TalkGroupMember member: members) {
+                TalkDelivery memberDelivery = new TalkDelivery();
+                memberDelivery.setMessageId(d.getMessageId());
+                memberDelivery.setMessageTag(d.getMessageTag());
+                memberDelivery.setSenderId(d.getSenderId());
+                memberDelivery.setKeyId(d.getKeyId());
+                memberDelivery.setKeyCiphertext(d.getKeyCiphertext());
+                memberDelivery.setReceiverId(member.getClientId());
+                memberDelivery.setState(TalkDelivery.STATE_DELIVERING);
+                memberDelivery.setTimeAccepted(currentDate);
+                result.addAll(requestOneDelivery(m, memberDelivery));
+            }
+            // group deliveries are confirmed from acceptance
+            d.setState(TalkDelivery.STATE_CONFIRMED);
+            return result;
+        }
+
+        // get the message id
+        String messageId = m.getMessageId();
+        // initialize the mid field
+        d.setMessageId(messageId);
+        // set the sender for easier db retrieval
+        d.setSenderId(clientId);
+
+        // reject messages to self
+        if (receiverId.equals(clientId)) {
+            LOG.info("delivery rejected: send to self");
+            // mark delivery failed
+            d.setState(TalkDelivery.STATE_FAILED);
+            return result;
+        }
+
+        // reject messages to nonexisting clients
+        //   XXX this check does not currently work because findClient() creates instances
+        TalkClient receiver = mDatabase.findClientById(receiverId);
+        if (receiver == null) {
+            LOG.info("delivery rejected: client " + receiverId + " does not exist");
+            // mark delivery failed
+            d.setState(TalkDelivery.STATE_FAILED);
+            return result;
+        }
+
+        // find relationship between clients, if there is one
+        TalkRelationship relationship = mDatabase.findRelationshipBetween(receiverId, clientId);
+
+        // reject if there is no relationship
+        if (relationship == null) {
+            LOG.info("delivery rejected: client " + receiverId + " has no relationship with sender");
+            d.setState(TalkDelivery.STATE_FAILED);
+            return result;
+        }
+
+        // reject unless befriended
+        if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
+            LOG.info("delivery rejected: client " + receiverId
+                    + " is not a friend of sender (relationship is " + relationship.getState() + ")");
+            d.setState(TalkDelivery.STATE_FAILED);
+            return result;
+        }
+
+        // all fine, delivery accepted
+        LOG.info("delivery accepted: client " + receiverId);
+        // mark delivery as in progress
+        d.setState(TalkDelivery.STATE_DELIVERING);
+        // set delivery timestamps
+        d.setTimeAccepted(currentDate);
+        d.setTimeChanged(currentDate);
+        // we did accept the delivery
+        result.add(d);
+        // return
+        return result;
     }
 
     @Override
