@@ -330,12 +330,12 @@ public class JongoDatabase implements ITalkServerDatabase {
         List<TalkGroup> res = new ArrayList<TalkGroup>();
         List<TalkGroupMember> members = findGroupMembersForClient(clientId);
         for(TalkGroupMember member: members) {
-            String memberRole = member.getRole();
-            if(memberRole.equals(TalkGroupMember.ROLE_MEMBER) || memberRole.equals(TalkGroupMember.ROLE_ADMIN)) {
+            String memberState = member.getState()
+            if(memberState.equals(TalkGroupMember.STATE_INVITED) || memberState.equals(TalkGroupMember.STATE_JOINED)) {
                 TalkGroup group = findGroupById(member.getGroupId());
-                if(group.getLastChanged().after(lastKnown)) {
+                //if(group.getLastChanged().after(lastKnown)) { // XXX fix this
                     res.add(group);
-                }
+                //}
             }
         }
         return res;
