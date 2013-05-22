@@ -35,6 +35,9 @@ public class TalkServerConfiguration {
     private String mJongoDb = "talk";
 
     private String mFilecacheControlUrl = "http://localhost:8081/control";
+    private String mFilecacheUploadBase = "http://localhost:8081/upload/";
+    private String mFilecacheDownloadBase = "http://localhost:8081/download/";
+
 
     public TalkServerConfiguration() {
     }
@@ -54,6 +57,8 @@ public class TalkServerConfiguration {
         mJongoDb = properties.getProperty(PROPERTY_PREFIX + ".jongo.db", "talk");
         // Filecache
         mFilecacheControlUrl = properties.getProperty(PROPERTY_PREFIX + ".filecache.controlUrl", mFilecacheControlUrl);
+        mFilecacheUploadBase = properties.getProperty(PROPERTY_PREFIX + ".filecache.uploadBase", mFilecacheUploadBase);
+        mFilecacheDownloadBase = properties.getProperty(PROPERTY_PREFIX + ".filecache.downloadBase", mFilecacheDownloadBase);
     }
 
     public boolean isGcmEnabled() {
@@ -102,4 +107,11 @@ public class TalkServerConfiguration {
         return url;
     }
 
+    public String getFilecacheUploadBase() {
+        return mFilecacheUploadBase;
+    }
+
+    public String getFilecacheDownloadBase() {
+        return mFilecacheDownloadBase;
+    }
 }

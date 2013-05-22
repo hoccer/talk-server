@@ -930,4 +930,20 @@ public class TalkRpcHandler implements ITalkRpcServer {
         throw new RuntimeException("Client is not a member in group " + groupId);
     }
 
+    @Override
+    public FileHandles createFileForStorage(int contentLength) {
+        requireIdentification();
+        logCall("createFileForStorage(" + contentLength + ")");
+        return mServer.getFilecacheClient()
+                .createFileForStorage(mConnection.getClientId(),"application/octet-stream",contentLength);
+    }
+
+    @Override
+    public FileHandles createFileForTransfer(int contentLength) {
+        requireIdentification();
+        logCall("createFileForTransfer(" + contentLength + ")");
+        return mServer.getFilecacheClient()
+                .createFileForTransfer(mConnection.getClientId(),"application/octet-stream",contentLength);
+    }
+
 }
