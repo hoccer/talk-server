@@ -919,11 +919,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
-    public void removeGroupMember(TalkGroupMember member) {
+    public void removeGroupMember(String groupId, String clientId) {
         requireIdentification();
-        logCall("removeGroupMember(" + member.getGroupId() + "/" + member.getClientId() + ")");
-        requiredGroupAdmin(member.getGroupId());
-        TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
+        logCall("removeGroupMember(" + groupId + "/" + clientId + ")");
+        requiredGroupAdmin(groupId);
+        TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
         if(targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
         }
