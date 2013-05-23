@@ -881,10 +881,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // get or create the group member
         TalkGroupMember member = mDatabase.findGroupMemberForClient(groupId, clientId);
         if(member == null) {
-            LOG.info("no existing entry!");
             member = new TalkGroupMember();
-        } else {
-            LOG.info("existing entry!");
         }
         // perform the invite
         if(member.getState().equals(TalkGroupMember.STATE_NONE)) {
