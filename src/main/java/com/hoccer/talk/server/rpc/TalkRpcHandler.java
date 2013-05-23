@@ -1,5 +1,6 @@
 package com.hoccer.talk.server.rpc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hoccer.talk.model.*;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
@@ -822,6 +823,26 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public void updateGroupName(String groupId, String name) {
+        requireIdentification();
+        requiredGroupAdmin(groupId);
+        logCall("updateGroupName(" + groupId + "," + name + ")");
+        TalkGroup targetGroup = mDatabase.findGroupById(groupId);
+        targetGroup.setGroupName(name);
+        changedGroup(targetGroup);
+    }
+
+    @Override
+    public void updateGroupAvatar(String groupId, String avatarUrl) {
+        requireIdentification();
+        requiredGroupAdmin(groupId);
+        logCall("updateGroupAvatar(" + groupId + "," + avatarUrl + ")");
+        TalkGroup targetGroup = mDatabase.findGroupById(groupId);
+        targetGroup.setGroupAvatarUrl(avatarUrl);
+        changedGroup(targetGroup);
+    }
+
+    @Override
     public void updateGroup(TalkGroup group) {
         requireIdentification();
         requiredGroupAdmin(group.getGroupId());
@@ -860,7 +881,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // get or create the group member
         TalkGroupMember member = mDatabase.findGroupMemberForClient(groupId, clientId);
         if(member == null) {
+            LOG.info("no existing entry!");
             member = new TalkGroupMember();
+        } else {
+            LOG.info("existing entry!");
         }
         // perform the invite
         if(member.getState().equals(TalkGroupMember.STATE_NONE)) {
@@ -908,19 +932,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
-    public void addGroupMember(TalkGroupMember member) {
-        requireIdentification();
-        logCall("addGroupMember(" + member.getGroupId() + "/" + member.getClientId() + ")");
-        requiredGroupAdmin(member.getGroupId());
-        TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
-        if(targetMember != null) {
-            throw new RuntimeException("Already a member");
-        }
-        mDatabase.saveGroupMember(targetMember);
-        changedGroupMember(member);
-    }
-
-    @Override
     public void removeGroupMember(String groupId, String clientId) {
         requireIdentification();
         logCall("removeGroupMember(" + groupId + "/" + clientId + ")");
@@ -933,6 +944,35 @@ public class TalkRpcHandler implements ITalkRpcServer {
         targetMember.setState(TalkGroupMember.STATE_NONE);
         // degrade removed users to member
         targetMember.setRole(TalkGroupMember.ROLE_MEMBER);
+        changedGroupMember(targetMember);
+    }
+
+    @Override
+    public void updateGroupRole(String groupId, String clientId, String role) {
+        requireIdentification();
+        logCall("updateGroupRole(" + groupId + "/" + clientId + "," + role + ")");
+        requiredGroupAdmin(groupId);
+        TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
+        if(targetMember == null) {
+            throw new RuntimeException("Client is not a member of group");
+        }
+        if(!TalkGroupMember.isValidRole(role)) {
+            throw new RuntimeException("Invalid role");
+        }
+        targetMember.setRole(role);
+        changedGroupMember(targetMember);
+    }
+
+    @Override
+    public void updateGroupKey(String groupId, String clientId, String key) {
+        requireIdentification();
+        logCall("updateGroupKey(" + groupId + "/" + clientId + "," + key + ")");
+        requiredGroupAdmin(groupId);
+        TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
+        if(targetMember == null) {
+            throw new RuntimeException("Client is not a member of group");
+        }
+        targetMember.setEncryptedGroupKey(key);
         changedGroupMember(targetMember);
     }
 
