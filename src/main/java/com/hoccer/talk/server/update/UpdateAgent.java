@@ -116,9 +116,7 @@ public class UpdateAgent {
                 if(updatedGroup != null) {
                     List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                     for(TalkGroupMember member: members) {
-                        String memberRole = member.getRole();
-                        if(memberRole.equals(TalkGroupMember.ROLE_MEMBER)
-                                || memberRole.equals(TalkGroupMember.ROLE_ADMIN)) {
+                        if(member.isMember()) {
                             TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
                             if(connection == null || !connection.isConnected()) {
                                 continue;
@@ -147,9 +145,7 @@ public class UpdateAgent {
                 }
                 List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                 for(TalkGroupMember member: members) {
-                    String memberRole = member.getRole();
-                    if(memberRole.equals(TalkGroupMember.ROLE_MEMBER)
-                            || memberRole.equals(TalkGroupMember.ROLE_ADMIN)) {
+                    if(member.isMember()) {
                         TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
                         if(connection == null || !connection.isConnected()) {
                             continue;

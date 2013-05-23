@@ -378,7 +378,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         TalkKey res = null;
 
         TalkRelationship rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
-        if(rel != null && rel.getState().equals(TalkRelationship.STATE_FRIEND)) {
+        if(rel != null && rel.isFriend()) {
             res = mDatabase.findKey(clientId, keyId);
         } else {
             throw new RuntimeException("Given client is not your friend");
@@ -979,8 +979,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     private TalkGroupMember requiredGroupAdmin(String groupId) {
         TalkGroupMember gm = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
-        if(gm != null && (gm.getRole().equals(TalkGroupMember.ROLE_ADMIN))
-                && (gm.getState().equals(TalkGroupMember.STATE_JOINED))) {
+        if(gm != null && gm.isAdmin()) {
             return gm;
         }
         throw new RuntimeException("Client is not an admin in group " + groupId);
@@ -988,10 +987,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     private TalkGroupMember requiredGroupMember(String groupId) {
         TalkGroupMember gm = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
-        if(gm != null &&
-                (gm.getRole().equals(TalkGroupMember.ROLE_ADMIN)
-                   || gm.getRole().equals(TalkGroupMember.ROLE_MEMBER))
-                && (gm.getState().equals(TalkGroupMember.STATE_JOINED))) {
+        if(gm != null && gm.isMember()) {
             return gm;
         }
         throw new RuntimeException("Client is not a member in group " + groupId);
