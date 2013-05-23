@@ -48,67 +48,78 @@ public class DeliveryRequest {
         List<TalkDelivery> inDeliveries =
                 mDatabase.findDeliveriesForClientInState(mClientId, TalkDelivery.STATE_DELIVERING);
         if(inDeliveries.size() > 0) {
-            // we need to push if we don't succeed
+            LOG.info("has " + inDeliveries.size() + " incoming deliveries");
+            // we will need to push if we don't succeed
             needToNotify = true;
-            // deliver if we can
-            if(currentlyConnected) {
-                for(TalkDelivery delivery: inDeliveries) {
-                    // rate limit
-                    long now = System.currentTimeMillis();
-                    long delta = Math.max(0, now - delivery.getTimeUpdatedIn().getTime());
-                    if(delta < 5000) {
-                        continue;
-                    }
-                    // get the matching message
-                    TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
-                    // post the delivery for the client
-                    try {
-                        rpc.incomingDelivery(delivery, message);
-                        delivery.setTimeUpdatedIn(new Date());
-                        mDatabase.saveDelivery(delivery);
-                    } catch (Exception e) {
-                        LOG.info("Exception calling incomingDelivery()", e);
-                        //currentlyConnected = false; XXX do this when we can differentiate
-                    }
-                    // check for disconnects
-                    if(!connection.isConnected()) {
-                        currentlyConnected = false;
-                    }
-                    // we lost the connection somehow
-                    if(!currentlyConnected) {
-                        break;
-                    }
+            // deliver one by one
+            for(TalkDelivery delivery: inDeliveries) {
+                // we lost the connection somehow
+                if(!currentlyConnected) {
+                    break;
                 }
+
+                // rate limit
+                long now = System.currentTimeMillis();
+                long delta = Math.max(0, now - delivery.getTimeUpdatedIn().getTime());
+                if(delta < 5000) {
+                    continue;
+                }
+
+                // get the matching message
+                TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
+                if(message == null) {
+                    LOG.warn("message not found: " + delivery.getMessageId());
+                    continue;
+                }
+
+                // post the delivery for the client
+                try {
+                    rpc.incomingDelivery(delivery, message);
+                    delivery.setTimeUpdatedIn(new Date());
+                    mDatabase.saveDelivery(delivery);
+                } catch (Exception e) {
+                    LOG.info("Exception calling incomingDelivery()", e);
+                    //currentlyConnected = false; XXX do this when we can differentiate
+                }
+
+                // check for disconnects
+                if(!connection.isConnected()) {
+                    currentlyConnected = false;
+                }
+
             }
         }
 
         List<TalkDelivery> outDeliveries =
                 mDatabase.findDeliveriesFromClientInState(mClientId, TalkDelivery.STATE_DELIVERED);
-        if(outDeliveries.size() > 0) {
-            if(currentlyConnected) {
-                for(TalkDelivery delivery: outDeliveries) {
-                    // rate limit
-                    long now = System.currentTimeMillis();
-                    long delta = Math.max(0, now - delivery.getTimeUpdatedOut().getTime());
-                    if(delta < 5000) {
-                        continue;
-                    }
-                    // notify it
-                    try {
-                        rpc.outgoingDelivery(delivery);
-                        delivery.setTimeUpdatedOut(new Date());
-                        mDatabase.saveDelivery(delivery);
-                    } catch (Exception e) {
-                        LOG.info("Exception calling outgoingDelivery()");
-                    }
-                    // check for disconnects
-                    if(!connection.isConnected()) {
-                        currentlyConnected = false;
-                    }
-                    // we lost the connection somehow
-                    if(!currentlyConnected) {
-                        break;
-                    }
+        if(currentlyConnected && outDeliveries.size() > 0) {
+            LOG.info("has " + outDeliveries.size() + " outgoing deliveries");
+            // deliver one by one
+            for(TalkDelivery delivery: outDeliveries) {
+                // we lost the connection somehow
+                if(!currentlyConnected) {
+                    break;
+                }
+
+                // rate limit
+                long now = System.currentTimeMillis();
+                long delta = Math.max(0, now - delivery.getTimeUpdatedOut().getTime());
+                if(delta < 5000) {
+                    continue;
+                }
+
+                // notify it
+                try {
+                    rpc.outgoingDelivery(delivery);
+                    delivery.setTimeUpdatedOut(new Date());
+                    mDatabase.saveDelivery(delivery);
+                } catch (Exception e) {
+                    LOG.info("Exception calling outgoingDelivery()");
+                }
+
+                // check for disconnects
+                if(!connection.isConnected()) {
+                    currentlyConnected = false;
                 }
             }
         }

@@ -31,7 +31,11 @@ public class DeliveryAgent {
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                request.perform();
+                try {
+                    request.perform();
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
             }
         });
     }
