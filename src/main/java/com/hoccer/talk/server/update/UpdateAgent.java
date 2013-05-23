@@ -120,7 +120,7 @@ public class UpdateAgent {
                             if(connection == null || !connection.isConnected()) {
                                 continue;
                             }
-                            ITalkRpcClient pc = connection.getClientRpc();
+                            ITalkRpcClient rpc = connection.getClientRpc();
                             try {
                                 rpc.groupUpdated(updatedGroup);
                             } catch (Exception e) {
