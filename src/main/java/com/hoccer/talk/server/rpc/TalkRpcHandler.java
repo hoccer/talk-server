@@ -947,7 +947,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         targetMember.setRole(member.getRole());
         targetMember.setEncryptedGroupKey(member.getEncryptedGroupKey());
-        targetMember.setInvitationSecret(member.getInvitationSecret());
         changedGroupMember(targetMember);
     }
 
