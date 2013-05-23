@@ -108,7 +108,6 @@ public class UpdateAgent {
     }
 
     public void requestGroupUpdate(final String groupId) {
-        LOG.info("requesting group update " + groupId);
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -135,7 +134,6 @@ public class UpdateAgent {
     }
 
     public void requestGroupMembershipUpdate(final String groupId, final String clientId) {
-        LOG.info("requesting group update " + groupId + "/" + clientId);
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
