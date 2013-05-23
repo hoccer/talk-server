@@ -12,7 +12,9 @@ import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
 import org.apache.log4j.Logger;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -54,20 +56,41 @@ public class UpdateAgent {
     }
 
     private void performPresenceUpdate(TalkPresence presence) {
+        // own client id
         String clientId = presence.getClientId();
-        // find relationships where others call us friend
-        List<TalkRelationship> rels = mDatabase.findRelationshipsByOtherClient(clientId);
-        // for each such relationship
-        for(TalkRelationship rel: rels) {
+        // set to collect clients into
+        Set<String> clients = new HashSet<String>();
+        // collect clients known through relationships
+        List<TalkRelationship> relationships = mDatabase.findRelationshipsByOtherClient(clientId);
+        for(TalkRelationship relationship: relationships) {
             // if the relation is friendly
-            if(rel.getState().equals(TalkRelationship.STATE_FRIEND)) {
-                // look for a connection by the other client
-                TalkRpcConnection connection = mServer.getClientConnection(rel.getClientId());
-                // and if the corresponding client is online
-                if(connection != null && connection.isLoggedIn()) {
-                    // tell the client about the new presence
-                    connection.getClientRpc().presenceUpdated(presence);
+            if(relationship.isFriend()) {
+                clients.add(relationship.getClientId());
+            }
+        }
+        // collect clients known through groups
+        List<TalkGroupMember> ownMembers = mDatabase.findGroupMembersForClient(clientId);
+        for(TalkGroupMember ownMember: ownMembers) {
+            String groupId = ownMember.getGroupId();
+            if(ownMember.isMember()) {
+                List<TalkGroupMember> otherMembers = mDatabase.findGroupMembersById(groupId);
+                for(TalkGroupMember otherMember: otherMembers) {
+                    if(otherMember.isMember()) {
+                        clients.add(otherMember.getClientId());
+                    }
                 }
+            }
+        }
+        // remove self
+        clients.remove(clientId);
+        // send presence updates
+        for(String client: clients) {
+            // look for a connection by the other client
+            TalkRpcConnection connection = mServer.getClientConnection(client);
+            // and if the corresponding client is online
+            if(connection != null && connection.isLoggedIn()) {
+                // tell the client about the new presence
+                connection.getClientRpc().presenceUpdated(presence);
             }
         }
     }

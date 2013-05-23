@@ -13,10 +13,7 @@ import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Database implementation using the Jongo mapper to MongoDB
@@ -242,18 +239,43 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public List<TalkPresence> findPresencesChangedAfter(String clientId, Date lastKnown) {
+        // result array
         List<TalkPresence> res = new ArrayList<TalkPresence>();
-        List<TalkRelationship> rels = findRelationships(clientId);
-        for(TalkRelationship rel: rels) {
-            if(rel.getState().equals(TalkRelationship.STATE_FRIEND)) {
-                TalkPresence pres = findPresenceForClient(rel.getOtherClientId());
-                if(pres != null) {
-                    if(pres.getTimestamp().after(lastKnown)) {
-                        res.add(pres);
+        // set to collect clients into
+        Set<String> clients = new HashSet<String>();
+        // collect clients known through relationships
+        List<TalkRelationship> relationships = findRelationshipsByOtherClient(clientId);
+        for(TalkRelationship relationship: relationships) {
+            // if the relation is friendly
+            if(relationship.isFriend()) {
+                clients.add(relationship.getClientId());
+            }
+        }
+        // collect clients known through groups
+        List<TalkGroupMember> ownMembers = findGroupMembersForClient(clientId);
+        for(TalkGroupMember ownMember: ownMembers) {
+            String groupId = ownMember.getGroupId();
+            if(ownMember.isMember()) {
+                List<TalkGroupMember> otherMembers = findGroupMembersById(groupId);
+                for(TalkGroupMember otherMember: otherMembers) {
+                    if(otherMember.isMember()) {
+                        clients.add(otherMember.getClientId());
                     }
                 }
             }
         }
+        // remove self
+        clients.remove(clientId);
+        // collect presences
+        for(String client: clients) {
+            TalkPresence pres = findPresenceForClient(client);
+            if(pres != null) {
+                if(pres.getTimestamp().after(lastKnown)) {
+                    res.add(pres);
+                }
+            }
+        }
+        // return them
         return res;
     }
 
