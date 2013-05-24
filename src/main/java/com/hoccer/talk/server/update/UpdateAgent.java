@@ -107,6 +107,27 @@ public class UpdateAgent {
         });
     }
 
+    public void requestGroupUpdate(final String groupId, final String clientId) {
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                TalkGroup updatedGroup = mDatabase.findGroupById(groupId);
+                if(updatedGroup != null) {
+                    TalkRpcConnection connection = mServer.getClientConnection(clientId);
+                    if(connection != null || !connection.isConnected()) {
+                        return;
+                    }
+                    ITalkRpcClient rpc = connection.getClientRpc();
+                    try {
+                        rpc.groupUpdated(updatedGroup);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
+
     public void requestGroupUpdate(final String groupId) {
         mExecutor.execute(new Runnable() {
             @Override
