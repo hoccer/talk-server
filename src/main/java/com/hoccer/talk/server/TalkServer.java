@@ -53,6 +53,7 @@ public class TalkServer {
     /** Ping measurement agent */
     PingAgent mPingAgent;
 
+    /** Client for the filecache control interface */
     FilecacheClient mFilecacheClient;
 
     /** All connections (every connected websocket) */
@@ -118,6 +119,7 @@ public class TalkServer {
         return mPingAgent;
     }
 
+    /** @return the filecache control client */
     public FilecacheClient getFilecacheClient() {
         return mFilecacheClient;
     }
