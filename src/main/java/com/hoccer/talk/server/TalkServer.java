@@ -1,7 +1,12 @@
 package com.hoccer.talk.server;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.MetricSet;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.rpc.ITalkRpcServer;
@@ -31,6 +36,10 @@ public class TalkServer {
 
     /** server-global JSON mapper */
 	ObjectMapper mMapper;
+
+    /** Metrics registry */
+    MetricRegistry mMetrics;
+    JmxReporter mJmxReporter;
 
     /** JSON-RPC server instance */
 	JsonRpcServer mRpcServer;
@@ -64,25 +73,41 @@ public class TalkServer {
 	Hashtable<String, TalkRpcConnection> mConnectionsByClientId =
 			new Hashtable<String, TalkRpcConnection>();
 
+    AtomicInteger mConnectionsTotal = new AtomicInteger();
+    AtomicInteger mConnectionsOpen = new AtomicInteger();
+
     /**
      * Create and initialize a Hoccer Talk server
      */
 	public TalkServer(TalkServerConfiguration configuration, ITalkServerDatabase database) {
         mConfiguration = configuration;
         mDatabase = database;
+
 		mMapper = createObjectMapper();
+
+        mMetrics = new MetricRegistry();
+        initializeMetrics();
+
 		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
         mDeliveryAgent = new DeliveryAgent(this);
 		mPushAgent = new PushAgent(this);
         mUpdateAgent = new UpdateAgent(this);
         mPingAgent = new PingAgent(this);
         mFilecacheClient = new FilecacheClient(this);
+
+        mJmxReporter = JmxReporter.forRegistry(mMetrics).build();
+        mJmxReporter.start();
     }
 
     /** @return the object mapper used by this server */
 	public ObjectMapper getMapper() {
 		return mMapper;
 	}
+
+    /** @return the metrics registry for the server */
+    public MetricRegistry getMetrics() {
+        return mMetrics;
+    }
 
     /** @return the JSON-RPC server */
 	public JsonRpcServer getRpcServer() {
@@ -160,7 +185,9 @@ public class TalkServer {
      * @param connection to be registered
      */
 	public void connectionOpened(TalkRpcConnection connection) {
-		mConnections.add(connection);
+        mConnectionsTotal.incrementAndGet();
+        mConnectionsOpen.incrementAndGet();
+        mConnections.add(connection);
 	}
 
     /**
@@ -168,6 +195,7 @@ public class TalkServer {
      * @param connection to be removed
      */
 	public void connectionClosed(TalkRpcConnection connection) {
+        mConnectionsOpen.decrementAndGet();
         // remove connection from list
 		mConnections.remove(connection);
         // remove connection from table
@@ -187,6 +215,24 @@ public class TalkServer {
         ObjectMapper result = new ObjectMapper();
         result.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return result;
+    }
+
+    /** Set up server metrics */
+    private void initializeMetrics() {
+        mMetrics.register(MetricRegistry.name(TalkServer.class, "connectionsOpen"),
+                new Gauge<Integer>() {
+                    @Override
+                    public Integer getValue() {
+                        return mConnectionsOpen.intValue();
+                    }
+                });
+        mMetrics.register(MetricRegistry.name(TalkServer.class, "connectionsTotal"),
+                new Gauge<Integer>() {
+                    @Override
+                    public Integer getValue() {
+                        return mConnectionsTotal.intValue();
+                    }
+                });
     }
 	
 }
