@@ -918,7 +918,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void leaveGroup(String groupId) {
         requireIdentification();
-        TalkGroupMember member = requiredGroupMember(groupId);
+        TalkGroupMember member = requiredGroupInvitedOrMember(groupId);
         logCall("leaveGroup(" + groupId + ")");
         // set membership state to NONE
         member.setState(TalkGroupMember.STATE_NONE);
@@ -991,7 +991,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public TalkGroupMember[] getGroupMembers(String groupId, Date lastKnown) {
         requireIdentification();
         logCall("getGroupMembers(" + groupId + "/" + lastKnown + ")");
-        requiredGroupMember(groupId);
+        requiredGroupInvitedOrMember(groupId);
 
         List<TalkGroupMember> members = mDatabase.findGroupMembersByIdChangedAfter(groupId, lastKnown);
         TalkGroupMember[] res = new TalkGroupMember[members.size()];
@@ -1021,12 +1021,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
         throw new RuntimeException("Client is not an admin in group " + groupId);
     }
 
-    private TalkGroupMember requiredGroupMember(String groupId) {
+    private TalkGroupMember requiredGroupInvitedOrMember(String groupId) {
         TalkGroupMember gm = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
-        if(gm != null && gm.isMember()) {
+        if(gm != null && (gm.isInvited() || gm.isMember())) {
             return gm;
         }
-        throw new RuntimeException("Client is not a member in group " + groupId);
+        throw new RuntimeException("Client is not an member in group " + groupId);
     }
 
     @Override
