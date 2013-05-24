@@ -662,7 +662,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 TalkDelivery memberDelivery = new TalkDelivery();
                 memberDelivery.setMessageId(d.getMessageId());
                 memberDelivery.setMessageTag(d.getMessageTag());
-                memberDelivery.setSenderId(d.getSenderId());
+                memberDelivery.setSenderId(clientId);
                 memberDelivery.setKeyId(member.getMemberKeyId());
                 memberDelivery.setKeyCiphertext(member.getEncryptedGroupKey());
                 memberDelivery.setReceiverId(member.getClientId());
