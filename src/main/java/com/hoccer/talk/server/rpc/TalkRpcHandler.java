@@ -656,6 +656,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
             // deliver to each group member
             List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
             for(TalkGroupMember member: members) {
+                if(member.getClientId().equals(clientId)) {
+                    continue;
+                }
                 TalkDelivery memberDelivery = new TalkDelivery();
                 memberDelivery.setMessageId(d.getMessageId());
                 memberDelivery.setMessageTag(d.getMessageTag());
@@ -665,13 +668,48 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 memberDelivery.setReceiverId(member.getClientId());
                 memberDelivery.setState(TalkDelivery.STATE_DELIVERING);
                 memberDelivery.setTimeAccepted(currentDate);
-                result.addAll(requestOneDelivery(m, memberDelivery));
+
+                boolean success = performOneDelivery(m, memberDelivery);
+                if(success) {
+                    result.add(memberDelivery);
+                }
             }
             // group deliveries are confirmed from acceptance
             d.setState(TalkDelivery.STATE_CONFIRMED);
-            return result;
-        }
+        } else {
+            // find relationship between clients, if there is one
+            TalkRelationship relationship = mDatabase.findRelationshipBetween(receiverId, clientId);
 
+            // reject if there is no relationship
+            if (relationship == null) {
+                LOG.info("delivery rejected: client " + receiverId + " has no relationship with sender");
+                d.setState(TalkDelivery.STATE_FAILED);
+                return result;
+            }
+
+            // reject unless befriended
+            if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
+                LOG.info("delivery rejected: client " + receiverId
+                        + " is not a friend of sender (relationship is " + relationship.getState() + ")");
+                d.setState(TalkDelivery.STATE_FAILED);
+                return result;
+            }
+
+            boolean success = performOneDelivery(m, d);
+            if(success) {
+                result.add(d);
+            }
+        }
+        return result;
+    }
+
+    private boolean performOneDelivery(TalkMessage m, TalkDelivery d) {
+        // get the current date for stamping
+        Date currentDate = new Date();
+        // who is doing this again?
+        String clientId = mConnection.getClientId();
+        // get the receiver
+        String receiverId = d.getReceiverId();
         // get the message id
         String messageId = m.getMessageId();
         // initialize the mid field
@@ -684,7 +722,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             LOG.info("delivery rejected: send to self");
             // mark delivery failed
             d.setState(TalkDelivery.STATE_FAILED);
-            return result;
+            return false;
         }
 
         // reject messages to nonexisting clients
@@ -694,25 +732,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             LOG.info("delivery rejected: client " + receiverId + " does not exist");
             // mark delivery failed
             d.setState(TalkDelivery.STATE_FAILED);
-            return result;
-        }
-
-        // find relationship between clients, if there is one
-        TalkRelationship relationship = mDatabase.findRelationshipBetween(receiverId, clientId);
-
-        // reject if there is no relationship
-        if (relationship == null) {
-            LOG.info("delivery rejected: client " + receiverId + " has no relationship with sender");
-            d.setState(TalkDelivery.STATE_FAILED);
-            return result;
-        }
-
-        // reject unless befriended
-        if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
-            LOG.info("delivery rejected: client " + receiverId
-                    + " is not a friend of sender (relationship is " + relationship.getState() + ")");
-            d.setState(TalkDelivery.STATE_FAILED);
-            return result;
+            return false;
         }
 
         // all fine, delivery accepted
@@ -722,10 +742,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // set delivery timestamps
         d.setTimeAccepted(currentDate);
         d.setTimeChanged(currentDate);
-        // we did accept the delivery
-        result.add(d);
         // return
-        return result;
+        return true;
     }
 
     @Override
