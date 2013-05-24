@@ -353,7 +353,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         List<TalkGroupMember> members = findGroupMembersForClient(clientId);
         for(TalkGroupMember member: members) {
             String memberState = member.getState();
-            if(memberState.equals(TalkGroupMember.STATE_INVITED) || memberState.equals(TalkGroupMember.STATE_JOINED)) {
+            if(member.isMember() || member.isInvited()) {
                 TalkGroup group = findGroupById(member.getGroupId());
                 //if(group.getLastChanged().after(lastKnown)) { // XXX fix this
                     res.add(group);
