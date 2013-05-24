@@ -660,7 +660,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 memberDelivery.setMessageId(d.getMessageId());
                 memberDelivery.setMessageTag(d.getMessageTag());
                 memberDelivery.setSenderId(d.getSenderId());
-                memberDelivery.setKeyId(d.getKeyId());
+                memberDelivery.setKeyId(member.getMemberKeyId());
                 memberDelivery.setKeyCiphertext(member.getEncryptedGroupKey());
                 memberDelivery.setReceiverId(member.getClientId());
                 memberDelivery.setState(TalkDelivery.STATE_DELIVERING);
@@ -959,14 +959,15 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
-    public void updateGroupKey(String groupId, String clientId, String key) {
+    public void updateGroupKey(String groupId, String clientId, String keyId, String key) {
         requireIdentification();
-        logCall("updateGroupKey(" + groupId + "/" + clientId + "," + key + ")");
+        logCall("updateGroupKey(" + groupId + "/" + clientId + "," + keyId + ")");
         requiredGroupAdmin(groupId);
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
         if(targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
         }
+        targetMember.setMemberKeyId(keyId);
         targetMember.setEncryptedGroupKey(key);
         changedGroupMember(targetMember);
     }
