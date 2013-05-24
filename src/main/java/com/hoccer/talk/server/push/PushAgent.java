@@ -6,7 +6,10 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricRegistry;
 import com.google.android.gcm.server.Sender;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
@@ -33,8 +36,12 @@ public class PushAgent {
     private ApnsService mApnsService;
 
     Hashtable<String, PushRequest> mOutstanding;
-	
-	public PushAgent(TalkServer server) {
+
+    AtomicInteger mPushRequests = new AtomicInteger();
+    AtomicInteger mPushDelayed = new AtomicInteger();
+    AtomicInteger mPushIncapable = new AtomicInteger();
+
+    public PushAgent(TalkServer server) {
 		mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PUSH);
         mServer = server;
         mDatabase = mServer.getDatabase();
@@ -46,13 +53,41 @@ public class PushAgent {
         if(mConfig.isApnsEnabled()) {
             initializeApns();
         }
+        initializeMetrics(mServer.getMetrics());
+    }
+
+    private void initializeMetrics(MetricRegistry metrics) {
+        metrics.register(MetricRegistry.name(PushAgent.class, "pushRequests"),
+                new Gauge<Integer>() {
+                    @Override
+                    public Integer getValue() {
+                        return mPushRequests.intValue();
+                    }
+                });
+        metrics.register(MetricRegistry.name(PushAgent.class, "pushIncapable"),
+                new Gauge<Integer>() {
+                    @Override
+                    public Integer getValue() {
+                        return mPushIncapable.intValue();
+                    }
+                });
+        metrics.register(MetricRegistry.name(PushAgent.class, "pushDelayed"),
+                new Gauge<Integer>() {
+                    @Override
+                    public Integer getValue() {
+                        return mPushDelayed.intValue();
+                    }
+                });
     }
 
     public void submitRequest(TalkClient client) {
         long now = System.currentTimeMillis();
 
+        mPushRequests.incrementAndGet();
+
         // bail if no push
         if(!client.isPushCapable()) {
+            mPushIncapable.incrementAndGet();
             return;
         }
 
@@ -64,6 +99,7 @@ public class PushAgent {
         long delta = Math.max(0, now - lastPush.getTime());
         long delay = 0;
         if(delta < 5000) {
+            mPushDelayed.incrementAndGet();
             delay = 5000 - delta;
         }
         client.setTimeLastPush(new Date());

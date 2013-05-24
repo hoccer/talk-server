@@ -37,28 +37,28 @@ public class PingAgent {
     }
 
     private void initializeMetrics(MetricRegistry metrics) {
-        metrics.register(MetricRegistry.name(PingAgent.class, "requests"),
+        metrics.register(MetricRegistry.name(PingAgent.class, "pingRequests"),
                 new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
                         return mPingRequests.intValue();
                     }
                 });
-        metrics.register(MetricRegistry.name(PingAgent.class, "attempts"),
+        metrics.register(MetricRegistry.name(PingAgent.class, "pingAttempts"),
                 new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
                         return mPingAttempts.intValue();
                     }
                 });
-        metrics.register(MetricRegistry.name(PingAgent.class, "failures"),
+        metrics.register(MetricRegistry.name(PingAgent.class, "pingFailures"),
                 new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
                         return mPingFailures.intValue();
                     }
                 });
-        metrics.register(MetricRegistry.name(PingAgent.class, "successes"),
+        metrics.register(MetricRegistry.name(PingAgent.class, "pingSuccesses"),
                 new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
