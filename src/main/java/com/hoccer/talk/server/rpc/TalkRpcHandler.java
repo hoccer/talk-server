@@ -600,6 +600,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // filling in missing things as we go
         Vector<TalkDelivery> acceptedDeliveries = new Vector<TalkDelivery>();
         for (TalkDelivery d : deliveries) {
+            // fill out various fields
+            d.setMessageId(message.getMessageId());
+            d.setSenderId(clientId);
             // perform the delivery request
             acceptedDeliveries.addAll(requestOneDelivery(message, d));
         }
@@ -660,7 +663,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     continue;
                 }
                 TalkDelivery memberDelivery = new TalkDelivery();
-                memberDelivery.setMessageId(d.getMessageId());
+                memberDelivery.setMessageId(m.getMessageId());
                 memberDelivery.setMessageTag(d.getMessageTag());
                 memberDelivery.setGroupId(groupId);
                 memberDelivery.setSenderId(clientId);
@@ -673,10 +676,14 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 boolean success = performOneDelivery(m, memberDelivery);
                 if(success) {
                     result.add(memberDelivery);
+                    // group deliveries are confirmed from acceptance
+                    d.setState(TalkDelivery.STATE_CONFIRMED);
+                    // set delivery timestamps
+                    d.setTimeAccepted(currentDate);
+                    d.setTimeChanged(currentDate);
                 }
             }
-            // group deliveries are confirmed from acceptance
-            d.setState(TalkDelivery.STATE_CONFIRMED);
+
         } else {
             // find relationship between clients, if there is one
             TalkRelationship relationship = mDatabase.findRelationshipBetween(receiverId, clientId);
@@ -699,6 +706,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
             boolean success = performOneDelivery(m, d);
             if(success) {
                 result.add(d);
+                // mark delivery as in progress
+                d.setState(TalkDelivery.STATE_DELIVERING);
+                // set delivery timestamps
+                d.setTimeAccepted(currentDate);
+                d.setTimeChanged(currentDate);
             }
         }
         return result;
@@ -711,12 +723,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         String clientId = mConnection.getClientId();
         // get the receiver
         String receiverId = d.getReceiverId();
-        // get the message id
-        String messageId = m.getMessageId();
-        // initialize the mid field
-        d.setMessageId(messageId);
-        // set the sender for easier db retrieval
-        d.setSenderId(clientId);
 
         // reject messages to self
         if (receiverId.equals(clientId)) {
@@ -738,11 +744,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         // all fine, delivery accepted
         LOG.info("delivery accepted: client " + receiverId);
-        // mark delivery as in progress
-        d.setState(TalkDelivery.STATE_DELIVERING);
-        // set delivery timestamps
-        d.setTimeAccepted(currentDate);
-        d.setTimeChanged(currentDate);
         // return
         return true;
     }
