@@ -648,9 +648,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
             // check that sender is member of group
             TalkGroupMember clientMember = mDatabase.findGroupMemberForClient(groupId, clientId);
-            if(clientMember == null &&
-                    !(clientMember.getRole().equals(TalkGroupMember.ROLE_MEMBER)
-                            || clientMember.getRole().equals(TalkGroupMember.ROLE_ADMIN))) {
+            if(clientMember == null || !clientMember.isMember()) {
                 LOG.info("delivery rejected: not a member of group");
                 d.setState(TalkDelivery.STATE_FAILED);
                 return result;
