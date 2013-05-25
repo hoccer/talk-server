@@ -87,30 +87,14 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public TalkClient findClientById(String clientId) {
-        Iterator<TalkClient> it =
-                mClients.find("{clientId:#}", clientId)
-                        .as(TalkClient.class).iterator();
-        if(it.hasNext()) {
-            return it.next();
-        } else {
-            // XXX gross hack
-            TalkClient newClient = new TalkClient();
-            newClient.setClientId(clientId);
-            saveClient(newClient);
-            return newClient;
-        }
+        return mClients.findOne("{clientId:#}", clientId)
+                       .as(TalkClient.class);
     }
 
     @Override
     public TalkClient findClientByApnsToken(String apnsToken) {
-        Iterator<TalkClient> it =
-                mClients.find("{apnsToken:#}", apnsToken)
-                        .as(TalkClient.class).iterator();
-        if(it.hasNext()) {
-            return it.next();
-        } else {
-            return null;
-        }
+        return mClients.findOne("{apnsToken:#}", apnsToken)
+                       .as(TalkClient.class);
     }
 
     @Override
@@ -120,14 +104,8 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public TalkMessage findMessageById(String messageId) {
-        Iterator<TalkMessage> it =
-                mMessages.find("{messageId:#}", messageId)
-                         .as(TalkMessage.class).iterator();
-        if(it.hasNext()) {
-            return it.next();
-        } else {
-            return null;
-        }
+        return mMessages.findOne("{messageId:#}", messageId)
+                        .as(TalkMessage.class);
     }
 
     @Override
@@ -137,14 +115,8 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public TalkDelivery findDelivery(String messageId, String clientId) {
-        Iterator<TalkDelivery> it =
-                mDeliveries.find("{messageId:#,receiverId:#}", messageId, clientId)
-                           .as(TalkDelivery.class).iterator();
-        if(it.hasNext()) {
-            return it.next();
-        } else {
-            return null;
-        }
+        return mDeliveries.findOne("{messageId:#,receiverId:#}", messageId, clientId)
+                          .as(TalkDelivery.class);
     }
 
     @Override
@@ -234,7 +206,8 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public TalkPresence findPresenceForClient(String clientId) {
-        return mPresences.findOne("{clientId:#}", clientId).as(TalkPresence.class);
+        return mPresences.findOne("{clientId:#}", clientId)
+                         .as(TalkPresence.class);
     }
 
     @Override
@@ -286,7 +259,8 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public TalkKey findKey(String clientId, String keyId) {
-        return mKeys.findOne("{clientId:#,keyId:#}", clientId, keyId).as(TalkKey.class);
+        return mKeys.findOne("{clientId:#,keyId:#}", clientId, keyId)
+                    .as(TalkKey.class);
     }
 
     @Override
@@ -407,7 +381,7 @@ public class JongoDatabase implements ITalkServerDatabase {
     @Override
     public TalkGroupMember findGroupMemberForClient(String groupId, String clientId) {
         return mGroupMembers.findOne("{groupId:#,clientId:#}", groupId, clientId)
-                             .as(TalkGroupMember.class);
+                            .as(TalkGroupMember.class);
     }
 
     @Override
