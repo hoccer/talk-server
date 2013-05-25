@@ -52,7 +52,7 @@ public class TalkServerMain {
         LOG.info("Initializing jetty");
 
         // create jetty instance
-        Server s = new Server(new InetSocketAddress(listen, port));
+        Server s = new Server(new InetSocketAddress(config.getListenAddress(), config.getListenPort()));
         // default handler for non-talk http requests
         DefaultHandler fallbackHandler = new DefaultHandler();
         fallbackHandler.setServeIcon(false);

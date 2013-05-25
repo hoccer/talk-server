@@ -20,6 +20,8 @@ public class TalkServerConfiguration {
 
     private static final String PROPERTY_PREFIX = "talk";
 
+    private String mListenAddress = "localhost";
+    private int    mListenPort = 8080;
 
     private boolean mGcmEnabled = false;
     private String  mGcmApiKey = "AIzaSyA25wabV4kSQTaF73LTgTkjmw0yZ8inVr8";
@@ -43,6 +45,9 @@ public class TalkServerConfiguration {
     }
 
     public void configureFromProperties(Properties properties) {
+        // listening
+        mListenAddress = properties.getProperty(PROPERTY_PREFIX + ".listen.address", "localhost");
+        mListenPort = Integer.parseInt(properties.getProperty(PROPERTY_PREFIX + ".listen.port", "8080"));
         // APNS
         mApnsEnabled = properties.getProperty(PROPERTY_PREFIX + ".apns.enabled", "false").equals("true");
         mApnsSandbox = properties.getProperty(PROPERTY_PREFIX + ".apns.sandbox", "true").equals("true");
@@ -59,6 +64,14 @@ public class TalkServerConfiguration {
         mFilecacheControlUrl = properties.getProperty(PROPERTY_PREFIX + ".filecache.controlUrl", mFilecacheControlUrl);
         mFilecacheUploadBase = properties.getProperty(PROPERTY_PREFIX + ".filecache.uploadBase", mFilecacheUploadBase);
         mFilecacheDownloadBase = properties.getProperty(PROPERTY_PREFIX + ".filecache.downloadBase", mFilecacheDownloadBase);
+    }
+
+    public String getListenAddress() {
+        return mListenAddress;
+    }
+
+    public int getListenPort() {
+        return mListenPort;
     }
 
     public boolean isGcmEnabled() {
