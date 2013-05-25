@@ -983,7 +983,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void updateGroupKey(String groupId, String clientId, String keyId, String key) {
         requireIdentification();
         logCall("updateGroupKey(" + groupId + "/" + clientId + "," + keyId + ")");
-        requiredGroupAdmin(groupId);
+        TalkGroupMember selfMember = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
+        if(selfMember == null || !(selfMember.isAdmin() || (selfMember.isMember() && clientId.equals(mConnection.getClientId())))) {
+            throw new RuntimeException("I'm afraid I can't do that, Dave!");
+        }
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
         if(targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
