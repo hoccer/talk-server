@@ -11,6 +11,7 @@ import com.beust.jcommander.Parameter;
 import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.MemoryDatabase;
+import com.hoccer.talk.server.database.OrmliteDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -109,6 +110,9 @@ public class TalkServerMain {
         }
         if(backend.equals("memory")) {
             return new MemoryDatabase();
+        }
+        if(backend.equals("ormlite")) {
+            return new OrmliteDatabase();
         }
         throw new RuntimeException("Unknown database backend: " + backend);
     }
