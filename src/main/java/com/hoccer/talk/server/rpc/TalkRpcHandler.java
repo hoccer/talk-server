@@ -920,8 +920,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
             member.setClientId(clientId);
             member.setState(TalkGroupMember.STATE_INVITED);
             mServer.getUpdateAgent().requestGroupUpdate(groupId, clientId);
-            mServer.getUpdateAgent().requestPresenceUpdateForGroup(clientId, groupId);
             changedGroupMember(member);
+            mServer.getUpdateAgent().requestPresenceUpdateForGroup(clientId, groupId);
+            mServer.getUpdateAgent().requestPresenceUpdate(clientId);
         } else {
             throw new RuntimeException("Already invited or member to group");
         }
