@@ -823,6 +823,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
         logCall("createGroup(" + group.getGroupTag() + ")");
         group.setGroupId(UUID.randomUUID().toString());
+        group.setState(TalkGroup.STATE_EXISTS);
         TalkGroupMember groupAdmin = new TalkGroupMember();
         groupAdmin.setClientId(mConnection.getClientId());
         groupAdmin.setGroupId(group.getGroupId());
