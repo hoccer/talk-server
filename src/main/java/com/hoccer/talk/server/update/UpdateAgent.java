@@ -114,7 +114,7 @@ public class UpdateAgent {
                 TalkGroup updatedGroup = mDatabase.findGroupById(groupId);
                 if(updatedGroup != null) {
                     TalkRpcConnection connection = mServer.getClientConnection(clientId);
-                    if(connection != null || !connection.isConnected()) {
+                    if(connection == null || !connection.isConnected()) {
                         return;
                     }
                     ITalkRpcClient rpc = connection.getClientRpc();
