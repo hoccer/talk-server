@@ -192,7 +192,7 @@ public class UpdateAgent {
                 }
                 List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                 for(TalkGroupMember member: members) {
-                    if(member.isJoined() || member.isInvited() || member.isGroupRemoved()) {
+                    if(member.isJoined() || member.isInvited() || member.isGroupRemoved() || member.getClientId().equals(clientId)) {
                         TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
                         if(connection == null || !connection.isConnected()) {
                             continue;
