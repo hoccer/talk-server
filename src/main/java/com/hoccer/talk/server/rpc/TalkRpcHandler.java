@@ -295,14 +295,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
-    public void identify(String clientId) {
-        logCall("identify(" + clientId + ")");
-
-        // client is now considered to be logged in
-        mConnection.identifyClient(clientId);
-    }
-
-    @Override
     public void updatePresence(TalkPresence presence) {
         requireIdentification();
 
