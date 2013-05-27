@@ -382,7 +382,20 @@ public class TalkRpcHandler implements ITalkRpcServer {
         if(rel != null && rel.isFriend()) {
             res = mDatabase.findKey(clientId, keyId);
         } else {
-            throw new RuntimeException("Given client is not your friend");
+            List<TalkGroupMember> members = mDatabase.findGroupMembersForClient(mConnection.getClientId());
+            for(TalkGroupMember member: members) {
+                if(member.isJoined() || member.isInvited()) {
+                    TalkGroupMember otherMember = mDatabase.findGroupMemberForClient(member.getGroupId(), clientId);
+                    if(otherMember != null && (otherMember.isJoined() || otherMember.isInvited())) {
+                        res = mDatabase.findKey(clientId, keyId);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(res == null) {
+            throw new RuntimeException("Given client is not your friend or key does not exist");
         }
 
         return res;
