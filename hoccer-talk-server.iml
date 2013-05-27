@@ -40,6 +40,8 @@
     <orderEntry type="library" name="Maven: org.mongodb:mongo-java-driver:2.10.1" level="project" />
     <orderEntry type="library" name="Maven: org.jongo:jongo:0.4" level="project" />
     <orderEntry type="library" name="Maven: de.undercouch:bson4jackson:2.1.1" level="project" />
+    <orderEntry type="library" name="Maven: com.j256.ormlite:ormlite-jdbc:4.43" level="project" />
+    <orderEntry type="library" name="Maven: postgresql:postgresql:9.1-901.jdbc4" level="project" />
   </component>
 </module>
 

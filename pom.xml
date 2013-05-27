@@ -104,6 +104,20 @@
         <version>${jongo.version}</version>
     </dependency>
 
+    <!-- Database binding / ORM -->
+    <dependency>
+      <groupId>com.j256.ormlite</groupId>
+      <artifactId>ormlite-jdbc</artifactId>
+      <version>${ormlite.version}</version>
+    </dependency>
+
+    <!-- PostgreSQL JDBC driver -->
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql.version}</version>
+    </dependency>
+
   </dependencies>
   
   <repositories>
