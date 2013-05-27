@@ -34,6 +34,34 @@ public class UpdateAgent {
         mDatabase = mServer.getDatabase();
     }
 
+    public void requestPresenceUpdateForGroup(final String clientId, final String groupId) {
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                TalkRpcConnection conn = mServer.getClientConnection(clientId);
+                if(conn == null || !conn.isConnected()) {
+                    return;
+                }
+                ITalkRpcClient rpc = conn.getClientRpc();
+                TalkGroupMember member = mDatabase.findGroupMemberForClient(groupId, clientId);
+                if(member.isInvited() || member.isJoined()) {
+                    List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
+                    for(TalkGroupMember otherMember: members) {
+                        if(otherMember.isJoined() || otherMember.isInvited()) {
+                            TalkPresence presence = mDatabase.findPresenceForClient(otherMember.getClientId());
+                            try {
+                                rpc.presenceUpdated(presence);
+                            } catch (Throwable t) {
+                                t.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+    }
+
     public void requestPresenceUpdate(final String clientId) {
         mExecutor.execute(new Runnable() {
             @Override
@@ -72,10 +100,10 @@ public class UpdateAgent {
         List<TalkGroupMember> ownMembers = mDatabase.findGroupMembersForClient(clientId);
         for(TalkGroupMember ownMember: ownMembers) {
             String groupId = ownMember.getGroupId();
-            if(ownMember.isMember()) {
+            if(ownMember.isJoined() || ownMember.isInvited()) {
                 List<TalkGroupMember> otherMembers = mDatabase.findGroupMembersById(groupId);
                 for(TalkGroupMember otherMember: otherMembers) {
-                    if(otherMember.isMember()) {
+                    if(otherMember.isJoined() || ownMember.isInvited()) {
                         clients.add(otherMember.getClientId());
                     }
                 }
