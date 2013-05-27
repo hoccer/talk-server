@@ -916,11 +916,19 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         // perform the invite
         if(member.getState().equals(TalkGroupMember.STATE_NONE)) {
+            // touch the presence so everyone gets it
+            TalkPresence presence = mDatabase.findPresenceForClient(clientId);
+            if(presence != null) {
+                presence.setTimestamp(new Date());
+                mDatabase.savePresence(presence);
+            }
+            // set up the member
             member.setGroupId(groupId);
             member.setClientId(clientId);
             member.setState(TalkGroupMember.STATE_INVITED);
-            mServer.getUpdateAgent().requestGroupUpdate(groupId, clientId);
             changedGroupMember(member);
+            // notify various things
+            mServer.getUpdateAgent().requestGroupUpdate(groupId, clientId);
             mServer.getUpdateAgent().requestPresenceUpdateForGroup(clientId, groupId);
             mServer.getUpdateAgent().requestPresenceUpdate(clientId);
         } else {
