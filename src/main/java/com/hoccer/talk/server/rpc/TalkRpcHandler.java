@@ -882,11 +882,22 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requiredGroupAdmin(groupId);
         logCall("deleteGroup(" + groupId + ")");
 
+        TalkGroup group = mDatabase.findGroupById(groupId);
+        if(group == null) {
+            throw new RuntimeException("Group does not exist");
+        }
+
+        // mark the group as deleted
+        group.setState(TalkGroup.STATE_NONE);
+        changedGroup(group);
+
         // walk the group and make everyone have a "none" relationship to it
         List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
         for(TalkGroupMember member: members) {
-            member.setState(TalkGroupMember.STATE_NONE);
-            changedGroupMember(member);
+            if(member.isInvited() || member.isJoined()) {
+                member.setState(TalkGroupMember.STATE_GROUP_REMOVED);
+                changedGroupMember(member);
+            }
         }
     }
 

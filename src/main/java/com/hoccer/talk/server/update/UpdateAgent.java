@@ -164,7 +164,7 @@ public class UpdateAgent {
                 if(updatedGroup != null) {
                     List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                     for(TalkGroupMember member: members) {
-                        if(member.isJoined() || member.isInvited()) {
+                        if(member.isJoined() || member.isInvited() || member.isGroupRemoved()) {
                             TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
                             if(connection == null || !connection.isConnected()) {
                                 continue;
@@ -192,7 +192,7 @@ public class UpdateAgent {
                 }
                 List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                 for(TalkGroupMember member: members) {
-                    if(member.isJoined() || member.isInvited()) {
+                    if(member.isJoined() || member.isInvited() || member.isGroupRemoved()) {
                         TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
                         if(connection == null || !connection.isConnected()) {
                             continue;
