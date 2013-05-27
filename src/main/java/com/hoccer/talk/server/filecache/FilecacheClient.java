@@ -55,6 +55,7 @@ public class FilecacheClient extends JsonRpcWsClient {
                  + " u=" + cacheHandles.uploadId
                  + " d=" + cacheHandles.downloadId);
         ITalkRpcServer.FileHandles serverHandles = new ITalkRpcServer.FileHandles();
+        serverHandles.fileId = cacheHandles.fileId;
         serverHandles.uploadUrl = mConfig.getFilecacheUploadBase() + cacheHandles.uploadId;
         serverHandles.downloadUrl = mConfig.getFilecacheDownloadBase() + cacheHandles.downloadId;
         return serverHandles;
@@ -67,6 +68,7 @@ public class FilecacheClient extends JsonRpcWsClient {
                  + " u=" + cacheHandles.uploadId
                  + " d=" + cacheHandles.downloadId);
         ITalkRpcServer.FileHandles serverHandles = new ITalkRpcServer.FileHandles();
+        serverHandles.fileId = cacheHandles.fileId;
         serverHandles.uploadUrl = mConfig.getFilecacheUploadBase() + cacheHandles.uploadId;
         serverHandles.downloadUrl = mConfig.getFilecacheDownloadBase() + cacheHandles.downloadId;
         return serverHandles;
