@@ -667,6 +667,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 if(member.getClientId().equals(clientId)) {
                     continue;
                 }
+                if(!member.isJoined()) {
+                    continue;
+                }
                 TalkDelivery memberDelivery = new TalkDelivery();
                 memberDelivery.setMessageId(m.getMessageId());
                 memberDelivery.setMessageTag(d.getMessageTag());
