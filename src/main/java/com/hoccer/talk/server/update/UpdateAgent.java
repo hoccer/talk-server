@@ -34,6 +34,15 @@ public class UpdateAgent {
         mDatabase = mServer.getDatabase();
     }
 
+    private void updateConnectionStatus(TalkPresence presence) {
+        // determine the connection status of the client
+        boolean isConnected = mServer.isClientConnected(presence.getClientId());
+        String connStatus = isConnected ? TalkPresence.CONN_STATUS_ONLINE
+                : TalkPresence.CONN_STATUS_OFFLINE;
+        // update the presence with the connection status
+        presence.setConnectionStatus(connStatus);
+    }
+
     public void requestPresenceUpdateForGroup(final String clientId, final String groupId) {
         mExecutor.execute(new Runnable() {
             @Override
@@ -48,7 +57,9 @@ public class UpdateAgent {
                     List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                     for(TalkGroupMember otherMember: members) {
                         if(otherMember.isJoined() || otherMember.isInvited()) {
-                            TalkPresence presence = mDatabase.findPresenceForClient(otherMember.getClientId());
+                            String clientId = otherMember.getClientId();
+                            TalkPresence presence = mDatabase.findPresenceForClient(clientId);
+                            updateConnectionStatus(presence);
                             try {
                                 rpc.presenceUpdated(presence);
                             } catch (Throwable t) {
@@ -70,12 +81,8 @@ public class UpdateAgent {
                 TalkPresence presence = mDatabase.findPresenceForClient(clientId);
                 // if we actually have a presence
                 if(presence != null) {
-                    // determine the connection status of the client
-                    boolean isConnected = mServer.isClientConnected(clientId);
-                    String connStatus = isConnected ? TalkPresence.CONN_STATUS_ONLINE
-                                                    : TalkPresence.CONN_STATUS_OFFLINE;
-                    // update the presence with the connection status
-                    presence.setConnectionStatus(connStatus);
+                    // update connection status
+                    updateConnectionStatus(presence);
                     // propagate the presence to all friends
                     performPresenceUpdate(presence);
                 }
