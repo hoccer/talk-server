@@ -436,6 +436,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         token.setSecret(secret);
         token.setGenerationTime(time);
         token.setExpiryTime(calendar.getTime());
+        token.setUseCount(0);
+        token.setMaxUseCount(1);
 
         // save the token
         mDatabase.saveToken(token);
@@ -443,6 +445,59 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // return the secret
         return token.getSecret();
     }
+
+    @Override
+    public String generatePairingToken(int maxUseCount, int secondsValid) {
+        requireIdentification();
+
+        logCall("generatePairingToken(" + maxUseCount + "," + secondsValid + ")");
+
+        // constrain validity period (XXX constants)
+        secondsValid = Math.max(60, secondsValid);            // at least 1 minute
+        secondsValid = Math.min(7 * 24 * 3600, secondsValid); // at most 1 week
+
+        // constrain use count
+        maxUseCount = Math.max(1, maxUseCount);
+        maxUseCount = Math.min(50, maxUseCount);
+
+        // get the current time
+        Date time = new Date();
+        // compute expiry time
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(time);
+        calendar.add(Calendar.SECOND, Math.round(secondsValid));
+
+        // generate the secret
+        int attempt = 0;
+        String secret = null;
+        do {
+            if(secret != null) {
+                LOG.warn("Token generator returned existing token - regenerating");
+            }
+            if(attempt++ > 3) {
+                throw new RuntimeException("Could not generate a token");
+            }
+            secret = genPw();
+        } while (mDatabase.findTokenByPurposeAndSecret(TalkToken.PURPOSE_PAIRING, secret) != null);
+
+        // create the token object
+        TalkToken token = new TalkToken();
+        token.setClientId(mConnection.getClientId());
+        token.setPurpose(TalkToken.PURPOSE_PAIRING);
+        token.setState(TalkToken.STATE_UNUSED);
+        token.setSecret(secret);
+        token.setGenerationTime(time);
+        token.setExpiryTime(calendar.getTime());
+        token.setUseCount(0);
+        token.setMaxUseCount(maxUseCount);
+
+        // save the token
+        mDatabase.saveToken(token);
+
+        // return the secret
+        return token.getSecret();
+    }
+
 
     private String genPw() {
         String result = null;
@@ -476,8 +531,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
 
         // check if token is unused
-        if(!token.getState().equals(TalkToken.STATE_UNUSED)) {
-            LOG.info("token has already been used");
+        if(!token.isUsable()) {
+            LOG.info("token can no longer be used");
             return false;
         }
 
@@ -505,7 +560,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
         setRelationship(otherId, myId, TalkRelationship.STATE_FRIEND, true);
 
         // invalidate the token
-        token.setState(TalkToken.STATE_USED);
+        token.setUseCount(token.getUseCount() + 1);
+        if(token.getUseCount() < token.getMaxUseCount()) {
+            token.setState(TalkToken.STATE_USED);
+        } else {
+            token.setState(TalkToken.STATE_SPENT);
+        }
         mDatabase.saveToken(token);
 
         return true;
