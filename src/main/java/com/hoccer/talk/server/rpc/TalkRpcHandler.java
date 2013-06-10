@@ -491,6 +491,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
         String myId = mConnection.getClientId();
         String otherId = token.getClientId();
 
+        // reject self-pairing
+        if(token.getClientId().equals(myId)) {
+            LOG.info("self-pairing rejected");
+            return false;
+        }
+
         // log about it
         LOG.info("performing token-based pairing between " + mConnection.getClientId() + " and " + token.getClientId());
 
