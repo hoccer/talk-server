@@ -1,6 +1,5 @@
 package com.hoccer.talk.server.delivery;
 
-import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.model.TalkMessage;

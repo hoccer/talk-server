@@ -1,6 +1,5 @@
 package com.hoccer.talk.server.update;
 
-import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkGroup;
 import com.hoccer.talk.model.TalkGroupMember;
 import com.hoccer.talk.model.TalkPresence;

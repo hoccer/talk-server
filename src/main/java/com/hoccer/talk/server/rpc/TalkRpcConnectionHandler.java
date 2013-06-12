@@ -5,7 +5,6 @@ import javax.servlet.http.HttpServletRequest;
 import better.jsonrpc.client.JsonRpcClient;
 import better.jsonrpc.server.JsonRpcServer;
 
-import com.hoccer.talk.logging.HoccerLoggers;
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketHandler;

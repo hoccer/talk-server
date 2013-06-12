@@ -8,7 +8,6 @@ import java.util.Properties;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.MemoryDatabase;
 import com.hoccer.talk.server.database.OrmliteDatabase;

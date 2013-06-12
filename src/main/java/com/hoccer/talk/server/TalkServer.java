@@ -6,9 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.MetricSet;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.delivery.DeliveryAgent;
 

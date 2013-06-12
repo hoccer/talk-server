@@ -1,6 +1,5 @@
 package com.hoccer.talk.server.delivery;
 
-import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import org.apache.log4j.Logger;

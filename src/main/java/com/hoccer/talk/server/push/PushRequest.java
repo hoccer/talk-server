@@ -2,7 +2,6 @@ package com.hoccer.talk.server.push;
 
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Sender;
-import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.server.ITalkServerDatabase;

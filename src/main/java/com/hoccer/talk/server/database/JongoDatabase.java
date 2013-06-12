@@ -1,6 +1,5 @@
 package com.hoccer.talk.server.database;
 
-import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.*;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServerConfiguration;

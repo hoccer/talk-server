@@ -1,7 +1,6 @@
 package com.hoccer.talk.server.rpc;
 
 import better.jsonrpc.websocket.JsonRpcWsConnection;
-import com.hoccer.talk.logging.HoccerLoggers;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.ITalkRpcClient;
 
