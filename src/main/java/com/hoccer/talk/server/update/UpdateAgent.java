@@ -72,6 +72,20 @@ public class UpdateAgent {
 
     }
 
+    public void requestPresenceUpdateForClient(final String clientId, final String targetClientId) {
+        TalkPresence presence = mDatabase.findPresenceForClient(clientId);
+        TalkRpcConnection targetConnection = mServer.getClientConnection(targetClientId);
+        if(targetConnection == null || ! targetConnection.isConnected()) {
+            return;
+        }
+        updateConnectionStatus(presence);
+        try {
+            targetConnection.getClientRpc().presenceUpdated(presence);
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
     public void requestPresenceUpdate(final String clientId) {
         mExecutor.execute(new Runnable() {
             @Override

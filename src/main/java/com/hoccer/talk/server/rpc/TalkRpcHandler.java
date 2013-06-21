@@ -568,6 +568,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         mDatabase.saveToken(token);
 
+        // give the requesting user an initial presence
+        mServer.getUpdateAgent().requestPresenceUpdateForClient(otherId, myId);
+
         return true;
     }
 
@@ -630,7 +633,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             return;
         }
 
-        setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_NONE, false);
+        setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_NONE, true);
         setRelationship(clientId, mConnection.getClientId(), TalkRelationship.STATE_NONE, true);
     }
 
