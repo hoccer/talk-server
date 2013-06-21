@@ -36,7 +36,7 @@
     <orderEntry type="library" name="Maven: com.googlecode.json-simple:json-simple:1.1.1" level="project" />
     <orderEntry type="library" name="Maven: junit:junit:4.10" level="project" />
     <orderEntry type="library" name="Maven: org.hamcrest:hamcrest-core:1.1" level="project" />
-    <orderEntry type="module" module-name="apns" />
+    <orderEntry type="library" name="Maven: com.notnoop.apns:apns:0.2.1-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: org.mongodb:mongo-java-driver:2.10.1" level="project" />
     <orderEntry type="library" name="Maven: org.jongo:jongo:0.4" level="project" />
     <orderEntry type="library" name="Maven: de.undercouch:bson4jackson:2.1.1" level="project" />
