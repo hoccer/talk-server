@@ -992,17 +992,24 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         // perform the invite
         if(member.getState().equals(TalkGroupMember.STATE_NONE)) {
-            // touch the presence so everyone gets it
-            TalkPresence presence = mDatabase.findPresenceForClient(clientId);
-            if(presence != null) {
-                presence.setTimestamp(new Date());
-                mDatabase.savePresence(presence);
-            }
             // set up the member
             member.setGroupId(groupId);
             member.setClientId(clientId);
             member.setState(TalkGroupMember.STATE_INVITED);
             changedGroupMember(member);
+            // touch presences of all members
+            //  NOTE if this gets removed then the invited users presence might
+            //       need touching depending on what the solution to the update problem is
+            List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
+            for(TalkGroupMember m: members) {
+                if(m.isInvited() || m.isJoined()) {
+                    TalkPresence p = mDatabase.findPresenceForClient(m.getClientId());
+                    if(p != null) {
+                        p.setTimestamp(new Date());
+                        mDatabase.savePresence(p);
+                    }
+                }
+            }
             // notify various things
             mServer.getUpdateAgent().requestGroupUpdate(groupId, clientId);
             mServer.getUpdateAgent().requestPresenceUpdateForGroup(clientId, groupId);
