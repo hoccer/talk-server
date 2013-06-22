@@ -227,10 +227,10 @@ public class JongoDatabase implements ITalkServerDatabase {
         List<TalkGroupMember> ownMembers = findGroupMembersForClient(clientId);
         for(TalkGroupMember ownMember: ownMembers) {
             String groupId = ownMember.getGroupId();
-            if(ownMember.isMember()) {
+            if(ownMember.isInvited() || ownMember.isJoined()) {
                 List<TalkGroupMember> otherMembers = findGroupMembersById(groupId);
                 for(TalkGroupMember otherMember: otherMembers) {
-                    if(otherMember.isMember()) {
+                    if(otherMember.isInvited() || otherMember.isJoined()) {
                         clients.add(otherMember.getClientId());
                     }
                 }
