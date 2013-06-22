@@ -568,8 +568,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         mDatabase.saveToken(token);
 
-        // give the requesting user an initial presence
+        // give both users an initial presence
         mServer.getUpdateAgent().requestPresenceUpdateForClient(otherId, myId);
+        mServer.getUpdateAgent().requestPresenceUpdateForClient(myId, otherId);
 
         return true;
     }
