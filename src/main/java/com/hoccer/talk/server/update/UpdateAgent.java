@@ -55,6 +55,7 @@ public class UpdateAgent {
                 if(member.isInvited() || member.isJoined()) {
                     List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                     for(TalkGroupMember otherMember: members) {
+                        // XXX only if otherMember != member
                         if(otherMember.isJoined() || otherMember.isInvited()) {
                             String clientId = otherMember.getClientId();
                             TalkPresence presence = mDatabase.findPresenceForClient(clientId);
