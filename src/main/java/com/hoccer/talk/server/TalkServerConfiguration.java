@@ -2,8 +2,10 @@ package com.hoccer.talk.server;
 
 import org.apache.log4j.Logger;
 
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Properties;
 
 public class TalkServerConfiguration {
@@ -11,8 +13,6 @@ public class TalkServerConfiguration {
     private static final Logger LOG = Logger.getLogger(TalkServerConfiguration.class);
 
     public static final boolean LOG_ALL_CALLS = false;
-
-    private static final String DEFAULT_SUPPORT_TAG = "Oos8guceich2yoox";
 
     public static final int THREADS_DELIVERY = 1;
     public static final int THREADS_GROUP = 1;
@@ -42,6 +42,8 @@ public class TalkServerConfiguration {
     private String mFilecacheUploadBase = "http://localhost:8081/upload/";
     private String mFilecacheDownloadBase = "http://localhost:8081/download/";
 
+    private String mSupportTag = "Oos8guceich2yoox";
+
     public TalkServerConfiguration() {
     }
 
@@ -66,7 +68,7 @@ public class TalkServerConfiguration {
         mFilecacheUploadBase = properties.getProperty(PROPERTY_PREFIX + ".filecache.uploadBase", mFilecacheUploadBase);
         mFilecacheDownloadBase = properties.getProperty(PROPERTY_PREFIX + ".filecache.downloadBase", mFilecacheDownloadBase);
         // Support
-        DEFAULT_SUPPORT_TAG = properties.getProperty(PROPERTY_PREFIX + ".support.tag", DEFAULT_SUPPORT_TAG);
+        mSupportTag = properties.getProperty(PROPERTY_PREFIX + ".support.tag", mSupportTag);
     }
 
     public String getListenAddress() {
@@ -132,7 +134,7 @@ public class TalkServerConfiguration {
     }
 
     public String getSupportTag() {
-        return DEFAULT_SUPPORT_TAG;
+        return mSupportTag;
     }
 
 }
