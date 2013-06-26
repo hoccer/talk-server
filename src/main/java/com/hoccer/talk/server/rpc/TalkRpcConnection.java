@@ -48,6 +48,9 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
     /** Client id provided for client registration */
     String mUnregisteredClientId;
 
+    /** Support mode flag */
+    boolean mSupportMode;
+
     /**
      * Construct a connection for the given server using the given connection
      *
@@ -142,6 +145,13 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
     }
 
     /**
+     * @return true if in support mode
+     */
+    public boolean isSupportMode() {
+        return mSupportMode;
+    }
+
+    /**
      * Callback: underlying connection is now open
      * @param connection
      */
@@ -213,6 +223,14 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
     public void beginRegistration(String clientId) {
         LOG.info("[" + getConnectionId() + "] begins registration as " + clientId);
         mUnregisteredClientId = clientId;
+    }
+
+    /**
+     * Activate support mode for this connection
+     */
+    public void activateSupportMode() {
+        LOG.info("[" + getConnectionId() + "] activated support mode");
+        mSupportMode = true;
     }
 
 }

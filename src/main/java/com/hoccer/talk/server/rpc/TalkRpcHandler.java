@@ -1,10 +1,10 @@
 package com.hoccer.talk.server.rpc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hoccer.talk.model.*;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
+import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.srp.SRP6Parameters;
 import com.hoccer.talk.srp.SRP6VerifyingServer;
 import org.apache.commons.codec.DecoderException;
@@ -64,7 +64,29 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     private void logCall(String message) {
-        LOG.info("[" + mConnection.getConnectionId() + "] " + message);
+        if(TalkServerConfiguration.LOG_ALL_CALLS || mConnection.isSupportMode()) {
+            LOG.info("[" + mConnection.getConnectionId() + "] " + message);
+        }
+    }
+
+    @Override
+    public TalkServerInfo hello(TalkClientInfo clientInfo) {
+        logCall("hello()");
+
+        String tag = clientInfo.getSupportTag();
+        if(tag != null && !tag.isEmpty()) {
+            if(tag.equals(mServer.getConfiguration().getSupportTag())) {
+                mConnection.activateSupportMode();
+            } else {
+                LOG.info("[" + mConnection.getConnectionId() + "] sent invalid support tag \"" + tag + "\"");
+            }
+        }
+
+        TalkServerInfo si = new TalkServerInfo();
+        si.setServerTime(new Date());
+        si.setSupportMode(mConnection.isSupportMode());
+
+        return si;
     }
 
     @Override
@@ -210,15 +232,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         // return server evidence for client to check
         return Hex.encodeHexString(M2);
-    }
-
-    @Override
-    public TalkServerInfo hello(TalkClientInfo clientInfo) {
-        requireIdentification();
-        logCall("hello()");
-        TalkServerInfo si = new TalkServerInfo();
-        si.setServerTime(new Date());
-        return si;
     }
 
     @Override
