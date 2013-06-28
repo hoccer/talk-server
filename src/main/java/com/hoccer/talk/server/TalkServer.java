@@ -9,6 +9,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.hoccer.talk.rpc.ITalkRpcServer;
+import com.hoccer.talk.server.cleaning.CleaningAgent;
 import com.hoccer.talk.server.delivery.DeliveryAgent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,6 +62,9 @@ public class TalkServer {
     /** Ping measurement agent */
     PingAgent mPingAgent;
 
+    /** Cleaning agent */
+    CleaningAgent mCleaningAgent;
+
     /** Client for the filecache control interface */
     FilecacheClient mFilecacheClient;
 
@@ -92,6 +96,7 @@ public class TalkServer {
 		mPushAgent = new PushAgent(this);
         mUpdateAgent = new UpdateAgent(this);
         mPingAgent = new PingAgent(this);
+        mCleaningAgent = new CleaningAgent(this);
         mFilecacheClient = new FilecacheClient(this);
 
         mJmxReporter = JmxReporter.forRegistry(mMetrics).build();
@@ -141,6 +146,11 @@ public class TalkServer {
     /** @return the ping agent of this server */
     public PingAgent getPingAgent() {
         return mPingAgent;
+    }
+
+    /** @return the cleaning agent */
+    public CleaningAgent getCleaningAgent() {
+        return mCleaningAgent;
     }
 
     /** @return the filecache control client */
@@ -200,7 +210,9 @@ public class TalkServer {
         // remove connection from table
         if(connection.getClientId() != null) {
             String clientId = connection.getClientId();
+            // remove connection from table
             mConnectionsByClientId.remove(clientId);
+            // update presence for connection status change
             mUpdateAgent.requestPresenceUpdate(clientId);
         }
         // disconnect if we still are
