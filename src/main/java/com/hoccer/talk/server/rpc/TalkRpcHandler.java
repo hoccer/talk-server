@@ -870,8 +870,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
             if(d.getState().equals(TalkDelivery.STATE_DELIVERED)) {
                 LOG.info("acknowledged " + messageId + " for " + recipientId);
                 setDeliveryState(d, TalkDelivery.STATE_CONFIRMED);
-            } else {
-                LOG.info("reacknowledged " + messageId + " for " + recipientId);
             }
         }
         return d;
