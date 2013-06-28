@@ -34,7 +34,7 @@ public class FilecacheClient extends JsonRpcWsClient {
         mRpc = (ICacheControl)this.makeProxy(ICacheControl.class);
     }
 
-    private void ensureConnected() {
+    private synchronized void ensureConnected() {
         if(!isConnected()) {
             LOG.info("filecache not connected, trying to connect");
             try {
