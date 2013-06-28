@@ -306,4 +306,17 @@ public class MemoryDatabase implements ITalkServerDatabase {
     @Override
     public void deleteRelationship(TalkRelationship relationship) {
     }
+
+    @Override
+    public void deleteMessage(TalkMessage message) {
+    }
+
+    @Override
+    public void deleteDelivery(TalkDelivery delivery) {
+    }
+
+    @Override
+    public List<TalkDelivery> findDeliveriesInState(String state) {
+        return null;
+    }
 }

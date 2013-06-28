@@ -100,6 +100,15 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public void deleteMessage(TalkMessage message) {
+        try {
+            mMessages.delete(message);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public void saveMessage(TalkMessage message) {
         try {
             mMessages.createOrUpdate(message);
@@ -116,6 +125,17 @@ public class OrmliteDatabase implements ITalkServerDatabase {
                                 .and()
                                 .eq("clientId", clientId)
                               .queryForFirst();
+        } catch (SQLException e) {
+            e.printStackTrace(); return null;
+        }
+    }
+
+    @Override
+    public List<TalkDelivery> findDeliveriesInState(String state) {
+        try {
+            return mDeliveries.queryBuilder().where()
+                                .eq("state", state)
+                              .query();
         } catch (SQLException e) {
             e.printStackTrace(); return null;
         }
@@ -177,6 +197,15 @@ public class OrmliteDatabase implements ITalkServerDatabase {
                     .query();
         } catch (SQLException e) {
             e.printStackTrace(); return null;
+        }
+    }
+
+    @Override
+    public void deleteDelivery(TalkDelivery delivery) {
+        try {
+            mDeliveries.delete(delivery);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

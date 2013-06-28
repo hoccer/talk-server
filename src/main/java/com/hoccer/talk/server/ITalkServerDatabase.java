@@ -22,14 +22,17 @@ public interface ITalkServerDatabase {
     public void saveClient(TalkClient client);
 
     public TalkMessage findMessageById(String messageId);
+    public void deleteMessage(TalkMessage message);
     public void saveMessage(TalkMessage message);
 
     public TalkDelivery findDelivery(String messageId, String clientId);
+    public List<TalkDelivery> findDeliveriesInState(String state);
     public List<TalkDelivery> findDeliveriesForClient(String clientId);
     public List<TalkDelivery> findDeliveriesForClientInState(String clientId, String state);
     public List<TalkDelivery> findDeliveriesFromClient(String clientId);
     public List<TalkDelivery> findDeliveriesFromClientInState(String clientId, String state);
     public List<TalkDelivery> findDeliveriesForMessage(String messageId);
+    public void deleteDelivery(TalkDelivery delivery);
     public void saveDelivery(TalkDelivery delivery);
 
     public TalkToken findTokenByPurposeAndSecret(String purpose, String secret);

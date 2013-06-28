@@ -108,6 +108,11 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public void deleteMessage(TalkMessage message) {
+        mMessages.remove("{messageId:#}", message.getMessageId());
+    }
+
+    @Override
     public void saveMessage(TalkMessage message) {
         mMessages.save(message);
     }
@@ -116,6 +121,18 @@ public class JongoDatabase implements ITalkServerDatabase {
     public TalkDelivery findDelivery(String messageId, String clientId) {
         return mDeliveries.findOne("{messageId:#,receiverId:#}", messageId, clientId)
                           .as(TalkDelivery.class);
+    }
+
+    @Override
+    public List<TalkDelivery> findDeliveriesInState(String state) {
+        List<TalkDelivery> res = new ArrayList<TalkDelivery>();
+        Iterator<TalkDelivery> it =
+                mDeliveries.find("{state:#}", state)
+                        .as(TalkDelivery.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
     }
 
     @Override
@@ -176,6 +193,11 @@ public class JongoDatabase implements ITalkServerDatabase {
             res.add(it.next());
         }
         return res;
+    }
+
+    @Override
+    public void deleteDelivery(TalkDelivery delivery) {
+        mDeliveries.remove("{messageId:#,receiverId:#}", delivery.getMessageId(), delivery.getReceiverId());
     }
 
     @Override
