@@ -679,10 +679,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // who is doing this again?
         String clientId = mConnection.getClientId();
 
-        // generate a message id
+        // generate and assign message id
         String messageId = UUID.randomUUID().toString();
-        message.setSenderId(clientId);
         message.setMessageId(messageId);
+
+        // guarantee correct sender
+        message.setSenderId(clientId);
 
         // walk deliveries and determine which to accept,
         // filling in missing things as we go
@@ -694,6 +696,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
             // perform the delivery request
             acceptedDeliveries.addAll(requestOneDelivery(message, d));
         }
+
+        // update number of deliveries
+        message.setNumDeliveries(acceptedDeliveries.size());
 
         // process all accepted deliveries
         if(!acceptedDeliveries.isEmpty()) {
