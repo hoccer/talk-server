@@ -40,12 +40,16 @@ public interface ITalkServerDatabase {
     public List<TalkPresence> findPresencesChangedAfter(String clientId, Date lastKnown);
 
     public TalkKey findKey(String clientId, String keyId);
+    public List<TalkKey> findKeys(String clientId);
+    public void deleteKey(TalkKey key);
     public void saveKey(TalkKey key);
 
     public List<TalkRelationship> findRelationships(String client);
+    public List<TalkRelationship> findRelationshipsForClientInState(String clientId, String state);
     public List<TalkRelationship> findRelationshipsByOtherClient(String other);
     public List<TalkRelationship> findRelationshipsChangedAfter(String client, Date lastKnown);
     public TalkRelationship findRelationshipBetween(String client, String otherClient);
+    public void deleteRelationship(TalkRelationship relationship);
     public void saveRelationship(TalkRelationship relationship);
 
     public TalkGroup findGroupById(String groupId);

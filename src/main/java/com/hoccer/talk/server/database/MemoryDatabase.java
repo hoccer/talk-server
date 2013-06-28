@@ -288,4 +288,22 @@ public class MemoryDatabase implements ITalkServerDatabase {
     public List<TalkGroupMember> findGroupMembersForClient(String clientId) {
         return null;
     }
+
+    @Override
+    public List<TalkKey> findKeys(String clientId) {
+        return null;
+    }
+
+    @Override
+    public void deleteKey(TalkKey key) {
+    }
+
+    @Override
+    public List<TalkRelationship> findRelationshipsForClientInState(String clientId, String state) {
+        return null;
+    }
+
+    @Override
+    public void deleteRelationship(TalkRelationship relationship) {
+    }
 }

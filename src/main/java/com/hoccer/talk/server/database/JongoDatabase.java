@@ -263,6 +263,23 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkKey> findKeys(String clientId) {
+        List<TalkKey> res = new ArrayList<TalkKey>();
+        Iterator<TalkKey> it =
+                mKeys.find("{clientId:#}", clientId)
+                     .as(TalkKey.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
+    public void deleteKey(TalkKey key) {
+        mKeys.remove("{clientId:#,keyId:#}", key.getClientId(), key.getKeyId());
+    }
+
+    @Override
     public void saveKey(TalkKey key) {
         mKeys.save(key);
     }
@@ -273,6 +290,18 @@ public class JongoDatabase implements ITalkServerDatabase {
         Iterator<TalkRelationship> it =
                 mRelationships.find("{clientId:#}", client)
                               .as(TalkRelationship.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
+    public List<TalkRelationship> findRelationshipsForClientInState(String clientId, String state) {
+        List<TalkRelationship> res = new ArrayList<TalkRelationship>();
+        Iterator<TalkRelationship> it =
+                mRelationships.find("{clientId:#,state:#}", clientId, state)
+                        .as(TalkRelationship.class).iterator();
         while(it.hasNext()) {
             res.add(it.next());
         }
@@ -307,6 +336,12 @@ public class JongoDatabase implements ITalkServerDatabase {
             res.add(it.next());
         }
         return res;
+    }
+
+    @Override
+    public void deleteRelationship(TalkRelationship relationship) {
+        mRelationships.remove("{clientId:#,otherClientId:#}",
+                relationship.getClientId(), relationship.getOtherClientId());
     }
 
     @Override

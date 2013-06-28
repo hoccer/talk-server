@@ -284,7 +284,27 @@ public class OrmliteDatabase implements ITalkServerDatabase {
                           .eq("keyId", keyId)
                         .queryForFirst();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public List<TalkKey> findKeys(String clientId) {
+        try {
+            return mKeys.queryForEq("clientId", clientId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public void deleteKey(TalkKey key) {
+        try {
+            mKeys.delete(key);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -302,6 +322,19 @@ public class OrmliteDatabase implements ITalkServerDatabase {
         try {
             return mRelationships.queryBuilder().where()
                                    .eq("clientId", client)
+                                 .query();
+        } catch (SQLException e) {
+            e.printStackTrace(); return null;
+        }
+    }
+
+    @Override
+    public List<TalkRelationship> findRelationshipsForClientInState(String clientId, String state) {
+        try {
+            return mRelationships.queryBuilder().where()
+                                    .eq("clientId", clientId)
+                                    .and()
+                                    .eq("state", state)
                                  .query();
         } catch (SQLException e) {
             e.printStackTrace(); return null;
@@ -342,6 +375,15 @@ public class OrmliteDatabase implements ITalkServerDatabase {
                                  .queryForFirst();
         } catch (SQLException e) {
             e.printStackTrace(); return null;
+        }
+    }
+
+    @Override
+    public void deleteRelationship(TalkRelationship relationship) {
+        try {
+            mRelationships.delete(relationship);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
