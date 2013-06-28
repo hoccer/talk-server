@@ -901,9 +901,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mDatabase.saveDelivery(delivery);
         if(state.equals(TalkDelivery.STATE_DELIVERED)) {
             mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId());
-        }
-        if(state.equals(TalkDelivery.STATE_DELIVERING)) {
+        } else if(state.equals(TalkDelivery.STATE_DELIVERING)) {
             mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId());
+        } else if(delivery.isFinished()) {
+            mServer.getCleaningAgent().cleanFinishedDelivery(delivery);
         }
     }
 
