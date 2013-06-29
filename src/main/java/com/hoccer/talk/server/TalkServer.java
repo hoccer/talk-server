@@ -7,6 +7,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.cleaning.CleaningAgent;
@@ -21,6 +22,7 @@ import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
 
 import better.jsonrpc.server.JsonRpcServer;
+import de.undercouch.bson4jackson.BsonFactory;
 import org.apache.log4j.Logger;
 
 /**
@@ -35,7 +37,10 @@ public class TalkServer {
 	private static final Logger log = Logger.getLogger(TalkServer.class);
 
     /** server-global JSON mapper */
-	ObjectMapper mMapper;
+	ObjectMapper mJsonMapper;
+
+    /** server-global BSON mapper */
+    ObjectMapper mBsonMapper;
 
     /** Metrics registry */
     MetricRegistry mMetrics;
@@ -86,7 +91,8 @@ public class TalkServer {
         mConfiguration = configuration;
         mDatabase = database;
 
-		mMapper = createObjectMapper();
+		mJsonMapper = createObjectMapper(new JsonFactory());
+        mBsonMapper = createObjectMapper(new BsonFactory());
 
         mMetrics = new MetricRegistry();
         initializeMetrics();
@@ -103,10 +109,15 @@ public class TalkServer {
         mJmxReporter.start();
     }
 
-    /** @return the object mapper used by this server */
-	public ObjectMapper getMapper() {
-		return mMapper;
+    /** @return the JSON mapper used by this server */
+	public ObjectMapper getJsonMapper() {
+		return mJsonMapper;
 	}
+
+    /** @return the BSON mapper used by this server */
+    public ObjectMapper getBsonMapper() {
+        return mBsonMapper;
+    }
 
     /** @return the metrics registry for the server */
     public MetricRegistry getMetrics() {
@@ -222,8 +233,8 @@ public class TalkServer {
 	}
 
     /** Creates the object mapper for this server */
-    private ObjectMapper createObjectMapper() {
-        ObjectMapper result = new ObjectMapper();
+    private ObjectMapper createObjectMapper(JsonFactory factory) {
+        ObjectMapper result = new ObjectMapper(factory);
         result.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         result.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return result;

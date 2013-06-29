@@ -26,9 +26,6 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
 
 	private static final Logger log = Logger.getLogger(TalkRpcConnectionHandler.class);
 
-    /** JSON object mapper common to all connections */
-	ObjectMapper mMapper;
-
     /** Talk server instance */
 	TalkServer mTalkServer;
 
@@ -40,7 +37,6 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
      * @param server to add connections to
      */
 	public TalkRpcConnectionHandler(TalkServer server) {
-		mMapper = server.getMapper();
         mRpcServer = server.getRpcServer();
 		mTalkServer = server;
 	}
@@ -53,12 +49,26 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
      */
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
+        log.info("connection with protocol " + protocol);
         if(protocol.equals("com.hoccer.talk.v1")) {
             // create JSON-RPC connection (this implements the websocket interface)
-            JsonRpcWsConnection connection = new JsonRpcWsConnection(mMapper);
+            JsonRpcWsConnection connection = new JsonRpcWsConnection(mTalkServer.getJsonMapper());
             // create talk high-level connection object
             TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection, request);
             // configure the connection
+            connection.setMaxIdleTime(1800 * 1000);
+            connection.bindClient(new JsonRpcClient());
+            connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
+            // return the raw connection (will be called by server for incoming messages)
+            return connection;
+        }
+        if(protocol.equals("com.hoccer.talk.v1.bson")) {
+            // create JSON-RPC connection (this implements the websocket interface)
+            JsonRpcWsConnection connection = new JsonRpcWsConnection(mTalkServer.getBsonMapper());
+            // create talk high-level connection object
+            TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection, request);
+            // configure the connection
+            connection.setSendBinaryMessages(true);
             connection.setMaxIdleTime(1800 * 1000);
             connection.bindClient(new JsonRpcClient());
             connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
