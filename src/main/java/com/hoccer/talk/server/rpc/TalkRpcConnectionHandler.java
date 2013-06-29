@@ -49,35 +49,28 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
      */
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
-        log.info("connection with protocol " + protocol);
         if(protocol.equals("com.hoccer.talk.v1")) {
-            // create JSON-RPC connection (this implements the websocket interface)
-            JsonRpcWsConnection connection = new JsonRpcWsConnection(mTalkServer.getJsonMapper());
-            // create talk high-level connection object
-            TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection, request);
-            // configure the connection
-            connection.setMaxIdleTime(1800 * 1000);
-            connection.bindClient(new JsonRpcClient());
-            connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
-            // return the raw connection (will be called by server for incoming messages)
-            return connection;
+            return createTalkV1Connection(request, mTalkServer.getJsonMapper(), false);
         }
         if(protocol.equals("com.hoccer.talk.v1.bson")) {
-            // create JSON-RPC connection (this implements the websocket interface)
-            JsonRpcWsConnection connection = new JsonRpcWsConnection(mTalkServer.getBsonMapper());
-            // create talk high-level connection object
-            TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection, request);
-            // configure the connection
-            connection.setSendBinaryMessages(true);
-            connection.setMaxIdleTime(1800 * 1000);
-            connection.bindClient(new JsonRpcClient());
-            connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
-            // return the raw connection (will be called by server for incoming messages)
-            return connection;
+            return createTalkV1Connection(request, mTalkServer.getBsonMapper(), true);
         }
-
         log.info("new connection with unknown protocol " + protocol);
         return null;
 	}
+
+    private WebSocket createTalkV1Connection(HttpServletRequest request, ObjectMapper mapper, boolean binary) {
+        // create JSON-RPC connection (this implements the websocket interface)
+        JsonRpcWsConnection connection = new JsonRpcWsConnection(mapper);
+        // create talk high-level connection object
+        TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection, request);
+        // configure the connection
+        connection.setSendBinaryMessages(binary);
+        connection.setMaxIdleTime(1800 * 1000);
+        connection.bindClient(new JsonRpcClient());
+        connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
+        // return the raw connection (will be called by server for incoming messages)
+        return connection;
+    }
 
 }
