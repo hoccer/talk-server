@@ -702,12 +702,14 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         // process all accepted deliveries
         if(!acceptedDeliveries.isEmpty()) {
+            // save deliveries first so messages get collected
+            for(TalkDelivery ds: acceptedDeliveries) {
+                mDatabase.saveDelivery(ds);
+            }
             // save the message
             mDatabase.saveMessage(message);
+            // initiate delivery for all recipients
             for(TalkDelivery ds: acceptedDeliveries) {
-                // save the delivery object
-                mDatabase.saveDelivery(ds);
-                // initiate delivery
                 mServer.getDeliveryAgent().requestDelivery(ds.getReceiverId());
             }
         }
