@@ -69,21 +69,26 @@ public class CleaningAgent {
     }
 
     private void doCleanFinishedDelivery(TalkDelivery finishedDelivery) {
-        TalkMessage message = mDatabase.findMessageById(finishedDelivery.getMessageId());
-        if (message.getNumDeliveries() == 1) {
-            // if we have only one delivery then we can safely delete the msg now
-            mDatabase.deleteMessage(message);
+        String messageId = finishedDelivery.getMessageId();
+        TalkMessage message = mDatabase.findMessageById(messageId);
+        if(message != null) {
+            if (message.getNumDeliveries() == 1) {
+                // if we have only one delivery then we can safely delete the msg now
+                mDatabase.deleteMessage(message);
+            } else {
+                // else we need to determine the state of the message in detail
+                doCleanDeliveriesForMessage(messageId, message);
+            }
         } else {
-            // else we need to determine the state of the message in detail
-            doCleanDeliveriesForMessage(message);
+            doCleanDeliveriesForMessage(messageId, null);
         }
         // always delete the ACKed delivery
         mDatabase.deleteDelivery(finishedDelivery);
     }
 
-    private void doCleanDeliveriesForMessage(TalkMessage message) {
+    private void doCleanDeliveriesForMessage(String messageId, TalkMessage message) {
         boolean keepMessage = false;
-        List<TalkDelivery> deliveries = mDatabase.findDeliveriesForMessage(message.getMessageId());
+        List<TalkDelivery> deliveries = mDatabase.findDeliveriesForMessage(messageId);
         for(TalkDelivery delivery: deliveries) {
             // confirmed and failed deliveries can always be deleted
             if(delivery.isFinished()) {
@@ -92,7 +97,7 @@ public class CleaningAgent {
             }
             keepMessage = true;
         }
-        if(!keepMessage) {
+        if(message != null && !keepMessage) {
             mDatabase.deleteMessage(message);
         }
     }
