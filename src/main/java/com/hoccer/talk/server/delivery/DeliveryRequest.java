@@ -12,6 +12,13 @@ import org.apache.log4j.Logger;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Delivery requests encapsulate a delivery run for a given client
+ *
+ * Both incoming and outgoing deliveries are handled in one go.
+ * If clients are not connected the request is passed on to the push agent.
+ * Deliveries are rate-limited to one update every 5 seconds.
+ */
 public class DeliveryRequest {
 
     private static final Logger LOG = Logger.getLogger(DeliveryRequest.class);
