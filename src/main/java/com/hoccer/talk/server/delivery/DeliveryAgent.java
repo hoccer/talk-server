@@ -25,7 +25,6 @@ public class DeliveryAgent {
     }
 
     public void requestDelivery(String clientId) {
-        LOG.info("requesting " + clientId);
         final DeliveryRequest request = new DeliveryRequest(this, clientId);
         mExecutor.execute(new Runnable() {
             @Override

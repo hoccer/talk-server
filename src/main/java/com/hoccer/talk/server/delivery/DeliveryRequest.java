@@ -31,7 +31,6 @@ public class DeliveryRequest {
     }
 
     void perform() {
-        LOG.info("notifying " + mClientId);
         boolean needToNotify = false;
         boolean currentlyConnected = false;
 
