@@ -218,9 +218,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
 
         // perform the verification
-        byte[] M2 = mSrpServer.verifyClient(M1b);
-        if(M2 == null) {
-            throw new RuntimeException("Verification failed");
+        byte[] M2;
+        try {
+            M2 = mSrpServer.verifyClient(M1b);
+        } catch (CryptoException e) {
+            throw new RuntimeException("Verification failed", e);
         }
 
         // we are now logged in
