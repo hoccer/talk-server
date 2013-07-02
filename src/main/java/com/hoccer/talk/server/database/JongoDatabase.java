@@ -85,6 +85,17 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkClient> findAllClients() {
+        List<TalkClient> res = new ArrayList<TalkClient>();
+        Iterator<TalkClient> it =
+                mClients.find().as(TalkClient.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
     public TalkClient findClientById(String clientId) {
         return mClients.findOne("{clientId:#}", clientId)
                        .as(TalkClient.class);
@@ -206,6 +217,18 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkToken> findTokensByClient(String clientId) {
+        List<TalkToken> res = new ArrayList<TalkToken>();
+        Iterator<TalkToken> it =
+                mTokens.find("{clientId:#}", clientId)
+                       .as(TalkToken.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
     public TalkToken findTokenByPurposeAndSecret(String purpose, String secret) {
         TalkToken res = null;
         Iterator<TalkToken> it =
@@ -218,6 +241,11 @@ public class JongoDatabase implements ITalkServerDatabase {
             }
         }
         return res;
+    }
+
+    @Override
+    public void deleteToken(TalkToken token) {
+        mTokens.remove("{clientId:#,secret:#}", token.getClientId(), token.getSecret());
     }
 
     @Override

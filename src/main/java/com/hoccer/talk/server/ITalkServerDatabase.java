@@ -17,6 +17,7 @@ import java.util.List;
  */
 public interface ITalkServerDatabase {
 
+    public List<TalkClient> findAllClients();
     public TalkClient findClientById(String clientId);
     public TalkClient findClientByApnsToken(String apnsToken);
     public void saveClient(TalkClient client);
@@ -35,7 +36,9 @@ public interface ITalkServerDatabase {
     public void deleteDelivery(TalkDelivery delivery);
     public void saveDelivery(TalkDelivery delivery);
 
+    public List<TalkToken> findTokensByClient(String clientId);
     public TalkToken findTokenByPurposeAndSecret(String purpose, String secret);
+    public void deleteToken(TalkToken token);
     public void saveToken(TalkToken token);
 
     public TalkPresence findPresenceForClient(String clientId);

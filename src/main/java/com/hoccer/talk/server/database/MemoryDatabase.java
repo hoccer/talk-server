@@ -319,4 +319,18 @@ public class MemoryDatabase implements ITalkServerDatabase {
     public List<TalkDelivery> findDeliveriesInState(String state) {
         return null;
     }
+
+    @Override
+    public List<TalkClient> findAllClients() {
+        return null;
+    }
+
+    @Override
+    public List<TalkToken> findTokensByClient(String clientId) {
+        return null;
+    }
+
+    @Override
+    public void deleteToken(TalkToken token) {
+    }
 }

@@ -62,6 +62,15 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkClient> findAllClients() {
+        try {
+            return mClients.queryForAll();
+        } catch (SQLException e) {
+            e.printStackTrace(); return null;
+        }
+    }
+
+    @Override
     public TalkClient findClientById(String clientId) {
         try {
             return mClients.queryForId(clientId);
@@ -219,6 +228,17 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkToken> findTokensByClient(String clientId) {
+        try {
+            return mTokens.queryBuilder().where()
+                            .eq("clientId", clientId)
+                          .query();
+        } catch (SQLException e) {
+            e.printStackTrace(); return null;
+        }
+    }
+
+    @Override
     public TalkToken findTokenByPurposeAndSecret(String purpose, String secret) {
         try {
             return mTokens.queryBuilder().where()
@@ -228,6 +248,15 @@ public class OrmliteDatabase implements ITalkServerDatabase {
                           .queryForFirst();
         } catch (SQLException e) {
             e.printStackTrace(); return null;
+        }
+    }
+
+    @Override
+    public void deleteToken(TalkToken token) {
+        try {
+            mTokens.delete(token);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
