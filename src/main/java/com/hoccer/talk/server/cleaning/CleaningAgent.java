@@ -27,6 +27,7 @@ public class CleaningAgent {
         mServer = server;
         mDatabase = server.getDatabase();
         mExecutor = Executors.newScheduledThreadPool(4);
+        cleanAllClients();
         cleanAllFinishedDeliveries();
     }
 
@@ -36,7 +37,16 @@ public class CleaningAgent {
             public void run() {
                 doCleanAllFinishedDeliveries();
             }
-        }, 60, 3600, TimeUnit.SECONDS);
+        }, 60, 600, TimeUnit.SECONDS);
+    }
+
+    private void cleanAllClients() {
+        mExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                doCleanAllClients();
+            }
+        }, 30, TimeUnit.SECONDS);
     }
 
     public void cleanFinishedDelivery(final TalkDelivery finishedDelivery) {
@@ -48,7 +58,17 @@ public class CleaningAgent {
         });
     }
 
+    private void doCleanAllClients() {
+        LOG.info("cleaning all clients");
+        List<TalkClient> allClients = mDatabase.findAllClients();
+
+        for(TalkClient client: allClients) {
+            cleanClientData(client.getClientId());
+        }
+    }
+
     private void doCleanAllFinishedDeliveries() {
+        LOG.debug("cleaning all finished deliveries");
         List<TalkDelivery> deliveries = null;
 
         deliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_ABORTED);
@@ -106,14 +126,16 @@ public class CleaningAgent {
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
+                LOG.info("cleaning client " + clientId);
                 doCleanKeysForClient(clientId);
+                doCleanTokensForClient(clientId);
                 doCleanRelationshipsForClient(clientId);
             }
         });
     }
 
     private void doCleanKeysForClient(String clientId) {
-        LOG.info("cleaning keys for client " + clientId);
+        LOG.debug("cleaning keys for client " + clientId);
 
         Date now = new Date();
         Calendar cal = new GregorianCalendar();
@@ -124,20 +146,51 @@ public class CleaningAgent {
         List<TalkKey> keys = mDatabase.findKeys(clientId);
         for(TalkKey key: keys) {
             if(key.getKeyId().equals(presence.getKeyId())) {
-                LOG.info("keeping " + key.getKeyId() + " because it is used");
+                LOG.debug("keeping " + key.getKeyId() + " because it is used");
                 continue;
             }
             if(!cal.after(key.getTimestamp())) {
-                LOG.info("keeping " + key.getKeyId() + " because it is recent");
+                LOG.debug("keeping " + key.getKeyId() + " because it is recent");
                 continue;
             }
-            LOG.info("deleting key " + key.getKeyId());
+            LOG.debug("deleting key " + key.getKeyId());
             mDatabase.deleteKey(key);
         }
     }
 
+    private void doCleanTokensForClient(String clientId) {
+        LOG.debug("cleaning tokens for client " + clientId);
+
+        Date now = new Date();
+        int numKept = 0;
+        int numSpent = 0;
+        int numExpired = 0;
+        List<TalkToken> tokens = mDatabase.findTokensByClient(clientId);
+        for(TalkToken token: tokens) {
+            if(token.getState().equals(TalkToken.STATE_SPENT)) {
+                numSpent++;
+                mDatabase.deleteToken(token);
+                continue;
+            }
+            if(token.getExpiryTime().before(now)) {
+                numExpired++;
+                mDatabase.deleteToken(token);
+                continue;
+            }
+        }
+        if(numSpent > 0) {
+            LOG.debug("deleted " + numSpent + " spent tokens");
+        }
+        if(numExpired > 0) {
+            LOG.debug("deleted " + numExpired + " expired tokens");
+        }
+        if(numKept > 0) {
+            LOG.debug("kept " + numKept + " tokens");
+        }
+    }
+
     private void doCleanRelationshipsForClient(String clientId) {
-        LOG.info("cleaning relationships for client " + clientId);
+        LOG.debug("cleaning relationships for client " + clientId);
 
         Date now = new Date();
         Calendar cal = new GregorianCalendar();
