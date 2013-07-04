@@ -37,7 +37,7 @@ public class StatusHandler extends AbstractHandler {
 
             w.write("Hoccer Talk Server -- System Status\n\n");
 
-            w.write("Handled " + mServer.getNumCurrentConnections() + " connections, " + mServer.getNumTotalConnections() + " total during uptime\n\n");
+            w.write(mServer.getNumCurrentConnections() + " connections open, " + mServer.getNumTotalConnections() + " total during uptime\n\n");
 
             ITalkServerStatistics stats = mServer.getStatistics();
             Map<String, Integer> srvStats = stats.getMap();
