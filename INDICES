@@ -1,0 +1,12 @@
+
+db.client.ensureIndex({clientId:1})
+db.token.ensureIndex({clientId:1, secret:1})
+db.relationship.ensureIndex({clientId:1, otherClientId:1})
+db.presence.ensureIndex({clientId:1})
+db.message.ensureIndex({messageId:1})
+db.key.ensureIndex({clientId:1})
+db.getCollection("group").ensureIndex({groupId:1})
+db.groupMember.ensureIndex({groupId:1, clientId:1})
+db.message.ensureIndex({messageId:1, senderId:1})
+db.delivery.ensureIndex({messageId:1, senderId:1, receiverId:1})
+
