@@ -55,6 +55,9 @@ public class TalkServer {
     /** Database accessor */
     ITalkServerDatabase mDatabase;
 
+    /** Stats collector */
+    ITalkServerStatistics mStatistics;
+
     /** Delivery agent */
     DeliveryAgent mDeliveryAgent;
 
@@ -91,6 +94,8 @@ public class TalkServer {
         mConfiguration = configuration;
         mDatabase = database;
 
+        mStatistics = new TalkMemoryStats();
+
 		mJsonMapper = createObjectMapper(new JsonFactory());
         mBsonMapper = createObjectMapper(new BsonFactory());
 
@@ -107,6 +112,14 @@ public class TalkServer {
 
         mJmxReporter = JmxReporter.forRegistry(mMetrics).build();
         mJmxReporter.start();
+    }
+
+    public int getNumTotalConnections() {
+        return mConnectionsTotal.intValue();
+    }
+
+    public int getNumCurrentConnections() {
+        return mConnectionsOpen.intValue();
     }
 
     /** @return the JSON mapper used by this server */
@@ -137,6 +150,11 @@ public class TalkServer {
     /** @return the database accessor of this server */
     public ITalkServerDatabase getDatabase() {
         return mDatabase;
+    }
+
+    /** @return the stats collector for this server */
+    public ITalkServerStatistics getStatistics() {
+        return mStatistics;
     }
 
     /** @return the push agent of this server */

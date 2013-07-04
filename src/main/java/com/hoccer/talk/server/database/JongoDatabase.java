@@ -38,6 +38,8 @@ public class JongoDatabase implements ITalkServerDatabase {
     /** Jongo object mapper */
     Jongo mJongo;
 
+    List<MongoCollection> mCollections;
+
     MongoCollection mClients;
     MongoCollection mMessages;
     MongoCollection mDeliveries;
@@ -51,6 +53,7 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     public JongoDatabase(TalkServerConfiguration configuration) {
         mConfig = configuration;
+        mCollections = new ArrayList<MongoCollection>();
         initialize();
     }
 
@@ -73,15 +76,30 @@ public class JongoDatabase implements ITalkServerDatabase {
         // create object mapper
         mJongo = new Jongo(mDb);
         // create collection accessors
-        mClients = mJongo.getCollection("client").withWriteConcern(wc);
-        mMessages = mJongo.getCollection("message").withWriteConcern(wc);
-        mDeliveries = mJongo.getCollection("delivery").withWriteConcern(wc);
-        mTokens = mJongo.getCollection("token").withWriteConcern(wc);
-        mRelationships = mJongo.getCollection("relationship").withWriteConcern(wc);
-        mPresences = mJongo.getCollection("presence").withWriteConcern(wc);
-        mKeys = mJongo.getCollection("key").withWriteConcern(wc);
-        mGroups = mJongo.getCollection("group").withWriteConcern(wc);
-        mGroupMembers = mJongo.getCollection("groupMember").withWriteConcern(wc);
+        mClients = getCollection("client");
+        mMessages = getCollection("message");
+        mDeliveries = getCollection("delivery");
+        mTokens = getCollection("token");
+        mRelationships = getCollection("relationship");
+        mPresences = getCollection("presence");
+        mKeys = getCollection("key");
+        mGroups = getCollection("group");
+        mGroupMembers = getCollection("groupMember");
+    }
+
+    private MongoCollection getCollection(String name) {
+        MongoCollection res = mJongo.getCollection(name).withWriteConcern(WriteConcern.JOURNALED);
+        mCollections.add(res);
+        return res;
+    }
+
+    @Override
+    public Map<String, Long> getStatistics() {
+        HashMap<String, Long> res = new HashMap<String, Long>();
+        for(MongoCollection collection: mCollections) {
+            res.put(collection.getName(), collection.count());
+        }
+        return res;
     }
 
     @Override

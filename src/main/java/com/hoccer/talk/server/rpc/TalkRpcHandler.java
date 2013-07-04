@@ -3,6 +3,7 @@ package com.hoccer.talk.server.rpc;
 import com.hoccer.talk.model.*;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
+import com.hoccer.talk.server.ITalkServerStatistics;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.srp.SRP6Parameters;
@@ -42,6 +43,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
     /** Reference to database accessor */
     private ITalkServerDatabase mDatabase;
 
+    /** Reference to stats collector */
+    private ITalkServerStatistics mStatistics;
+
     /** Reference to connection object */
     private TalkRpcConnection mConnection;
 
@@ -55,6 +59,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mServer = pServer;
         mConnection = pConnection;
         mDatabase = mServer.getDatabase();
+        mStatistics = mServer.getStatistics();
     }
 
     private void requireIdentification() {
@@ -131,6 +136,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         mDatabase.saveClient(client);
 
+        mStatistics.countClientRegistered();
+
         return clientId;
     }
 
@@ -166,7 +173,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         try {
             salt = (byte[]) HEX.decode(mSrpClient.getSrpSalt());
         } catch (DecoderException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Bad salt", e);
         }
 
         // initialize SRP state
@@ -185,7 +192,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         try {
             mSrpServer.calculateSecret(new BigInteger(A, 16));
         } catch (CryptoException e) {
-            throw new RuntimeException(e);
+            mStatistics.countClientLoginFailedSRP1();
+            throw new RuntimeException("Authentication failed", e);
         }
 
         // return our credentials for the client
@@ -222,11 +230,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
         try {
             M2 = mSrpServer.verifyClient(M1b);
         } catch (CryptoException e) {
+            mStatistics.countClientLoginFailedSRP2();
             throw new RuntimeException("Verification failed", e);
         }
 
         // we are now logged in
         mConnection.identifyClient(mSrpClient.getClientId());
+        mStatistics.countClientLogin();
 
         // clear SRP state
         mSrpClient = null;
@@ -522,7 +532,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             InputStream s = p.getInputStream();
             BufferedReader r = new BufferedReader(new InputStreamReader(s));
             String line = r.readLine();
-            LOG.info("pwline " + line);
+            LOG.debug("pwline " + line);
             if(line.length() == 10) {
                 result = line;
             }
@@ -716,6 +726,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
         }
 
+        mStatistics.countMessageAccepted();
+
         // done - return whatever we are left with
         return deliveries;
     }
@@ -858,8 +870,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             if(d.getState().equals(TalkDelivery.STATE_DELIVERING)) {
                 LOG.info("confirmed " + messageId + " for " + clientId);
                 setDeliveryState(d, TalkDelivery.STATE_DELIVERED);
-            } else {
-                LOG.info("reconfirmed " + messageId + " for " + clientId);
+                mStatistics.countMessageConfirmed();
             }
         }
         return d;
@@ -874,6 +885,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             if(d.getState().equals(TalkDelivery.STATE_DELIVERED)) {
                 LOG.info("acknowledged " + messageId + " for " + recipientId);
                 setDeliveryState(d, TalkDelivery.STATE_CONFIRMED);
+                mStatistics.countMessageAcknowledged();
             }
         }
         return d;

@@ -333,4 +333,9 @@ public class MemoryDatabase implements ITalkServerDatabase {
     @Override
     public void deleteToken(TalkToken token) {
     }
+
+    @Override
+    public Map<String, Long> getStatistics() {
+        return null;
+    }
 }

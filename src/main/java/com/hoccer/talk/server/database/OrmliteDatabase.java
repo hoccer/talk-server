@@ -62,6 +62,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public Map<String, Long> getStatistics() {
+        return null;
+    }
+
+    @Override
     public List<TalkClient> findAllClients() {
         try {
             return mClients.queryForAll();

@@ -12,6 +12,7 @@ import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.MemoryDatabase;
 import com.hoccer.talk.server.database.OrmliteDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
+import com.hoccer.talk.server.status.StatusHandler;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -56,9 +57,11 @@ public class TalkServerMain {
         // default handler for non-talk http requests
         DefaultHandler fallbackHandler = new DefaultHandler();
         fallbackHandler.setServeIcon(false);
-        // handler for talk websocket connections
+        // status page handler
+        StatusHandler statusHandler = new StatusHandler(ts, fallbackHandler);
+        // handler for talk websocket connectionscd
         WebSocketHandler clientHandler = new TalkRpcConnectionHandler(ts);
-        clientHandler.setHandler(fallbackHandler);
+        clientHandler.setHandler(statusHandler);
         // set root handler of the server
         s.setHandler(clientHandler);
 

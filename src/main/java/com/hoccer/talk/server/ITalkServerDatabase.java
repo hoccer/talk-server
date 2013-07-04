@@ -4,6 +4,7 @@ import com.hoccer.talk.model.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Describes the interface of Talk database backends
@@ -16,6 +17,8 @@ import java.util.List;
  *
  */
 public interface ITalkServerDatabase {
+
+    public Map<String, Long> getStatistics();
 
     public List<TalkClient> findAllClients();
     public TalkClient findClientById(String clientId);
