@@ -214,6 +214,10 @@ public class TalkServer {
      */
 	public void identifyClient(TalkClient client, TalkRpcConnection connection) {
         String clientId = client.getClientId();
+        TalkRpcConnection oldConnection = mConnectionsByClientId.get(clientId);
+        if(oldConnection != null) {
+            oldConnection.disconnect();
+        }
 		mConnectionsByClientId.put(clientId, connection);
         mUpdateAgent.requestPresenceUpdate(clientId);
 	}
