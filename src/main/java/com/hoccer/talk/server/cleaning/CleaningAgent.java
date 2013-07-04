@@ -61,7 +61,6 @@ public class CleaningAgent {
     private void doCleanAllClients() {
         LOG.info("cleaning all clients");
         List<TalkClient> allClients = mDatabase.findAllClients();
-
         for(TalkClient client: allClients) {
             cleanClientData(client.getClientId());
         }
@@ -72,19 +71,25 @@ public class CleaningAgent {
         List<TalkDelivery> deliveries = null;
 
         deliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_ABORTED);
-        LOG.info("found " + deliveries.size() + " aborted deliveries");
-        for(TalkDelivery delivery: deliveries) {
-            doCleanFinishedDelivery(delivery);
+        if(!deliveries.isEmpty()) {
+            LOG.info("cleanup found " + deliveries.size() + " aborted deliveries");
+            for(TalkDelivery delivery: deliveries) {
+                doCleanFinishedDelivery(delivery);
+            }
         }
         deliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_FAILED);
-        LOG.info("found " + deliveries.size() + " failed deliveries");
-        for(TalkDelivery delivery: deliveries) {
-            doCleanFinishedDelivery(delivery);
+        if(!deliveries.isEmpty()) {
+            LOG.info("cleanup found " + deliveries.size() + " failed deliveries");
+            for(TalkDelivery delivery: deliveries) {
+                doCleanFinishedDelivery(delivery);
+            }
         }
         deliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_CONFIRMED);
-        LOG.info("found " + deliveries.size() + " confirmed deliveries");
-        for(TalkDelivery delivery: deliveries) {
-            doCleanFinishedDelivery(delivery);
+        if(!deliveries.isEmpty()) {
+            LOG.info("cleanup found " + deliveries.size() + " confirmed deliveries");
+            for(TalkDelivery delivery: deliveries) {
+                doCleanFinishedDelivery(delivery);
+            }
         }
     }
 
@@ -126,7 +131,7 @@ public class CleaningAgent {
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                LOG.info("cleaning client " + clientId);
+                LOG.debug("cleaning client " + clientId);
                 doCleanKeysForClient(clientId);
                 doCleanTokensForClient(clientId);
                 doCleanRelationshipsForClient(clientId);
