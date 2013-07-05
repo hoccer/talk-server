@@ -9,7 +9,6 @@ import java.util.Properties;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.hoccer.talk.server.database.JongoDatabase;
-import com.hoccer.talk.server.database.MemoryDatabase;
 import com.hoccer.talk.server.database.OrmliteDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
 import com.hoccer.talk.server.status.StatusHandler;
@@ -109,9 +108,6 @@ public class TalkServerMain {
         String backend = config.getDatabaseBackend();
         if(backend.equals("jongo")) {
             return new JongoDatabase(config);
-        }
-        if(backend.equals("memory")) {
-            return new MemoryDatabase();
         }
         if(backend.equals("ormlite")) {
             return new OrmliteDatabase();
