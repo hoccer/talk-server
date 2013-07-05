@@ -32,10 +32,11 @@ public class PushRequest {
 	}
 
     public void perform() {
-        LOG.info("performing push request for " + mClientId);
+        LOG.debug("pushing " + mClientId);
         // get up-to-date client object
         mClient = mAgent.getDatabase().findClientById(mClientId);
         if(mClient == null) {
+            LOG.warn("client " + mClientId + " does not exist");
             return;
         }
         // try to perform push
@@ -44,11 +45,16 @@ public class PushRequest {
         } else if(mConfig.isApnsEnabled() && mClient.isApnsCapable()) {
             performApns();
         } else {
-            LOG.info("push not executed for " + mClientId);
+            if(mClient.isPushCapable()) {
+                LOG.warn("client " + mClient + " push not available");
+            } else {
+                LOG.info("client " + mClientId + " has no registration");
+            }
         }
     }
 
     private void performGcm() {
+        LOG.info("GCM push for " + mClientId);
         Message message = new Message.Builder()
                 .collapseKey("com.hoccer.talk.wake")
                 .timeToLive(mConfig.getGcmWakeTtl())
@@ -64,6 +70,7 @@ public class PushRequest {
     }
 
     private void performApns() {
+        LOG.info("APNS push for " + mClientId);
         ITalkServerDatabase database = mAgent.getDatabase();
         ApnsService apnsService = mAgent.getApnsService();
         PayloadBuilder b = APNS.newPayload();
