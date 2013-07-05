@@ -34,6 +34,8 @@ public class TalkServerConfiguration {
     private boolean mApnsSandbox = false;
     private String  mApnsCertPath = "HoccerTalkApplePushNotificationDev.p12";
     private String  mApnsCertPassword = "password";
+    private int     mApnsInvalidateDelay = 30;
+    private int     mApnsInvalidateInterval = 3600;
 
     private String mDatabaseBackend = "jongo";
 
@@ -65,6 +67,8 @@ public class TalkServerConfiguration {
         mApnsSandbox = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.sandbox", Boolean.toString(mApnsSandbox)));
         mApnsCertPath = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.path", mApnsCertPath);
         mApnsCertPassword = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.password", mApnsCertPassword);
+        mApnsInvalidateDelay = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.invalidate.delay", Integer.toString(mApnsInvalidateDelay)));
+        mApnsInvalidateInterval = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.invalidate.interval", Integer.toString(mApnsInvalidateInterval)));
         // GCM
         mGcmEnabled = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".gcm.enabled", Boolean.toString(mGcmEnabled)));
         mGcmApiKey  = properties.getProperty(PROPERTY_PREFIX + ".gcm.apikey", mGcmApiKey);
@@ -124,6 +128,14 @@ public class TalkServerConfiguration {
 
     public String getApnsCertPassword() {
         return mApnsCertPassword;
+    }
+
+    public int getApnsInvalidateDelay() {
+        return mApnsInvalidateDelay;
+    }
+
+    public int getApnsInvalidateInterval() {
+        return mApnsInvalidateInterval;
     }
 
     public URI getFilecacheControlUrl() {

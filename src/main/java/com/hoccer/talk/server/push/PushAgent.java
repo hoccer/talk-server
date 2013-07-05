@@ -157,6 +157,8 @@ public class PushAgent {
 
     private void initializeApns() {
         LOG.info("APNS support enabled");
+
+        // set up service
         ApnsServiceBuilder apnsServiceBuilder = APNS.newService()
                 .withCert(mConfig.getApnsCertPath(),
                           mConfig.getApnsCertPassword());
@@ -166,20 +168,34 @@ public class PushAgent {
             apnsServiceBuilder = apnsServiceBuilder.withProductionDestination();
         }
         mApnsService = apnsServiceBuilder.build();
-        invalidateApns();
+
+        // set up invalidation
+        int delay = mConfig.getApnsInvalidateDelay();
+        int interval = mConfig.getApnsInvalidateInterval();
+        if(interval > 0) {
+            LOG.info("APNS will check for invalidations every " + interval + " seconds");
+            mExecutor.scheduleAtFixedRate(new Runnable() {
+                @Override
+                public void run() {
+                    invalidateApns();
+                }
+            }, delay, interval, TimeUnit.SECONDS);
+        }
     }
 
     private void invalidateApns() {
         LOG.info("APNS retrieving inactive devices");
         Map<String, Date> inactive = mApnsService.getInactiveDevices();
-        LOG.info("APNS reports " + inactive.size() + " inactive devices");
-        for(String token: inactive.keySet()) {
-            TalkClient client = mDatabase.findClientByApnsToken(token);
-            if(client == null) {
-                LOG.info("unknown inactive APNS client with token " + token);
-            } else {
-                LOG.info("client inactive on APNS since " + inactive.get(token) + ": " + client.getClientId());
-                client.setApnsToken(null);
+        if(!inactive.isEmpty()) {
+            LOG.info("APNS reports " + inactive.size() + " inactive devices");
+            for(String token: inactive.keySet()) {
+                TalkClient client = mDatabase.findClientByApnsToken(token);
+                if(client == null) {
+                    LOG.warn("APNS invalidates unknown client (token " + token + ")");
+                } else {
+                    LOG.info("APNS client" + client.getClientId() + " invalid since " + inactive.get(token));
+                    client.setApnsToken(null);
+                }
             }
         }
     }
