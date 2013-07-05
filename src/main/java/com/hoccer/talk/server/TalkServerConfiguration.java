@@ -25,10 +25,11 @@ public class TalkServerConfiguration {
     private String mListenAddress = "localhost";
     private int    mListenPort = 8080;
 
+
+    private int mPushRateLimit = 15000;
     private boolean mGcmEnabled = false;
     private String  mGcmApiKey = "AIzaSyA25wabV4kSQTaF73LTgTkjmw0yZ8inVr8";
     private int     mGcmWakeTtl = 1 * 7 * 24 * 3600; // 1 week
-
     private boolean mApnsEnabled = false;
     private boolean mApnsSandbox = false;
     private String  mApnsCertPath = "HoccerTalkApplePushNotificationDev.p12";
@@ -49,24 +50,30 @@ public class TalkServerConfiguration {
 
     public void configureFromProperties(Properties properties) {
         // listening
-        mListenAddress = properties.getProperty(PROPERTY_PREFIX + ".listen.address", "localhost");
-        mListenPort = Integer.parseInt(properties.getProperty(PROPERTY_PREFIX + ".listen.port", "8080"));
-        // APNS
-        mApnsEnabled = properties.getProperty(PROPERTY_PREFIX + ".apns.enabled", "false").equals("true");
-        mApnsSandbox = properties.getProperty(PROPERTY_PREFIX + ".apns.sandbox", "true").equals("true");
-        mApnsCertPath = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.path", "apns.p12");
-        mApnsCertPassword = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.password", "password");
-        // GCM
-        mGcmEnabled = properties.getProperty(PROPERTY_PREFIX + ".gcm.enabled", "false").equals("true");
-        mGcmApiKey  = properties.getProperty(PROPERTY_PREFIX + ".gcm.apikey", "ABCD");
+        mListenAddress = properties.getProperty(PROPERTY_PREFIX + ".listen.address", mListenAddress);
+        mListenPort = Integer.parseInt(properties.getProperty(PROPERTY_PREFIX + ".listen.port", Integer.toString(mListenPort)));
+
         // Database
-        mDatabaseBackend = properties.getProperty(PROPERTY_PREFIX + ".db.backend", "jongo");
+        mDatabaseBackend = properties.getProperty(PROPERTY_PREFIX + ".db.backend", mDatabaseBackend);
         // Jongo
-        mJongoDb = properties.getProperty(PROPERTY_PREFIX + ".jongo.db", "talk");
+        mJongoDb = properties.getProperty(PROPERTY_PREFIX + ".jongo.db", mJongoDb);
+
+        // Push
+        mPushRateLimit = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".push.rateLimit", Integer.toString(mPushRateLimit)));
+        // APNS
+        mApnsEnabled = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.enabled", Boolean.toString(mApnsEnabled)));
+        mApnsSandbox = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.sandbox", Boolean.toString(mApnsSandbox)));
+        mApnsCertPath = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.path", mApnsCertPath);
+        mApnsCertPassword = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.password", mApnsCertPassword);
+        // GCM
+        mGcmEnabled = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".gcm.enabled", Boolean.toString(mGcmEnabled)));
+        mGcmApiKey  = properties.getProperty(PROPERTY_PREFIX + ".gcm.apikey", mGcmApiKey);
+
         // Filecache
         mFilecacheControlUrl = properties.getProperty(PROPERTY_PREFIX + ".filecache.controlUrl", mFilecacheControlUrl);
         mFilecacheUploadBase = properties.getProperty(PROPERTY_PREFIX + ".filecache.uploadBase", mFilecacheUploadBase);
         mFilecacheDownloadBase = properties.getProperty(PROPERTY_PREFIX + ".filecache.downloadBase", mFilecacheDownloadBase);
+
         // Support
         mSupportTag = properties.getProperty(PROPERTY_PREFIX + ".support.tag", mSupportTag);
     }
@@ -77,6 +84,18 @@ public class TalkServerConfiguration {
 
     public int getListenPort() {
         return mListenPort;
+    }
+
+    public String getDatabaseBackend() {
+        return mDatabaseBackend;
+    }
+
+    public String getJongoDb() {
+        return mJongoDb;
+    }
+
+    public int getPushRateLimit() {
+        return mPushRateLimit;
     }
 
     public boolean isGcmEnabled() {
@@ -105,14 +124,6 @@ public class TalkServerConfiguration {
 
     public String getApnsCertPassword() {
         return mApnsCertPassword;
-    }
-
-    public String getDatabaseBackend() {
-        return mDatabaseBackend;
-    }
-
-    public String getJongoDb() {
-        return mJongoDb;
     }
 
     public URI getFilecacheControlUrl() {
