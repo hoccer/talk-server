@@ -3,6 +3,7 @@ package com.hoccer.talk.server.cleaning;
 import com.hoccer.talk.model.*;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
+import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.filecache.FilecacheClient;
 import org.apache.log4j.Logger;
 
@@ -20,6 +21,8 @@ public class CleaningAgent {
 
     TalkServer mServer;
 
+    TalkServerConfiguration mConfig;
+
     ITalkServerDatabase mDatabase;
 
     FilecacheClient mFilecache;
@@ -28,29 +31,46 @@ public class CleaningAgent {
 
     public CleaningAgent(TalkServer server) {
         mServer = server;
+        mConfig = server.getConfiguration();
         mDatabase = server.getDatabase();
         mFilecache = server.getFilecacheClient();
         mExecutor = Executors.newScheduledThreadPool(4);
-        cleanAllClients();
-        cleanAllFinishedDeliveries();
+        scheduleCleanAllClients();
+        scheduleCleanAllDeliveries();
     }
 
-    private void cleanAllFinishedDeliveries() {
+    public void cleanClientData(final String clientId) {
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                LOG.debug("cleaning client " + clientId);
+                doCleanKeysForClient(clientId);
+                doCleanTokensForClient(clientId);
+                doCleanRelationshipsForClient(clientId);
+            }
+        });
+    }
+
+    private void scheduleCleanAllDeliveries() {
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 doCleanAllFinishedDeliveries();
             }
-        }, 60, 600, TimeUnit.SECONDS);
+        }, mConfig.getCleanupAllDeliveriesDelay(),
+           mConfig.getCleanupAllDeliveriesInterval(),
+           TimeUnit.SECONDS);
     }
 
-    private void cleanAllClients() {
-        mExecutor.schedule(new Runnable() {
+    private void scheduleCleanAllClients() {
+        mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 doCleanAllClients();
             }
-        }, 30, TimeUnit.SECONDS);
+        }, mConfig.getCleanupAllClientsDelay(),
+                mConfig.getCleanupAllClientsInterval(),
+                TimeUnit.SECONDS);
     }
 
     public void cleanFinishedDelivery(final TalkDelivery finishedDelivery) {
@@ -129,18 +149,6 @@ public class CleaningAgent {
         if(message != null && !keepMessage) {
             doDeleteMessage(message);
         }
-    }
-
-    public void cleanClientData(final String clientId) {
-        mExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                LOG.debug("cleaning client " + clientId);
-                doCleanKeysForClient(clientId);
-                doCleanTokensForClient(clientId);
-                doCleanRelationshipsForClient(clientId);
-            }
-        });
     }
 
     private void doCleanKeysForClient(String clientId) {

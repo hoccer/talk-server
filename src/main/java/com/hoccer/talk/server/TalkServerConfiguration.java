@@ -38,8 +38,12 @@ public class TalkServerConfiguration {
     private int     mApnsInvalidateInterval = 3600;
 
     private String mDatabaseBackend = "jongo";
-
     private String mJongoDb = "talk";
+
+    private int mCleanupAllClientsDelay = 300;
+    private int mCleanupAllClientsInterval = 900;
+    private int mCleanupAllDeliveriesDelay = 600;
+    private int mCleanupAllDeliveriesInterval = 900;
 
     private String mFilecacheControlUrl = "http://localhost:8081/control";
     private String mFilecacheUploadBase = "http://localhost:8081/upload/";
@@ -72,6 +76,12 @@ public class TalkServerConfiguration {
         // GCM
         mGcmEnabled = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".gcm.enabled", Boolean.toString(mGcmEnabled)));
         mGcmApiKey  = properties.getProperty(PROPERTY_PREFIX + ".gcm.apikey", mGcmApiKey);
+
+        // Cleanup
+        mCleanupAllClientsDelay = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".cleanup.allClientsDelay", Integer.toString(mCleanupAllClientsDelay)));
+        mCleanupAllClientsInterval = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".cleanup.allClientsInterval", Integer.toString(mCleanupAllClientsInterval)));
+        mCleanupAllDeliveriesDelay = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".cleanup.allDeliveriesDelay", Integer.toString(mCleanupAllDeliveriesDelay)));
+        mCleanupAllDeliveriesInterval = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".cleanup.allDeliveriesInterval", Integer.toString(mCleanupAllDeliveriesInterval)));
 
         // Filecache
         mFilecacheControlUrl = properties.getProperty(PROPERTY_PREFIX + ".filecache.controlUrl", mFilecacheControlUrl);
@@ -146,6 +156,22 @@ public class TalkServerConfiguration {
             e.printStackTrace();
         }
         return url;
+    }
+
+    public int getCleanupAllClientsDelay() {
+        return mCleanupAllClientsDelay;
+    }
+
+    public int getCleanupAllClientsInterval() {
+        return mCleanupAllClientsInterval;
+    }
+
+    public int getCleanupAllDeliveriesDelay() {
+        return mCleanupAllDeliveriesDelay;
+    }
+
+    public int getCleanupAllDeliveriesInterval() {
+        return mCleanupAllDeliveriesInterval;
     }
 
     public String getFilecacheUploadBase() {
