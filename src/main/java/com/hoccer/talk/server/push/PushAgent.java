@@ -107,7 +107,7 @@ public class PushAgent {
         // schedule the request
         final String clientId = client.getClientId();
         synchronized (mOutstanding) {
-            if(!mOutstanding.contains(clientId)) {
+            if(!mOutstanding.containsKey(clientId)) {
                 final PushRequest request = new PushRequest(this, clientId);
                 mExecutor.schedule(new Runnable() {
                     @Override
