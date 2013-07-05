@@ -97,9 +97,10 @@ public class PushAgent {
         }
         long delta = Math.max(0, now - lastPush.getTime());
         long delay = 0;
-        if(delta < 5000) {
+        int limit = mConfig.getPushRateLimit();
+        if(delta < limit) {
             mPushDelayed.incrementAndGet();
-            delay = 5000 - delta;
+            delay = Math.max(0, limit - delta);
         }
         client.setTimeLastPush(new Date());
         mDatabase.saveClient(client);
