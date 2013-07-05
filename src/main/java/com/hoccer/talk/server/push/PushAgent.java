@@ -39,6 +39,7 @@ public class PushAgent {
     AtomicInteger mPushRequests = new AtomicInteger();
     AtomicInteger mPushDelayed = new AtomicInteger();
     AtomicInteger mPushIncapable = new AtomicInteger();
+    AtomicInteger mPushBatched = new AtomicInteger();
 
     public PushAgent(TalkServer server) {
 		mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PUSH);
@@ -77,6 +78,13 @@ public class PushAgent {
                         return mPushDelayed.intValue();
                     }
                 });
+        metrics.register(MetricRegistry.name(PushAgent.class, "pushBatched"),
+                new Gauge<Integer>() {
+                    @Override
+                    public Integer getValue() {
+                        return mPushBatched.intValue();
+                    }
+                });
     }
 
     public void submitRequest(TalkClient client) {
@@ -108,7 +116,11 @@ public class PushAgent {
         // schedule the request
         final String clientId = client.getClientId();
         synchronized (mOutstanding) {
-            if(!mOutstanding.containsKey(clientId)) {
+            if(mOutstanding.containsKey(clientId)) {
+                // request has been batched
+                mPushBatched.incrementAndGet();
+            } else {
+                // schedule the request
                 final PushRequest request = new PushRequest(this, clientId);
                 mExecutor.schedule(new Runnable() {
                     @Override
