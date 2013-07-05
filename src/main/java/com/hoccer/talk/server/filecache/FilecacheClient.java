@@ -77,6 +77,7 @@ public class FilecacheClient extends JsonRpcWsClient {
 
     public void deleteFile(String fileId) {
         ensureConnected();
+        LOG.info("deleting file f=" + fileId);
         mRpc.deleteFile(fileId);
     }
 
