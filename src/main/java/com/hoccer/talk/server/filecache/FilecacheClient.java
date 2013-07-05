@@ -12,6 +12,12 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Wrapper for filecache control operations
+ *
+ * This automatically connects to the filecache when needed
+ * and performs the requested operations synchronously.
+ */
 public class FilecacheClient extends JsonRpcWsClient {
 
     private static final Logger LOG = Logger.getLogger(FilecacheClient.class);
@@ -31,7 +37,7 @@ public class FilecacheClient extends JsonRpcWsClient {
         mClient = new JsonRpcClient();
         mClient.setRequestTimeout(3000); // XXX constant
         this.bindClient(mClient);
-        mRpc = (ICacheControl)this.makeProxy(ICacheControl.class);
+        mRpc = this.makeProxy(ICacheControl.class);
     }
 
     private synchronized void ensureConnected() {
