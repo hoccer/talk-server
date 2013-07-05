@@ -67,6 +67,7 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
         // configure the connection
         connection.setSendBinaryMessages(binary);
         connection.setMaxIdleTime(1800 * 1000);
+        connection.setAnswerKeepAlives(true);
         connection.bindClient(new JsonRpcClient());
         connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
         // return the raw connection (will be called by server for incoming messages)
