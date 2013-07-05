@@ -98,7 +98,7 @@ public class PushAgent {
             return;
         }
 
-        // determine delay
+        // limit push rate
         Date lastPush = client.getTimeLastPush();
         if(lastPush == null) {
             lastPush = new Date();
@@ -110,10 +110,12 @@ public class PushAgent {
             mPushDelayed.incrementAndGet();
             delay = Math.max(0, limit - delta);
         }
+
+        // update timestamp
         client.setTimeLastPush(new Date());
         mDatabase.saveClient(client);
 
-        // schedule the request
+        // only perform push when we aren't doing so already
         final String clientId = client.getClientId();
         synchronized (mOutstanding) {
             if(mOutstanding.containsKey(clientId)) {
@@ -125,7 +127,9 @@ public class PushAgent {
                 mExecutor.schedule(new Runnable() {
                     @Override
                     public void run() {
+                        // no longer outstanding
                         mOutstanding.remove(clientId);
+                        // perform the request
                         request.perform();
                     }
                 }, delay, TimeUnit.MILLISECONDS);
