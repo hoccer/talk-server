@@ -3,6 +3,7 @@ package com.hoccer.talk.server.cleaning;
 import com.hoccer.talk.model.*;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
+import com.hoccer.talk.server.filecache.FilecacheClient;
 import org.apache.log4j.Logger;
 
 import java.util.Calendar;
@@ -21,11 +22,14 @@ public class CleaningAgent {
 
     ITalkServerDatabase mDatabase;
 
+    FilecacheClient mFilecache;
+
     ScheduledExecutorService mExecutor;
 
     public CleaningAgent(TalkServer server) {
         mServer = server;
         mDatabase = server.getDatabase();
+        mFilecache = server.getFilecacheClient();
         mExecutor = Executors.newScheduledThreadPool(4);
         cleanAllClients();
         cleanAllFinishedDeliveries();
@@ -99,7 +103,7 @@ public class CleaningAgent {
         if(message != null) {
             if (message.getNumDeliveries() == 1) {
                 // if we have only one delivery then we can safely delete the msg now
-                mDatabase.deleteMessage(message);
+                doDeleteMessage(message);
             } else {
                 // else we need to determine the state of the message in detail
                 doCleanDeliveriesForMessage(messageId, message);
@@ -123,7 +127,7 @@ public class CleaningAgent {
             keepMessage = true;
         }
         if(message != null && !keepMessage) {
-            mDatabase.deleteMessage(message);
+            doDeleteMessage(message);
         }
     }
 
@@ -209,6 +213,19 @@ public class CleaningAgent {
             }
             mDatabase.deleteRelationship(relationship);
         }
+    }
+
+    private void doDeleteMessage(TalkMessage message) {
+        LOG.debug("deleting message " + message);
+
+        // delete attached file if there is one
+        String fileId = message.getAttachmentFileId();
+        if(fileId != null) {
+            mFilecache.deleteFile(fileId);
+        }
+
+        // delete the message itself
+        mDatabase.deleteMessage(message);
     }
 
 }
