@@ -1,5 +1,7 @@
 package com.hoccer.talk.server.ping;
 
+import better.jsonrpc.client.JsonRpcClientDisconnect;
+import better.jsonrpc.client.JsonRpcClientTimeout;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -80,12 +82,18 @@ public class PingAgent {
                     Timer.Context timer = mPingLatency.time();
                     try {
                         rpc.ping();
+                        long elapsed = (timer.stop() / 1000000);
+                        LOG.info("ping on " + clientId + " took " + elapsed + " msecs");
                         mPingSuccesses.incrementAndGet();
+                    } catch (JsonRpcClientDisconnect e) {
+                        LOG.info("ping on " + clientId + " disconnect");
+                        mPingFailures.incrementAndGet();
+                    } catch (JsonRpcClientTimeout e) {
+                        LOG.info("ping on " + clientId + " timeout");
+                        mPingFailures.incrementAndGet();
                     } catch (Throwable t) {
                         LOG.info("exception in ping on " + clientId, t);
                         mPingFailures.incrementAndGet();
-                    } finally {
-                        timer.stop();
                     }
                 }
             }
