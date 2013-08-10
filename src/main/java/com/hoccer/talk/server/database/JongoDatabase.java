@@ -1,18 +1,32 @@
 package com.hoccer.talk.server.database;
 
-import com.hoccer.talk.model.*;
+import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.model.TalkDelivery;
+import com.hoccer.talk.model.TalkGroup;
+import com.hoccer.talk.model.TalkGroupMember;
+import com.hoccer.talk.model.TalkKey;
+import com.hoccer.talk.model.TalkMessage;
+import com.hoccer.talk.model.TalkPresence;
+import com.hoccer.talk.model.TalkRelationship;
+import com.hoccer.talk.model.TalkToken;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
-
 import com.mongodb.WriteConcern;
 import org.apache.log4j.Logger;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Database implementation using the Jongo mapper to MongoDB

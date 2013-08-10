@@ -1,13 +1,5 @@
 package com.hoccer.talk.server.push;
 
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.google.android.gcm.server.Sender;
@@ -19,6 +11,14 @@ import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.ApnsServiceBuilder;
 import org.apache.log4j.Logger;
+
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PushAgent {
 

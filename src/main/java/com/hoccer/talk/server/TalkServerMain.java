@@ -1,11 +1,5 @@
 package com.hoccer.talk.server;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Properties;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.hoccer.talk.server.database.JongoDatabase;
@@ -18,6 +12,12 @@ import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.websocket.WebSocketHandler;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Properties;
 
 public class TalkServerMain {
 

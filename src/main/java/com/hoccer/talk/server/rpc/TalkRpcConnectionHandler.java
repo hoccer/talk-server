@@ -1,19 +1,15 @@
 package com.hoccer.talk.server.rpc;
 
-import javax.servlet.http.HttpServletRequest;
-
 import better.jsonrpc.client.JsonRpcClient;
 import better.jsonrpc.server.JsonRpcServer;
-
+import better.jsonrpc.websocket.JsonRpcWsConnection;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hoccer.talk.server.TalkServer;
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketHandler;
 
-import better.jsonrpc.websocket.JsonRpcWsConnection;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import com.hoccer.talk.server.TalkServer;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * WebSocket handler

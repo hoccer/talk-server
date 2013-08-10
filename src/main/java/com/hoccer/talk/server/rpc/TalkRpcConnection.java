@@ -1,18 +1,15 @@
 package com.hoccer.talk.server.rpc;
 
+import better.jsonrpc.core.JsonRpcConnection;
 import better.jsonrpc.websocket.JsonRpcWsConnection;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.ITalkRpcClient;
-
-import java.util.Date;
-
-import better.jsonrpc.core.JsonRpcConnection;
-
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import org.apache.log4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
 
 /**
  * Connection object representing one JSON-RPC connection each

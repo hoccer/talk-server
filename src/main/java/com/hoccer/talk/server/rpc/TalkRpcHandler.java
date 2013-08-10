@@ -1,6 +1,16 @@
 package com.hoccer.talk.server.rpc;
 
-import com.hoccer.talk.model.*;
+import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.model.TalkClientInfo;
+import com.hoccer.talk.model.TalkDelivery;
+import com.hoccer.talk.model.TalkGroup;
+import com.hoccer.talk.model.TalkGroupMember;
+import com.hoccer.talk.model.TalkKey;
+import com.hoccer.talk.model.TalkMessage;
+import com.hoccer.talk.model.TalkPresence;
+import com.hoccer.talk.model.TalkRelationship;
+import com.hoccer.talk.model.TalkServerInfo;
+import com.hoccer.talk.model.TalkToken;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.ITalkServerStatistics;
@@ -15,10 +25,17 @@ import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.Vector;
 
 /**
  * RPC handler for talk protocol communications

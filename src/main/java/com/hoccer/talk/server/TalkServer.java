@@ -1,29 +1,28 @@
 package com.hoccer.talk.server;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import better.jsonrpc.server.JsonRpcServer;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.cleaning.CleaningAgent;
 import com.hoccer.talk.server.delivery.DeliveryAgent;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.server.filecache.FilecacheClient;
 import com.hoccer.talk.server.ping.PingAgent;
-import com.hoccer.talk.server.update.UpdateAgent;
 import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
-
-import better.jsonrpc.server.JsonRpcServer;
+import com.hoccer.talk.server.update.UpdateAgent;
 import de.undercouch.bson4jackson.BsonFactory;
 import org.apache.log4j.Logger;
+
+import java.util.Hashtable;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Main object of the Talk server

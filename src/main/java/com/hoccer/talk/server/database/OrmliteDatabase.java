@@ -1,6 +1,14 @@
 package com.hoccer.talk.server.database;
 
-import com.hoccer.talk.model.*;
+import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.model.TalkDelivery;
+import com.hoccer.talk.model.TalkGroup;
+import com.hoccer.talk.model.TalkGroupMember;
+import com.hoccer.talk.model.TalkKey;
+import com.hoccer.talk.model.TalkMessage;
+import com.hoccer.talk.model.TalkPresence;
+import com.hoccer.talk.model.TalkRelationship;
+import com.hoccer.talk.model.TalkToken;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -8,7 +16,12 @@ import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OrmliteDatabase implements ITalkServerDatabase {
 

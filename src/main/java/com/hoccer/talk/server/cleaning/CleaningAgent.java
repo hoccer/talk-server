@@ -1,6 +1,12 @@
 package com.hoccer.talk.server.cleaning;
 
-import com.hoccer.talk.model.*;
+import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.model.TalkDelivery;
+import com.hoccer.talk.model.TalkKey;
+import com.hoccer.talk.model.TalkMessage;
+import com.hoccer.talk.model.TalkPresence;
+import com.hoccer.talk.model.TalkRelationship;
+import com.hoccer.talk.model.TalkToken;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;

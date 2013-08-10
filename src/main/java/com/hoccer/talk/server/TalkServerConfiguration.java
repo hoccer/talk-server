@@ -2,10 +2,8 @@ package com.hoccer.talk.server;
 
 import org.apache.log4j.Logger;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Properties;
 
 public class TalkServerConfiguration {
