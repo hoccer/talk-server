@@ -70,7 +70,7 @@ public class FilecacheClient extends JsonRpcWsClient {
 
     public ITalkRpcServer.FileHandles createFileForTransfer(String accountId, String contentType, int contentLength) {
         ensureConnected();
-        ICacheControl.FileHandles cacheHandles = mRpc.createFileForStorage(accountId, contentType, contentLength);
+        ICacheControl.FileHandles cacheHandles = mRpc.createFileForTransfer(accountId, contentType, contentLength);
         LOG.info("created transfer file with handles f=" + cacheHandles.fileId
                  + " u=" + cacheHandles.uploadId
                  + " d=" + cacheHandles.downloadId);
