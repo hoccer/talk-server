@@ -20,7 +20,6 @@ import java.util.Map;
  * There currently are two implementations:
  *
  *   .database.JongoDatabase   -  Jongo-based persistent database
- *
  *   .database.MemoryDatabase  -  Hashtable-based in-memory database
  *
  */

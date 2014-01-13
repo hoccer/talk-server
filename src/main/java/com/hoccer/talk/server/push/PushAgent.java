@@ -20,6 +20,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Agent for push notifications
+ */
 public class PushAgent {
 
     private static final Logger LOG = Logger.getLogger(PushAgent.class);

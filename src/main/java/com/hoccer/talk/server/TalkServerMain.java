@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 
+/**
+ * Entrypoint to the Talk server
+ */
 public class TalkServerMain {
 
     private static final Logger LOG = Logger.getLogger(TalkServerMain.class);

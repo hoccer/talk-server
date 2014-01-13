@@ -16,7 +16,6 @@ import javax.servlet.http.HttpServletRequest;
  *
  * This is responsible for accepting websocket connections,
  * creating and configuring a connection object for them.
- *
  */
 public class TalkRpcConnectionHandler extends WebSocketHandler {
 

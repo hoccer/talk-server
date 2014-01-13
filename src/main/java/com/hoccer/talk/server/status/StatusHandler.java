@@ -14,6 +14,12 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Map;
 
+/**
+ * Server status page
+ *
+ * This handler shows some simple system stats
+ * as a form of stopgap monitoring.
+ */
 public class StatusHandler extends AbstractHandler {
 
     TalkServer mServer;

@@ -16,6 +16,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Ping measurement agent
+ *
+ * This gets kicked on login and reports the round-trip call latency
+ * from the server to the client and back.
+ *
+ * It is intended purely for monitoring.
+ */
 public class PingAgent {
 
     private static final Logger LOG = Logger.getLogger(PingAgent.class);

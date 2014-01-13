@@ -21,6 +21,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Cleaning agent
+ *
+ * This agent takes care of database garbage. We need it for several
+ * reasons, the most important being multi-destination delivery.
+ *
+ * It is even more justified on mongodb where there is no transactionality.
+ *
+ * The various parts of it run in background and in other beneficial situations.
+ */
 public class CleaningAgent {
 
     private final static Logger LOG = Logger.getLogger(CleaningAgent.class);

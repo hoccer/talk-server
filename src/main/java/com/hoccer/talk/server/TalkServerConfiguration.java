@@ -6,6 +6,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
+/**
+ * Encapsulation of server configuration
+ *
+ * This gets initialized with defaults and can then
+ * be overloaded from a property file.
+ */
 public class TalkServerConfiguration {
 
     private static final Logger LOG = Logger.getLogger(TalkServerConfiguration.class);
