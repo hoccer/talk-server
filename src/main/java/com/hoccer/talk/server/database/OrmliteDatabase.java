@@ -23,6 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Ormlite-based database backend
+ *
+ * XXX WARNING broken and incomplete, use as inspiration only...
+ */
 public class OrmliteDatabase implements ITalkServerDatabase {
 
     JdbcConnectionSource mConnectionSource;

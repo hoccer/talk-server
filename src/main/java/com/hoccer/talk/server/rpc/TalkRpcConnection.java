@@ -17,7 +17,6 @@ import java.util.Date;
  * This class is responsible for the connection lifecycle as well
  * as for binding JSON-RPC handlers and Talk messaging state to
  * the connection based on user identity and state.
- *
  */
 public class TalkRpcConnection implements JsonRpcConnection.Listener {
 

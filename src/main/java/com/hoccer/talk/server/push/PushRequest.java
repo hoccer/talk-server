@@ -14,6 +14,9 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * A single in-progress push request
+ */
 public class PushRequest {
 
     private static final Logger LOG = Logger.getLogger(PushAgent.class);

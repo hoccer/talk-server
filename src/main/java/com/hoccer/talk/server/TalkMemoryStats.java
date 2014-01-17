@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * In-memory server stats
+ */
 public class TalkMemoryStats implements ITalkServerStatistics {
 
     Date startTime = new Date();
@@ -13,7 +16,6 @@ public class TalkMemoryStats implements ITalkServerStatistics {
     AtomicInteger clientLogins = new AtomicInteger();
     AtomicInteger clientLoginsFailedSRP1 = new AtomicInteger();
     AtomicInteger clientLoginsFailedSRP2 = new AtomicInteger();
-
 
     AtomicInteger messagesAccepted = new AtomicInteger();
     AtomicInteger messagesConfirmed = new AtomicInteger();

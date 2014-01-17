@@ -40,9 +40,10 @@ import java.util.Vector;
 /**
  * RPC handler for talk protocol communications
  *
- * This class has all of its public methods exposed directly to the client
- * via JSON-RPC. It should not hold any state, only process calls.
+ * Calls are exposed directly to the client, so essentially
+ * this also has to take care of protocol-level security...
  *
+ * This class does not hold any state except for login state.
  */
 public class TalkRpcHandler implements ITalkRpcServer {
 

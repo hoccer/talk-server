@@ -3,6 +3,12 @@ package com.hoccer.talk.server;
 import java.util.Date;
 import java.util.Map;
 
+/**
+ * Common interface for server statistics
+ *
+ * This is here so the crappy in-memory statistics
+ * can be replaced with Metrics easily.
+ */
 public interface ITalkServerStatistics {
 
     void countClientRegistered();
