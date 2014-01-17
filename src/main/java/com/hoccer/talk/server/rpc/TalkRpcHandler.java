@@ -260,7 +260,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mSrpServer = null;
 
         // return server evidence for client to check
-        return Hex.encodeHexString(M2);
+//        return Hex.encodeHexString(M2);
+        return new String(Hex.encodeHex(M2));
     }
 
     @Override
