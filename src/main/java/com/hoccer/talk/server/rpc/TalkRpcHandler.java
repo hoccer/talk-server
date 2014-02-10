@@ -910,6 +910,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return d;
     }
 
+    // TODO: do not allow abortion of message that are already delivered or confirmed
     @Override
     public TalkDelivery deliveryAbort(String messageId, String recipientId) {
         requireIdentification();
