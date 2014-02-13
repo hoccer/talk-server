@@ -44,6 +44,10 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
      */
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
+        if (protocol == null) {
+            log.info("protocol is null - aborting connection attempt");
+            return null;
+        }
         if(protocol.equals("com.hoccer.talk.v1")) {
             return createTalkV1Connection(request, mTalkServer.getJsonMapper(), false);
         }
