@@ -30,3 +30,7 @@ log4j.appender.CONSOLE.layout.ConversionPattern = %d [%t] %-5p %c - %m%n
 log4j.logger.better.jsonrpc.server.JsonRpcServer = DEBUG
 log4j.logger.better.jsonrpc.client.JsonRpcClient = DEBUG
 log4j.logger.better.jsonrpc.core.JsonRpcConnection = DEBUG
+
+#support tags
+talk.support.tag = log
+
