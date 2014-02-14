@@ -105,11 +105,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
         }
 
-        TalkServerInfo si = new TalkServerInfo();
-        si.setServerTime(new Date());
-        si.setSupportMode(mConnection.isSupportMode());
+        TalkServerInfo serverInfo = new TalkServerInfo();
+        serverInfo.setServerTime(new Date());
+        serverInfo.setSupportMode(mConnection.isSupportMode());
 
-        return si;
+        return serverInfo;
     }
 
     @Override
