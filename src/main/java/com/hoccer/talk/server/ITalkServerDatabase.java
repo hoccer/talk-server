@@ -19,8 +19,8 @@ import java.util.Map;
  *
  * There currently are two implementations:
  *
- *   .database.JongoDatabase   -  Jongo-based persistent database
- *   .database.MemoryDatabase  -  Hashtable-based in-memory database
+ *   .database.JongoDatabase    -  Jongo-based persistent database
+ *   .database.OrmLiteDatabase  -  Classical Relational persistent database (e.g. Postgresql) - currently unfinished
  *
  */
 public interface ITalkServerDatabase {
@@ -77,5 +77,4 @@ public interface ITalkServerDatabase {
     public List<TalkGroupMember> findGroupMembersByIdChangedAfter(String groupId, Date lastKnown);
     public TalkGroupMember findGroupMemberForClient(String groupId, String clientId);
     public void saveGroupMember(TalkGroupMember groupMember);
-
 }
