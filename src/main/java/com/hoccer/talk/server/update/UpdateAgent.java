@@ -51,17 +51,17 @@ public class UpdateAgent {
             public void run() {
                 LOG.debug("RPUFG: update " + clientId + " for group " + clientId);
                 TalkRpcConnection conn = mServer.getClientConnection(clientId);
-                if(conn == null || !conn.isConnected()) {
+                if (conn == null || !conn.isConnected()) {
                     return;
                 }
                 ITalkRpcClient rpc = conn.getClientRpc();
                 try {
                     TalkGroupMember member = mDatabase.findGroupMemberForClient(groupId, clientId);
-                    if(member.isInvited() || member.isJoined()) {
+                    if (member.isInvited() || member.isJoined()) {
                         List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
-                        for(TalkGroupMember otherMember: members) {
+                        for (TalkGroupMember otherMember : members) {
                             // XXX only if otherMember != member
-                            if(otherMember.isJoined() || otherMember.isInvited()) {
+                            if (otherMember.isJoined() || otherMember.isInvited()) {
                                 String clientId = otherMember.getClientId();
                                 LOG.debug("RPUFG: delivering presence of " + clientId);
                                 TalkPresence presence = mDatabase.findPresenceForClient(clientId);
@@ -86,7 +86,7 @@ public class UpdateAgent {
         LOG.debug("RPUC: updating " + targetClientId + " with presence of " + clientId);
         TalkPresence presence = mDatabase.findPresenceForClient(clientId);
         TalkRpcConnection targetConnection = mServer.getClientConnection(targetClientId);
-        if(targetConnection == null || ! targetConnection.isConnected()) {
+        if (targetConnection == null || !targetConnection.isConnected()) {
             LOG.debug("RPUC: target not connected");
             return;
         }
@@ -105,7 +105,7 @@ public class UpdateAgent {
                 // retrieve the current presence of the client
                 TalkPresence presence = mDatabase.findPresenceForClient(clientId);
                 // if we actually have a presence
-                if(presence != null) {
+                if (presence != null) {
                     // update connection status
                     updateConnectionStatus(presence);
                     // propagate the presence to all friends
@@ -126,22 +126,22 @@ public class UpdateAgent {
         Set<String> clients = new HashSet<String>();
         // collect clients known through relationships
         List<TalkRelationship> relationships = mDatabase.findRelationshipsByOtherClient(clientId);
-        for(TalkRelationship relationship: relationships) {
+        for (TalkRelationship relationship : relationships) {
             // if the relation is friendly
-            if(relationship.isFriend()) { // XXX what about isBlocked()?
+            if (relationship.isFriend()) { // XXX what about isBlocked()?
                 LOG.debug(tag + "including friend " + relationship.getClientId());
                 clients.add(relationship.getClientId());
             }
         }
         // collect clients known through groups
         List<TalkGroupMember> ownMembers = mDatabase.findGroupMembersForClient(clientId);
-        for(TalkGroupMember ownMember: ownMembers) {
+        for (TalkGroupMember ownMember : ownMembers) {
             String groupId = ownMember.getGroupId();
-            if(ownMember.isJoined() || ownMember.isInvited()) {
+            if (ownMember.isJoined() || ownMember.isInvited()) {
                 LOG.debug(tag + "scanning group " + groupId);
                 List<TalkGroupMember> otherMembers = mDatabase.findGroupMembersById(groupId);
-                for(TalkGroupMember otherMember: otherMembers) {
-                    if(otherMember.isJoined() || ownMember.isInvited()) { // MARK
+                for (TalkGroupMember otherMember : otherMembers) {
+                    if (otherMember.isJoined() || ownMember.isInvited()) { // MARK
                         LOG.debug(tag + "including group member " + otherMember.getClientId());
                         clients.add(otherMember.getClientId());
                     } else {
@@ -154,11 +154,11 @@ public class UpdateAgent {
         LOG.debug(tag + "excluding self " + clientId);
         clients.remove(clientId);
         // send presence updates
-        for(String client: clients) {
+        for (String client : clients) {
             // look for a connection by the other client
             TalkRpcConnection connection = mServer.getClientConnection(client);
             // and if the corresponding client is online
-            if(connection != null && connection.isLoggedIn()) {
+            if (connection != null && connection.isLoggedIn()) {
                 LOG.debug(tag + "client " + client + " is connected");
                 try {
                     // tell the client about the new presence
@@ -179,7 +179,7 @@ public class UpdateAgent {
             @Override
             public void run() {
                 TalkRpcConnection clientConnection = mServer.getClientConnection(relationship.getClientId());
-                if(clientConnection != null && clientConnection.isLoggedIn()) {
+                if (clientConnection != null && clientConnection.isLoggedIn()) {
                     clientConnection.getClientRpc().relationshipUpdated(relationship);
                 }
             }
@@ -191,9 +191,9 @@ public class UpdateAgent {
             @Override
             public void run() {
                 TalkGroup updatedGroup = mDatabase.findGroupById(groupId);
-                if(updatedGroup != null) {
+                if (updatedGroup != null) {
                     TalkRpcConnection connection = mServer.getClientConnection(clientId);
-                    if(connection == null || !connection.isConnected()) {
+                    if (connection == null || !connection.isConnected()) {
                         return;
                     }
                     ITalkRpcClient rpc = connection.getClientRpc();
@@ -212,12 +212,12 @@ public class UpdateAgent {
             @Override
             public void run() {
                 TalkGroup updatedGroup = mDatabase.findGroupById(groupId);
-                if(updatedGroup != null) {
+                if (updatedGroup != null) {
                     List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
-                    for(TalkGroupMember member: members) {
-                        if(member.isJoined() || member.isInvited() || member.isGroupRemoved()) {
+                    for (TalkGroupMember member : members) {
+                        if (member.isJoined() || member.isInvited() || member.isGroupRemoved()) {
                             TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
-                            if(connection == null || !connection.isConnected()) {
+                            if (connection == null || !connection.isConnected()) {
                                 continue;
                             }
                             ITalkRpcClient rpc = connection.getClientRpc();
@@ -238,14 +238,14 @@ public class UpdateAgent {
             @Override
             public void run() {
                 TalkGroupMember updatedMember = mDatabase.findGroupMemberForClient(groupId, clientId);
-                if(updatedMember == null) {
+                if (updatedMember == null) {
                     return;
                 }
                 List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
-                for(TalkGroupMember member: members) {
-                    if(member.isJoined() || member.isInvited() || member.isGroupRemoved() || member.getClientId().equals(clientId)) {
+                for (TalkGroupMember member : members) {
+                    if (member.isJoined() || member.isInvited() || member.isGroupRemoved() || member.getClientId().equals(clientId)) {
                         TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
-                        if(connection == null || !connection.isConnected()) {
+                        if (connection == null || !connection.isConnected()) {
                             continue;
                         }
                         ITalkRpcClient rpc = connection.getClientRpc();

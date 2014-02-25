@@ -18,10 +18,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Ping measurement agent
- *
+ * <p/>
  * This gets kicked on login and reports the round-trip call latency
  * from the server to the client and back.
- *
+ * <p/>
  * It is intended purely for monitoring.
  */
 public class PingAgent {
@@ -84,7 +84,7 @@ public class PingAgent {
             @Override
             public void run() {
                 TalkRpcConnection conn = mServer.getClientConnection(clientId);
-                if(conn != null) {
+                if (conn != null) {
                     ITalkRpcClient rpc = conn.getClientRpc();
                     mPingAttempts.incrementAndGet();
                     Timer.Context timer = mPingLatency.time();

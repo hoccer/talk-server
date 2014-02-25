@@ -26,62 +26,94 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Main object of the Talk server
- *
+ * <p/>
  * This holds global state such as the list of active connections,
  * references to common database mapping helpers and so on.
  */
 public class TalkServer {
 
-    /** Logger for changes in global server state */
-	private static final Logger log = Logger.getLogger(TalkServer.class);
+    /**
+     * Logger for changes in global server state
+     */
+    private static final Logger log = Logger.getLogger(TalkServer.class);
 
-    /** server-global JSON mapper */
-	ObjectMapper mJsonMapper;
+    /**
+     * server-global JSON mapper
+     */
+    ObjectMapper mJsonMapper;
 
-    /** server-global BSON mapper */
+    /**
+     * server-global BSON mapper
+     */
     ObjectMapper mBsonMapper;
 
-    /** Metrics registry */
+    /**
+     * Metrics registry
+     */
     MetricRegistry mMetrics;
     JmxReporter mJmxReporter;
 
-    /** JSON-RPC server instance */
-	JsonRpcServer mRpcServer;
+    /**
+     * JSON-RPC server instance
+     */
+    JsonRpcServer mRpcServer;
 
-    /** Server configuration */
+    /**
+     * Server configuration
+     */
     TalkServerConfiguration mConfiguration;
 
-    /** Database accessor */
+    /**
+     * Database accessor
+     */
     ITalkServerDatabase mDatabase;
 
-    /** Stats collector */
+    /**
+     * Stats collector
+     */
     ITalkServerStatistics mStatistics;
 
-    /** Delivery agent */
+    /**
+     * Delivery agent
+     */
     DeliveryAgent mDeliveryAgent;
 
-    /** Push service agent */
-	PushAgent mPushAgent;
+    /**
+     * Push service agent
+     */
+    PushAgent mPushAgent;
 
-    /** Presence update agent */
+    /**
+     * Presence update agent
+     */
     UpdateAgent mUpdateAgent;
 
-    /** Ping measurement agent */
+    /**
+     * Ping measurement agent
+     */
     PingAgent mPingAgent;
 
-    /** Cleaning agent */
+    /**
+     * Cleaning agent
+     */
     CleaningAgent mCleaningAgent;
 
-    /** Client for the filecache control interface */
+    /**
+     * Client for the filecache control interface
+     */
     FilecacheClient mFilecacheClient;
 
-    /** All connections (every connected websocket) */
-	Vector<TalkRpcConnection> mConnections =
-			new Vector<TalkRpcConnection>();
+    /**
+     * All connections (every connected websocket)
+     */
+    Vector<TalkRpcConnection> mConnections =
+            new Vector<TalkRpcConnection>();
 
-    /** All logged-in connections by client ID */
-	Hashtable<String, TalkRpcConnection> mConnectionsByClientId =
-			new Hashtable<String, TalkRpcConnection>();
+    /**
+     * All logged-in connections by client ID
+     */
+    Hashtable<String, TalkRpcConnection> mConnectionsByClientId =
+            new Hashtable<String, TalkRpcConnection>();
 
     AtomicInteger mConnectionsTotal = new AtomicInteger();
     AtomicInteger mConnectionsOpen = new AtomicInteger();
@@ -89,21 +121,21 @@ public class TalkServer {
     /**
      * Create and initialize a Hoccer Talk server
      */
-	public TalkServer(TalkServerConfiguration configuration, ITalkServerDatabase database) {
+    public TalkServer(TalkServerConfiguration configuration, ITalkServerDatabase database) {
         mConfiguration = configuration;
         mDatabase = database;
 
         mStatistics = new TalkMemoryStats();
 
-		mJsonMapper = createObjectMapper(new JsonFactory());
+        mJsonMapper = createObjectMapper(new JsonFactory());
         mBsonMapper = createObjectMapper(new BsonFactory());
 
         mMetrics = new MetricRegistry();
         initializeMetrics();
 
-		mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
+        mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
         mDeliveryAgent = new DeliveryAgent(this);
-		mPushAgent = new PushAgent(this);
+        mPushAgent = new PushAgent(this);
         mUpdateAgent = new UpdateAgent(this);
         mPingAgent = new PingAgent(this);
         mCleaningAgent = new CleaningAgent(this);
@@ -121,67 +153,93 @@ public class TalkServer {
         return mConnectionsOpen.intValue();
     }
 
-    /** @return the JSON mapper used by this server */
-	public ObjectMapper getJsonMapper() {
-		return mJsonMapper;
-	}
+    /**
+     * @return the JSON mapper used by this server
+     */
+    public ObjectMapper getJsonMapper() {
+        return mJsonMapper;
+    }
 
-    /** @return the BSON mapper used by this server */
+    /**
+     * @return the BSON mapper used by this server
+     */
     public ObjectMapper getBsonMapper() {
         return mBsonMapper;
     }
 
-    /** @return the metrics registry for the server */
+    /**
+     * @return the metrics registry for the server
+     */
     public MetricRegistry getMetrics() {
         return mMetrics;
     }
 
-    /** @return the JSON-RPC server */
-	public JsonRpcServer getRpcServer() {
-		return mRpcServer;
-	}
+    /**
+     * @return the JSON-RPC server
+     */
+    public JsonRpcServer getRpcServer() {
+        return mRpcServer;
+    }
 
-    /** @return the configuration of this server */
+    /**
+     * @return the configuration of this server
+     */
     public TalkServerConfiguration getConfiguration() {
         return mConfiguration;
     }
 
-    /** @return the database accessor of this server */
+    /**
+     * @return the database accessor of this server
+     */
     public ITalkServerDatabase getDatabase() {
         return mDatabase;
     }
 
-    /** @return the stats collector for this server */
+    /**
+     * @return the stats collector for this server
+     */
     public ITalkServerStatistics getStatistics() {
         return mStatistics;
     }
 
-    /** @return the push agent of this server */
+    /**
+     * @return the push agent of this server
+     */
     public PushAgent getPushAgent() {
         return mPushAgent;
     }
 
-    /** @return the delivery agent of this server */
+    /**
+     * @return the delivery agent of this server
+     */
     public DeliveryAgent getDeliveryAgent() {
         return mDeliveryAgent;
     }
 
-    /** @return the update agent of this server */
+    /**
+     * @return the update agent of this server
+     */
     public UpdateAgent getUpdateAgent() {
         return mUpdateAgent;
     }
 
-    /** @return the ping agent of this server */
+    /**
+     * @return the ping agent of this server
+     */
     public PingAgent getPingAgent() {
         return mPingAgent;
     }
 
-    /** @return the cleaning agent */
+    /**
+     * @return the cleaning agent
+     */
     public CleaningAgent getCleaningAgent() {
         return mCleaningAgent;
     }
 
-    /** @return the filecache control client */
+    /**
+     * @return the filecache control client
+     */
     public FilecacheClient getFilecacheClient() {
         return mFilecacheClient;
     }
@@ -208,39 +266,42 @@ public class TalkServer {
 
     /**
      * Notify the server of a successful login
-     * @param client that was logged in
+     *
+     * @param client     that was logged in
      * @param connection the client is on
      */
-	public void identifyClient(TalkClient client, TalkRpcConnection connection) {
+    public void identifyClient(TalkClient client, TalkRpcConnection connection) {
         String clientId = client.getClientId();
         TalkRpcConnection oldConnection = mConnectionsByClientId.get(clientId);
-        if(oldConnection != null) {
+        if (oldConnection != null) {
             oldConnection.disconnect();
         }
-		mConnectionsByClientId.put(clientId, connection);
+        mConnectionsByClientId.put(clientId, connection);
         mUpdateAgent.requestPresenceUpdate(clientId);
-	}
+    }
 
     /**
      * Register a new connection with the server
+     *
      * @param connection to be registered
      */
-	public void connectionOpened(TalkRpcConnection connection) {
+    public void connectionOpened(TalkRpcConnection connection) {
         mConnectionsTotal.incrementAndGet();
         mConnectionsOpen.incrementAndGet();
         mConnections.add(connection);
-	}
+    }
 
     /**
      * Unregister a connection from the server
+     *
      * @param connection to be removed
      */
-	public void connectionClosed(TalkRpcConnection connection) {
+    public void connectionClosed(TalkRpcConnection connection) {
         mConnectionsOpen.decrementAndGet();
         // remove connection from list
-		mConnections.remove(connection);
+        mConnections.remove(connection);
         // remove connection from table
-        if(connection.getClientId() != null) {
+        if (connection.getClientId() != null) {
             String clientId = connection.getClientId();
             // remove connection from table
             mConnectionsByClientId.remove(clientId);
@@ -248,12 +309,14 @@ public class TalkServer {
             mUpdateAgent.requestPresenceUpdate(clientId);
         }
         // disconnect if we still are
-        if(connection.isConnected()) {
+        if (connection.isConnected()) {
             connection.disconnect();
         }
-	}
+    }
 
-    /** Creates the object mapper for this server */
+    /**
+     * Creates the object mapper for this server
+     */
     private ObjectMapper createObjectMapper(JsonFactory factory) {
         ObjectMapper result = new ObjectMapper(factory);
         result.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -261,7 +324,9 @@ public class TalkServer {
         return result;
     }
 
-    /** Set up server metrics */
+    /**
+     * Set up server metrics
+     */
     private void initializeMetrics() {
         mMetrics.register(MetricRegistry.name(TalkServer.class, "connectionsOpen"),
                 new Gauge<Integer>() {
@@ -278,5 +343,5 @@ public class TalkServer {
                     }
                 });
     }
-	
+
 }

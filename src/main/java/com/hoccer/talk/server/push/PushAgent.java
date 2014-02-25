@@ -27,13 +27,13 @@ public class PushAgent {
 
     private static final Logger LOG = Logger.getLogger(PushAgent.class);
 
-	private ScheduledExecutorService mExecutor;
+    private ScheduledExecutorService mExecutor;
 
     TalkServer mServer;
     TalkServerConfiguration mConfig;
     ITalkServerDatabase mDatabase;
 
-	private Sender mGcmSender;
+    private Sender mGcmSender;
 
     private ApnsService mApnsService;
 
@@ -45,15 +45,15 @@ public class PushAgent {
     AtomicInteger mPushBatched = new AtomicInteger();
 
     public PushAgent(TalkServer server) {
-		mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PUSH);
+        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PUSH);
         mServer = server;
         mDatabase = mServer.getDatabase();
         mConfig = mServer.getConfiguration();
         mOutstanding = new Hashtable<String, PushRequest>();
-        if(mConfig.isGcmEnabled()) {
+        if (mConfig.isGcmEnabled()) {
             initializeGcm();
         }
-        if(mConfig.isApnsEnabled()) {
+        if (mConfig.isApnsEnabled()) {
             initializeApns();
         }
         initializeMetrics(mServer.getMetrics());
@@ -96,20 +96,20 @@ public class PushAgent {
         mPushRequests.incrementAndGet();
 
         // bail if no push
-        if(!client.isPushCapable()) {
+        if (!client.isPushCapable()) {
             mPushIncapable.incrementAndGet();
             return;
         }
 
         // limit push rate
         Date lastPush = client.getTimeLastPush();
-        if(lastPush == null) {
+        if (lastPush == null) {
             lastPush = new Date();
         }
         long delta = Math.max(0, now - lastPush.getTime());
         long delay = 0;
         int limit = mConfig.getPushRateLimit();
-        if(delta < limit) {
+        if (delta < limit) {
             mPushDelayed.incrementAndGet();
             delay = Math.max(0, limit - delta);
         }
@@ -121,7 +121,7 @@ public class PushAgent {
         // only perform push when we aren't doing so already
         final String clientId = client.getClientId();
         synchronized (mOutstanding) {
-            if(mOutstanding.containsKey(clientId)) {
+            if (mOutstanding.containsKey(clientId)) {
                 // request has been batched
                 mPushBatched.incrementAndGet();
             } else {
@@ -168,8 +168,8 @@ public class PushAgent {
         // set up service
         ApnsServiceBuilder apnsServiceBuilder = APNS.newService()
                 .withCert(mConfig.getApnsCertPath(),
-                          mConfig.getApnsCertPassword());
-        if(mConfig.isApnsSandbox()) {
+                        mConfig.getApnsCertPassword());
+        if (mConfig.isApnsSandbox()) {
             apnsServiceBuilder = apnsServiceBuilder.withSandboxDestination();
         } else {
             apnsServiceBuilder = apnsServiceBuilder.withProductionDestination();
@@ -179,7 +179,7 @@ public class PushAgent {
         // set up invalidation
         int delay = mConfig.getApnsInvalidateDelay();
         int interval = mConfig.getApnsInvalidateInterval();
-        if(interval > 0) {
+        if (interval > 0) {
             LOG.info("APNS will check for invalidations every " + interval + " seconds");
             mExecutor.scheduleAtFixedRate(new Runnable() {
                 @Override
@@ -193,11 +193,11 @@ public class PushAgent {
     private void invalidateApns() {
         LOG.info("APNS retrieving inactive devices");
         Map<String, Date> inactive = mApnsService.getInactiveDevices();
-        if(!inactive.isEmpty()) {
+        if (!inactive.isEmpty()) {
             LOG.info("APNS reports " + inactive.size() + " inactive devices");
-            for(String token: inactive.keySet()) {
+            for (String token : inactive.keySet()) {
                 TalkClient client = mDatabase.findClientByApnsToken(token);
-                if(client == null) {
+                if (client == null) {
                     LOG.warn("APNS invalidates unknown client (token " + token + ")");
                 } else {
                     LOG.info("APNS client" + client.getClientId() + " invalid since " + inactive.get(token));
