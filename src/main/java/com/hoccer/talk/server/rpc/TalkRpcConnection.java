@@ -13,62 +13,80 @@ import java.util.Date;
 
 /**
  * Connection object representing one JSON-RPC connection each
- *
+ * <p/>
  * This class is responsible for the connection lifecycle as well
  * as for binding JSON-RPC handlers and Talk messaging state to
  * the connection based on user identity and state.
  */
 public class TalkRpcConnection implements JsonRpcConnection.Listener {
 
-    /** Logger for connection-related things */
-	private static final Logger LOG = Logger.getLogger(TalkRpcConnection.class);
-	
-	/** Server this connection belongs to */
-	TalkServer mServer;
+    /**
+     * Logger for connection-related things
+     */
+    private static final Logger LOG = Logger.getLogger(TalkRpcConnection.class);
 
-	/** JSON-RPC connection object */
-	JsonRpcWsConnection mConnection;
+    /**
+     * Server this connection belongs to
+     */
+    TalkServer mServer;
 
-    /** HTTP request that created this WS connection */
+    /**
+     * JSON-RPC connection object
+     */
+    JsonRpcWsConnection mConnection;
+
+    /**
+     * HTTP request that created this WS connection
+     */
     HttpServletRequest mInitialRequest;
-	
-	/** RPC interface to client */
-	ITalkRpcClient mClientRpc;
-	
-	/** Last time we have seen client activity (connection or message) */
-	long mLastActivity;
 
-    /** Client object (if logged in) */
+    /**
+     * RPC interface to client
+     */
+    ITalkRpcClient mClientRpc;
+
+    /**
+     * Last time we have seen client activity (connection or message)
+     */
+    long mLastActivity;
+
+    /**
+     * Client object (if logged in)
+     */
     TalkClient mClient;
 
-    /** Client id provided for client registration */
+    /**
+     * Client id provided for client registration
+     */
     String mUnregisteredClientId;
 
-    /** Support mode flag */
+    /**
+     * Support mode flag
+     */
     boolean mSupportMode;
 
     /**
      * Construct a connection for the given server using the given connection
      *
-     * @param server that we are part of
+     * @param server     that we are part of
      * @param connection that we should handle
      */
-	public TalkRpcConnection(TalkServer server, JsonRpcWsConnection connection, HttpServletRequest request) {
+    public TalkRpcConnection(TalkServer server, JsonRpcWsConnection connection, HttpServletRequest request) {
         // remember stuff
-		mServer = server;
-		mConnection = connection;
+        mServer = server;
+        mConnection = connection;
         mInitialRequest = request;
         // create a json-rpc proxy for client notifications
-		mClientRpc = (ITalkRpcClient)connection.makeProxy(ITalkRpcClient.class);
+        mClientRpc = (ITalkRpcClient) connection.makeProxy(ITalkRpcClient.class);
         // register ourselves for connection events
-		mConnection.addListener(this);
-	}
+        mConnection.addListener(this);
+    }
 
     /**
      * Get the connection ID of this connection
-     *
+     * <p/>
      * This is derived from JSON-RPC stuff at the moment.
-     *
+     * <p/>
      * The only purpose of this is for identifying log messages.
      *
      * @return
@@ -82,9 +100,9 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
      *
      * @return true if connected
      */
-	public boolean isConnected() {
-		return mConnection.isConnected();
-	}
+    public boolean isConnected() {
+        return mConnection.isConnected();
+    }
 
     /**
      * Indicate if the connection is currently logged in
@@ -95,6 +113,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 
     /**
      * Returns the logged-in client or null
+     *
      * @return
      */
     public TalkClient getClient() {
@@ -103,10 +122,11 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 
     /**
      * Returns the logged-in clients id or null
+     *
      * @return
      */
     public String getClientId() {
-        if(mClient != null) {
+        if (mClient != null) {
             return mClient.getClientId();
         }
         return null;
@@ -149,29 +169,31 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 
     /**
      * Callback: underlying connection is now open
+     *
      * @param connection
      */
-	@Override
-	public void onOpen(JsonRpcConnection connection) {
+    @Override
+    public void onOpen(JsonRpcConnection connection) {
         LOG.info("[" + getConnectionId() + "] connection opened by " + getRemoteAddress());
         // reset the time of last activity
-		mLastActivity = System.currentTimeMillis();
+        mLastActivity = System.currentTimeMillis();
         // tell the server about the connection
-		mServer.connectionOpened(this);
+        mServer.connectionOpened(this);
     }
 
     /**
      * Callback: underlying connection is now closed
+     *
      * @param connection
      */
-	@Override
-	public void onClose(JsonRpcConnection connection) {
+    @Override
+    public void onClose(JsonRpcConnection connection) {
         LOG.info("[" + getConnectionId() + "] connection closed");
         // invalidate the time of last activity
-		mLastActivity = -1;
+        mLastActivity = -1;
         // tell the server about the disconnect
-		mServer.connectionClosed(this);
-	}
+        mServer.connectionClosed(this);
+    }
 
     /**
      * Disconnect the underlying connection and finish up
@@ -191,7 +213,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
 
         // mark connection as logged in
         mClient = database.findClientById(clientId);
-        if(mClient == null) {
+        if (mClient == null) {
             throw new RuntimeException("Client does not exist");
         } else {
             mServer.identifyClient(mClient, this);
@@ -202,7 +224,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
         database.saveClient(mClient);
 
         // tell the client if it doesn't have push
-        if(!mClient.isPushCapable()) {
+        if (!mClient.isPushCapable()) {
             mClientRpc.pushNotRegistered();
         }
 
