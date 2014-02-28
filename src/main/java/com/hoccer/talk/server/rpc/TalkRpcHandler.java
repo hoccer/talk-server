@@ -556,6 +556,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 result = line;
             }
         } catch (IOException ioe) {
+            LOG.error("Error in running 'pwgen'!", ioe);
         }
         return result;
     }
