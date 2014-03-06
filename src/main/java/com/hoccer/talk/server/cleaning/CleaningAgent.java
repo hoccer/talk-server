@@ -11,9 +11,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Cleaning agent
@@ -39,48 +38,81 @@ public class CleaningAgent {
 
     ScheduledExecutorService mExecutor;
 
+    static final int KEY_LIFE_TIME = 3; // in months
+    static final int RELATIONSHIP_LIFE_TIME = 3; // in months
+
+    static class YourThreadFactory implements ThreadFactory {
+        private static final AtomicInteger poolNumber = new AtomicInteger(1);
+        private final ThreadGroup group;
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private final String namePrefix;
+
+        YourThreadFactory(String name) {
+            SecurityManager s = System.getSecurityManager();
+            group = (s != null) ? s.getThreadGroup() :
+                    Thread.currentThread().getThreadGroup();
+            namePrefix = name + "-pool-" + poolNumber.getAndIncrement() + "-thread-";
+        }
+
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
+
+            if (t.isDaemon())
+                t.setDaemon(false);
+            if (t.getPriority() != Thread.NORM_PRIORITY)
+                t.setPriority(Thread.NORM_PRIORITY);
+            return t;
+        }
+    }
+
     public CleaningAgent(TalkServer server) {
         mServer = server;
         mConfig = server.getConfiguration();
         mDatabase = server.getDatabase();
         mFilecache = server.getFilecacheClient();
-        mExecutor = Executors.newScheduledThreadPool(4);
-        scheduleCleanAllClients();
-        scheduleCleanAllDeliveries();
+        mExecutor = Executors.newScheduledThreadPool(4, new YourThreadFactory("cleaning-agent"));
+        LOG.info("Cleaning clients scheduling will start in '" + mConfig.getCleanupAllClientsDelay() + "' seconds.");
+        mExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                scheduleCleanAllClients();
+            }
+        }, mConfig.getCleanupAllClientsDelay(), TimeUnit.SECONDS);
+        LOG.info("Cleaning deliveries scheduling will start in '" + mConfig.getCleanupAllDeliveriesDelay() + "' seconds.");
+        mExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                scheduleCleanAllDeliveries();
+            }
+        }, mConfig.getCleanupAllDeliveriesDelay(), TimeUnit.SECONDS);
+
     }
 
     public void cleanClientData(final String clientId) {
-        mExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                LOG.debug("cleaning client " + clientId);
-                doCleanKeysForClient(clientId);
-                doCleanTokensForClient(clientId);
-                doCleanRelationshipsForClient(clientId);
-            }
-        });
+        LOG.debug("cleaning client " + clientId);
+        doCleanKeysForClient(clientId);
+        doCleanTokensForClient(clientId);
+        doCleanRelationshipsForClient(clientId);
     }
 
     private void scheduleCleanAllDeliveries() {
-        mExecutor.scheduleAtFixedRate(new Runnable() {
+        LOG.info("scheduling deliveries cleanup in '" + mConfig.getCleanupAllDeliveriesInterval() + "' seconds.");
+        mExecutor.schedule(new Runnable() {
             @Override
             public void run() {
                 doCleanAllFinishedDeliveries();
             }
-        }, mConfig.getCleanupAllDeliveriesDelay(),
-                mConfig.getCleanupAllDeliveriesInterval(),
-                TimeUnit.SECONDS);
+        }, mConfig.getCleanupAllDeliveriesInterval(), TimeUnit.SECONDS);
     }
 
     private void scheduleCleanAllClients() {
-        mExecutor.scheduleAtFixedRate(new Runnable() {
+        LOG.info("scheduling client cleanup in '" + mConfig.getCleanupAllClientsInterval() + "' seconds.");
+        mExecutor.schedule(new Runnable() {
             @Override
             public void run() {
                 doCleanAllClients();
             }
-        }, mConfig.getCleanupAllClientsDelay(),
-                mConfig.getCleanupAllClientsInterval(),
-                TimeUnit.SECONDS);
+        }, mConfig.getCleanupAllClientsInterval(), TimeUnit.SECONDS);
     }
 
     public void cleanFinishedDelivery(final TalkDelivery finishedDelivery) {
@@ -93,38 +125,46 @@ public class CleaningAgent {
     }
 
     private void doCleanAllClients() {
-        LOG.info("cleaning all clients");
+        long startTime = System.currentTimeMillis();
+        LOG.info("Cleaning all clients. Determining list of clients...");
         List<TalkClient> allClients = mDatabase.findAllClients();
+        LOG.info("Cleaning '" + allClients.size() + "' clients...");
         for (TalkClient client : allClients) {
             cleanClientData(client.getClientId());
         }
+        long endTime = System.currentTimeMillis();
+        LOG.info("Cleaning of '" + allClients.size() + "' clients done (took '" + (endTime - startTime) + "ms'). rescheduling next run...");
+        scheduleCleanAllClients();
     }
 
     private void doCleanAllFinishedDeliveries() {
-        LOG.debug("cleaning all finished deliveries");
-        List<TalkDelivery> deliveries = null;
+        long startTime = System.currentTimeMillis();
+        LOG.info("Cleaning all finished deliveries...");
 
-        deliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_ABORTED);
-        if (!deliveries.isEmpty()) {
-            LOG.info("cleanup found " + deliveries.size() + " aborted deliveries");
-            for (TalkDelivery delivery : deliveries) {
+        List<TalkDelivery> abortedDeliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_ABORTED);
+        if (!abortedDeliveries.isEmpty()) {
+            LOG.info("cleanup found " + abortedDeliveries.size() + " aborted deliveries");
+            for (TalkDelivery delivery : abortedDeliveries) {
                 doCleanFinishedDelivery(delivery);
             }
         }
-        deliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_FAILED);
-        if (!deliveries.isEmpty()) {
-            LOG.info("cleanup found " + deliveries.size() + " failed deliveries");
-            for (TalkDelivery delivery : deliveries) {
+        List<TalkDelivery> failedDeliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_FAILED);
+        if (!failedDeliveries.isEmpty()) {
+            LOG.info("cleanup found " + failedDeliveries.size() + " failed deliveries");
+            for (TalkDelivery delivery : failedDeliveries) {
                 doCleanFinishedDelivery(delivery);
             }
         }
-        deliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_CONFIRMED);
-        if (!deliveries.isEmpty()) {
-            LOG.info("cleanup found " + deliveries.size() + " confirmed deliveries");
-            for (TalkDelivery delivery : deliveries) {
+        List<TalkDelivery> confirmedDeliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_CONFIRMED);
+        if (!confirmedDeliveries.isEmpty()) {
+            LOG.info("cleanup found " + confirmedDeliveries.size() + " confirmed deliveries");
+            for (TalkDelivery delivery : confirmedDeliveries) {
                 doCleanFinishedDelivery(delivery);
             }
         }
+        int totalDeliveriesCleaned = abortedDeliveries.size() + failedDeliveries.size() + confirmedDeliveries.size();
+        long endTime = System.currentTimeMillis();
+        LOG.info("Cleaning of '" + totalDeliveriesCleaned + "' deliveries done (took '" + (endTime - startTime) + "ms'). rescheduling next run...");
     }
 
     private void doCleanFinishedDelivery(TalkDelivery finishedDelivery) {
@@ -167,7 +207,7 @@ public class CleaningAgent {
         Date now = new Date();
         Calendar cal = new GregorianCalendar();
         cal.setTime(now);
-        cal.add(Calendar.MONTH, -3);
+        cal.add(Calendar.MONTH, -KEY_LIFE_TIME);
 
         TalkPresence presence = mDatabase.findPresenceForClient(clientId);
         List<TalkKey> keys = mDatabase.findKeys(clientId);
@@ -222,7 +262,7 @@ public class CleaningAgent {
         Date now = new Date();
         Calendar cal = new GregorianCalendar();
         cal.setTime(now);
-        cal.add(Calendar.MONTH, -3);
+        cal.add(Calendar.MONTH, -RELATIONSHIP_LIFE_TIME);
 
         List<TalkRelationship> relationships = mDatabase.findRelationshipsForClientInState(clientId, TalkRelationship.STATE_NONE);
         for (TalkRelationship relationship : relationships) {
@@ -230,6 +270,7 @@ public class CleaningAgent {
                 continue;
             }
             mDatabase.deleteRelationship(relationship);
+            LOG.debug("deleted relationship from clientId '" + relationship.getClientId() + "' to clientID '" + relationship.getOtherClientId() + "'");
         }
     }
 
