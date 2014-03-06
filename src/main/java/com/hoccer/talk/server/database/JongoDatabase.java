@@ -13,6 +13,7 @@ import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
+import com.mongodb.MongoOptions;
 import com.mongodb.WriteConcern;
 import org.apache.log4j.Logger;
 import org.jongo.Jongo;
@@ -80,7 +81,9 @@ public class JongoDatabase implements ITalkServerDatabase {
 
         // create connection pool
         try {
-            mMongo = new Mongo();
+            MongoOptions options = new MongoOptions();
+            options.threadsAllowedToBlockForConnectionMultiplier = 1500;
+            mMongo = new Mongo("localhost", options);
         } catch (UnknownHostException e) {
             e.printStackTrace();
             return;
