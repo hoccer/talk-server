@@ -46,7 +46,7 @@ public class StatusHandler extends AbstractHandler {
             w.write(mServer.getNumCurrentConnections() + " connections open, " + mServer.getNumTotalConnections() + " total during uptime\n\n");
 
             ITalkServerStatistics stats = mServer.getStatistics();
-            Map<String, Integer> srvStats = stats.getMap();
+            Map<String, Long> srvStats = stats.getMap();
             w.write("Server stats (since " + stats.getStartTime() + "):\n");
             for(String key: srvStats.keySet()) {
                 w.write(srvStats.get(key) + " " + key + "\n");

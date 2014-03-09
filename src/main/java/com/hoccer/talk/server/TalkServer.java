@@ -125,13 +125,12 @@ public class TalkServer {
         mConfiguration = configuration;
         mDatabase = database;
 
-        mStatistics = new TalkMemoryStats();
-
         mJsonMapper = createObjectMapper(new JsonFactory());
         mBsonMapper = createObjectMapper(new BsonFactory());
 
         mMetrics = new MetricRegistry();
         initializeMetrics();
+        mStatistics = new TalkMetricStats(mMetrics);
 
         mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
         mDeliveryAgent = new DeliveryAgent(this);

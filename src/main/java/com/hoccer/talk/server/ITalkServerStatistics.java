@@ -21,6 +21,6 @@ public interface ITalkServerStatistics {
     void countMessageAcknowledged();
 
     public Date getStartTime();
-    public Map<String, Integer> getMap();
+    public Map<String, Long> getMap();
 
 }
