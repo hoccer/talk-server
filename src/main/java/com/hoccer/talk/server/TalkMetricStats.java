@@ -3,9 +3,7 @@ package com.hoccer.talk.server;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
@@ -43,13 +41,10 @@ public class TalkMetricStats implements ITalkServerStatistics {
     @Override
     public Map<String, Long> getMap() {
         HashMap<String, Long> result = new HashMap<String, Long>();
-        result.put("clients registered", clientRegistrations.getCount());
-        result.put("clients logged in", clientLogins.getCount());
-        result.put("clients failed in SRP1", clientLoginsFailedSRP1.getCount());
-        result.put("clients failed in SRP2", clientLoginsFailedSRP2.getCount());
-        result.put("messages accepted", messagesAccepted.getCount());
-        result.put("messages confirmed", messagesConfirmed.getCount());
-        result.put("messages acknowledged", messagesAcknowledged.getCount());
+        SortedMap<String, Counter> counters = mMetrics.getCounters();
+        for(Map.Entry<String, Counter> counter: counters.entrySet()) {
+            result.put(counter.getKey(), counter.getValue().getCount());
+        }
         return result;
     }
 
