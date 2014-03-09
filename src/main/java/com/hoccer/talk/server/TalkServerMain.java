@@ -2,6 +2,8 @@ package com.hoccer.talk.server;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.servlets.MetricsServlet;
 import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.OrmliteDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
@@ -11,6 +13,8 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.websocket.WebSocketHandler;
 
 import java.io.FileInputStream;
@@ -59,11 +63,19 @@ public class TalkServerMain {
         // default handler for non-talk http requests
         DefaultHandler fallbackHandler = new DefaultHandler();
         fallbackHandler.setServeIcon(false);
+
+        ServletContextHandler metricsContextHandler = new ServletContextHandler();
+        metricsContextHandler.setContextPath("/metrics");
+        //metricsContextHandler.setInitParameter("show-jvm-metrics", "true");
+        metricsContextHandler.addEventListener(new MyMetricsServletContextListener(ts.getMetrics()));
+        metricsContextHandler.addServlet(MetricsServlet.class, "/registry");
+
         // status page handler
-        StatusHandler statusHandler = new StatusHandler(ts, fallbackHandler);
-        // handler for talk websocket connectionscd
+        //StatusHandler statusHandler = new StatusHandler(ts, fallbackHandler);
+        // handler for talk websocket connections
         WebSocketHandler clientHandler = new TalkRpcConnectionHandler(ts);
-        clientHandler.setHandler(statusHandler);
+        clientHandler.setHandler(metricsContextHandler);
+        //clientHandler.setHandler(statusHandler);
         // set root handler of the server
         s.setHandler(clientHandler);
 
@@ -125,5 +137,16 @@ public class TalkServerMain {
         PropertyConfigurator.configure(main.config);
         main.run();
 	}
+
+    private static class MyMetricsServletContextListener extends MetricsServlet.ContextListener {
+        private MetricRegistry _metricRegistry;
+        public MyMetricsServletContextListener(MetricRegistry metricRegistry) {
+            _metricRegistry = metricRegistry;
+        }
+        @Override
+        protected MetricRegistry getMetricRegistry() {
+            return _metricRegistry;
+        }
+    }
 
 }

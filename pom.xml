@@ -38,6 +38,17 @@
       <artifactId>jetty-server</artifactId>
       <version>${jetty.version}</version>
     </dependency>
+      <dependency>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-servlet</artifactId>
+          <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-security</artifactId>
+          <version>${jetty.version}</version>
+      </dependency>
+
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-websocket</artifactId>
@@ -74,6 +85,11 @@
     <dependency>
        <groupId>com.codahale.metrics</groupId>
        <artifactId>metrics-core</artifactId>
+       <version>${metrics.version}</version>
+    </dependency>
+    <dependency>
+       <groupId>com.codahale.metrics</groupId>
+       <artifactId>metrics-servlets</artifactId>
        <version>${metrics.version}</version>
     </dependency>
 

@@ -11,14 +11,16 @@ import java.util.Map;
  */
 public interface ITalkServerStatistics {
 
-    void countClientRegistered();
-    void countClientLogin();
-    void countClientLoginFailedSRP1();
-    void countClientLoginFailedSRP2();
+    void signalClientRegisteredSucceeded();
+    void signalClientRegisteredFailed();
+    void signalClientLoginSRP1Succeeded();
+    void signalClientLoginSRP1Failed();
+    void signalClientLoginSRP2Succeeded();
+    void signalClientLoginSRP2Failed();
 
-    void countMessageAccepted();
-    void countMessageConfirmed();
-    void countMessageAcknowledged();
+    void signalMessageAcceptedSucceeded();
+    void signalMessageConfirmedSucceeded();
+    void signalMessageAcknowledgedSucceeded();
 
     public Date getStartTime();
     public Map<String, Long> getMap();

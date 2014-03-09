@@ -1,6 +1,7 @@
 package com.hoccer.talk.server;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
 import java.util.*;
@@ -12,30 +13,30 @@ public class TalkMetricStats implements ITalkServerStatistics {
     Date startTime = new Date();
 
     MetricRegistry mMetrics;
-    private final Counter clientRegistrations;
-    private final Counter clientLogins;
-    private final Counter clientLoginsFailedSRP1;
-    private final Counter clientLoginsFailedSRP2;
-    private final Counter messagesAccepted;
-    private final Counter messagesConfirmed;
-    private final Counter messagesAcknowledged;
+    private final Meter clientRegistrationSucceededMeter;
+    private final Meter clientRegistrationFailedMeter;
+    private final Meter clientLoginsSRP1SucceededMeter;
+    private final Meter clientLoginsSRP1FailedMeter;
+    private final Meter clientLoginsSRP2SucceededMeter;
+    private final Meter clientLoginsSRP2FailedMeter;
+    private final Meter messageAcceptedSucceededMeter;
+    private final Meter messageConfirmedSucceededMeter;
+    private final Meter messageAcknowledgedSucceededMeter;
 
 
     public TalkMetricStats(MetricRegistry metrics) {
         mMetrics = metrics;
 
-        // Counters
-        clientRegistrations = metrics.counter(name(TalkServer.class, "client-registrations"));
-
-        clientLogins = metrics.counter(name(TalkServer.class, "client-logins"));
-        clientLoginsFailedSRP1 = metrics.counter(name(TalkServer.class, "client-logins-failed-srp1"));
-        clientLoginsFailedSRP2 = metrics.counter(name(TalkServer.class, "client-logins-failed-srp2"));
-
-        messagesAccepted = metrics.counter(name(TalkServer.class, "messages-accepted"));
-        messagesConfirmed = metrics.counter(name(TalkServer.class, "messages-confirmed"));
-        messagesAcknowledged = metrics.counter(name(TalkServer.class, "messages-acknowledged"));
-
         // Meters
+        clientRegistrationSucceededMeter = metrics.meter(name(TalkServer.class, "client-registrations-succeeded-meter"));
+        clientRegistrationFailedMeter =  metrics.meter(name(TalkServer.class, "client-registrations-failed-meter"));
+        clientLoginsSRP1SucceededMeter = metrics.meter(name(TalkServer.class, "client-logins-srp1-succeeded-meter"));
+        clientLoginsSRP1FailedMeter = metrics.meter(name(TalkServer.class, "client-logins-srp1-failed-meter"));
+        clientLoginsSRP2SucceededMeter = metrics.meter(name(TalkServer.class, "client-logins-srp2-succeeded-meter"));
+        clientLoginsSRP2FailedMeter = metrics.meter(name(TalkServer.class, "client-logins-srp2-failed-meter"));
+        messageAcceptedSucceededMeter = metrics.meter(name(TalkServer.class, "message-accepts-succeeded-meter"));
+        messageConfirmedSucceededMeter = metrics.meter(name(TalkServer.class, "message-confirmations-succeeded-meter"));
+        messageAcknowledgedSucceededMeter = metrics.meter(name(TalkServer.class, "message-acknowledgements-succeeded-meter"));
     }
 
     @Override
@@ -45,6 +46,12 @@ public class TalkMetricStats implements ITalkServerStatistics {
         for(Map.Entry<String, Counter> counter: counters.entrySet()) {
             result.put(counter.getKey(), counter.getValue().getCount());
         }
+
+/*        SortedMap<String, Meter> meters = mMetrics.getMeters();
+        for(Map.Entry<String, Meter> meter: meters.entrySet()) {
+            result.put(meter.getKey(), meter.getValue().getOneMinuteRate());
+        }*/
+
         return result;
     }
 
@@ -54,38 +61,47 @@ public class TalkMetricStats implements ITalkServerStatistics {
     }
 
     @Override
-    public void countClientRegistered() {
-        clientRegistrations.inc();
+    public void signalClientRegisteredSucceeded() {
+        clientRegistrationSucceededMeter.mark();
     }
 
     @Override
-    public void countClientLogin() {
-        clientLogins.inc();
+    public void signalClientRegisteredFailed() {
+        clientRegistrationFailedMeter.mark();
     }
 
     @Override
-    public void countClientLoginFailedSRP1() {
-        clientLoginsFailedSRP1.inc();
+    public void signalClientLoginSRP1Succeeded() {
+        clientLoginsSRP1SucceededMeter.mark();
     }
 
     @Override
-    public void countClientLoginFailedSRP2() {
-        clientLoginsFailedSRP2.inc();
+    public void signalClientLoginSRP1Failed() {
+        clientLoginsSRP1FailedMeter.mark();
     }
 
     @Override
-    public void countMessageAccepted() {
-        messagesAccepted.inc();
+    public void signalClientLoginSRP2Succeeded() {
+        clientLoginsSRP2SucceededMeter.mark();
     }
 
     @Override
-    public void countMessageConfirmed() {
-        messagesConfirmed.inc();
+    public void signalClientLoginSRP2Failed() {
+        clientLoginsSRP2FailedMeter.mark();
+    }
+    @Override
+    public void signalMessageAcceptedSucceeded() {
+        messageAcceptedSucceededMeter.mark();
     }
 
     @Override
-    public void countMessageAcknowledged() {
-        messagesAcknowledged.inc();
+    public void signalMessageConfirmedSucceeded() {
+        messageConfirmedSucceededMeter.mark();
+    }
+
+    @Override
+    public void signalMessageAcknowledgedSucceeded() {
+        messageAcknowledgedSucceededMeter.mark();
     }
 }
 
