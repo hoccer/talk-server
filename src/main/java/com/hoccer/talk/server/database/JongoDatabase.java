@@ -83,6 +83,8 @@ public class JongoDatabase implements ITalkServerDatabase {
         try {
             MongoOptions options = new MongoOptions();
             options.threadsAllowedToBlockForConnectionMultiplier = 1500;
+            options.maxWaitTime = 5 * 1000;
+            // options.connectionsPerHost
             mMongo = new Mongo("localhost", options);
         } catch (UnknownHostException e) {
             e.printStackTrace();
