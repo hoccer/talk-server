@@ -22,7 +22,7 @@ public class TalkServerConfiguration {
     public static final int THREADS_GROUP = 1;
     public static final int THREADS_UPDATE = 1;
     public static final int THREADS_PUSH = 1;
-    public static final int THREADS_PING = 2;
+    public static final int THREADS_PING = 2; // XXX HIGHER COUNT?
 
     private static final String PROPERTY_PREFIX = "talk";
 
@@ -44,10 +44,10 @@ public class TalkServerConfiguration {
     private String mDatabaseBackend = "jongo";
     private String mJongoDb = "talk";
 
-    private int mCleanupAllClientsDelay = 300;
-    private int mCleanupAllClientsInterval = 900;
-    private int mCleanupAllDeliveriesDelay = 600;
-    private int mCleanupAllDeliveriesInterval = 900;
+    private int mCleanupAllClientsDelay = 7200; // 2 hours //300;
+    private int mCleanupAllClientsInterval = 60*60*24; // once a day //900;
+    private int mCleanupAllDeliveriesDelay = 3600; // 1 hour //600;
+    private int mCleanupAllDeliveriesInterval = 60*60*6; // every 6 hours //900;
 
     private String mFilecacheControlUrl = "http://localhost:8081/control";
     private String mFilecacheUploadBase = "http://localhost:8081/upload/";
