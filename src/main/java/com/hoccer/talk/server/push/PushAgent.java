@@ -27,26 +27,27 @@ public class PushAgent {
 
     private static final Logger LOG = Logger.getLogger(PushAgent.class);
 
-    private ScheduledExecutorService mExecutor;
+    private final ScheduledExecutorService mExecutor;
 
-    TalkServer mServer;
-    TalkServerConfiguration mConfig;
-    ITalkServerDatabase mDatabase;
+    private final TalkServer mServer;
+    private final TalkServerConfiguration mConfig;
+    private final ITalkServerDatabase mDatabase;
 
     private Sender mGcmSender;
 
     private ApnsService mApnsService;
 
-    Hashtable<String, PushRequest> mOutstanding;
+    private final Hashtable<String, PushRequest> mOutstanding;
 
-    AtomicInteger mPushRequests = new AtomicInteger();
-    AtomicInteger mPushDelayed = new AtomicInteger();
-    AtomicInteger mPushIncapable = new AtomicInteger();
-    AtomicInteger mPushBatched = new AtomicInteger();
+    private final AtomicInteger mPushRequests = new AtomicInteger();
+    private final AtomicInteger mPushDelayed = new AtomicInteger();
+    private final AtomicInteger mPushIncapable = new AtomicInteger();
+    private final AtomicInteger mPushBatched = new AtomicInteger();
 
     public PushAgent(TalkServer server) {
-        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PUSH);
+        assert server != null;
         mServer = server;
+        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PUSH);
         mDatabase = mServer.getDatabase();
         mConfig = mServer.getConfiguration();
         mOutstanding = new Hashtable<String, PushRequest>();

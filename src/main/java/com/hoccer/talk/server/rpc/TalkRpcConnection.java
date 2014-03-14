@@ -28,42 +28,42 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
     /**
      * Server this connection belongs to
      */
-    TalkServer mServer;
+    private static TalkServer mServer;
 
     /**
      * JSON-RPC connection object
      */
-    JsonRpcWsConnection mConnection;
+    private static JsonRpcWsConnection mConnection;
 
     /**
      * HTTP request that created this WS connection
      */
-    HttpServletRequest mInitialRequest;
+    private static HttpServletRequest mInitialRequest;
 
     /**
      * RPC interface to client
      */
-    ITalkRpcClient mClientRpc;
+    private static ITalkRpcClient mClientRpc;
 
     /**
      * Last time we have seen client activity (connection or message)
      */
-    long mLastActivity;
+    private long mLastActivity;
 
     /**
      * Client object (if logged in)
      */
-    TalkClient mClient;
+    private TalkClient mClient;
 
     /**
      * Client id provided for client registration
      */
-    String mUnregisteredClientId;
+    private String mUnregisteredClientId;
 
     /**
      * Support mode flag
      */
-    boolean mSupportMode;
+    private boolean mSupportMode;
 
     /**
      * Construct a connection for the given server using the given connection
@@ -77,7 +77,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
         mConnection = connection;
         mInitialRequest = request;
         // create a json-rpc proxy for client notifications
-        mClientRpc = (ITalkRpcClient) connection.makeProxy(ITalkRpcClient.class);
+        mClientRpc = connection.makeProxy(ITalkRpcClient.class);
         // register ourselves for connection events
         mConnection.addListener(this);
     }
