@@ -62,7 +62,7 @@ public class PushRequest {
                 .collapseKey("com.hoccer.talk.wake")
                 .timeToLive(mConfig.getGcmWakeTtl())
                 .restrictedPackageName(mClient.getGcmPackage())
-                .dryRun(true)
+                .dryRun(false) //TODO: maybe make a setting out of it
                 .build();
         Sender gcmSender = mAgent.getGcmSender();
         try {
