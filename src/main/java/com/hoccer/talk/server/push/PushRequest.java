@@ -21,34 +21,34 @@ public class PushRequest {
 
     private static final Logger LOG = Logger.getLogger(PushAgent.class);
 
-    private final PushAgent mAgent;
+    PushAgent mAgent;
 
-    private final String mClientId;
-    private TalkClient mClient;
+    String mClientId;
+	TalkClient mClient;
 
-    private TalkServerConfiguration mConfig;
+    TalkServerConfiguration mConfig;
 
-    public PushRequest(PushAgent agent, String clientId) {
+	public PushRequest(PushAgent agent, String clientId) {
         mAgent = agent;
         mConfig = mAgent.getConfiguration();
         mClientId = clientId;
-    }
+	}
 
     public void perform() {
         LOG.debug("pushing " + mClientId);
         // get up-to-date client object
         mClient = mAgent.getDatabase().findClientById(mClientId);
-        if (mClient == null) {
+        if(mClient == null) {
             LOG.warn("client " + mClientId + " does not exist");
             return;
         }
         // try to perform push
-        if (mConfig.isGcmEnabled() && mClient.isGcmCapable()) {
+        if(mConfig.isGcmEnabled() && mClient.isGcmCapable()) {
             performGcm();
-        } else if (mConfig.isApnsEnabled() && mClient.isApnsCapable()) {
+        } else if(mConfig.isApnsEnabled() && mClient.isApnsCapable()) {
             performApns();
         } else {
-            if (mClient.isPushCapable()) {
+            if(mClient.isPushCapable()) {
                 LOG.warn("client " + mClient + " push not available");
             } else {
                 LOG.info("client " + mClientId + " has no registration");
@@ -94,5 +94,5 @@ public class PushRequest {
         b.sound("default");
         apnsService.push(mClient.getApnsToken(), b.build());
     }
-
+	
 }

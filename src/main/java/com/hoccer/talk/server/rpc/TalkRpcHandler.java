@@ -36,7 +36,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private static final Logger LOG =
             Logger.getLogger(TalkRpcHandler.class);
 
-    private static final Hex HEX = new Hex();
+    private static Hex HEX = new Hex();
     private final Digest SRP_DIGEST = new SHA256Digest();
     private static final SecureRandom SRP_RANDOM = new SecureRandom();
     private static final SRP6Parameters SRP_PARAMETERS = SRP6Parameters.CONSTANTS_1024;
@@ -44,22 +44,22 @@ public class TalkRpcHandler implements ITalkRpcServer {
     /**
      * Reference to server
      */
-    private final TalkServer mServer;
+    private TalkServer mServer;
 
     /**
      * Reference to database accessor
      */
-    private final ITalkServerDatabase mDatabase;
+    private ITalkServerDatabase mDatabase;
 
     /**
      * Reference to stats collector
      */
-    private final ITalkServerStatistics mStatistics;
+    private ITalkServerStatistics mStatistics;
 
     /**
      * Reference to connection object
      */
-    private final TalkRpcConnection mConnection;
+    private TalkRpcConnection mConnection;
 
     /**
      * SRP authentication state
@@ -71,9 +71,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
      */
     private TalkClient mSrpClient;
 
-    public TalkRpcHandler(TalkServer pTalkServer, TalkRpcConnection pTalkRpcConnection) {
-        mServer = pTalkServer;
-        mConnection = pTalkRpcConnection;
+    public TalkRpcHandler(TalkServer pServer, TalkRpcConnection pConnection) {
+        mServer = pServer;
+        mConnection = pConnection;
         mDatabase = mServer.getDatabase();
         mStatistics = mServer.getStatistics();
     }
@@ -189,7 +189,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
 
             // parse the salt from DB
-            byte[] salt;
+            byte[] salt = null;
             try {
                 salt = (byte[]) HEX.decode(mSrpClient.getSrpSalt());
             } catch (DecoderException e) {
@@ -243,7 +243,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
 
             // parse the string given by the client
-            byte[] M1b;
+            byte[] M1b = null;
             try {
                 M1b = (byte[]) HEX.decode(M1);
             } catch (DecoderException e) {
@@ -860,6 +860,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     private boolean performOneDelivery(TalkMessage m, TalkDelivery d) {
         // get the current date for stamping
+        Date currentDate = new Date();
         // who is doing this again?
         String clientId = mConnection.getClientId();
         // get the receiver
