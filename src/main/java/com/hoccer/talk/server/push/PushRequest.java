@@ -1,6 +1,7 @@
 package com.hoccer.talk.server.push;
 
 import com.google.android.gcm.server.Message;
+import com.google.android.gcm.server.Result;
 import com.google.android.gcm.server.Sender;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkDelivery;
@@ -66,7 +67,15 @@ public class PushRequest {
                 .build();
         Sender gcmSender = mAgent.getGcmSender();
         try {
-            gcmSender.send(message, mClient.getGcmRegistration(), 10);
+            Result res = gcmSender.send(message, mClient.getGcmRegistration(), 10);
+            if (res.getMessageId() != null) {
+                if ( res.getCanonicalRegistrationId() != null ) {
+                    LOG.warn("GCM returned a canonical registration id - we should do something with it");
+                }
+                LOG.debug("GCM push successful, return message id "+res.getMessageId());
+            } else {
+                LOG.error("GCM push returned error '"+res.getErrorCodeName()+"'");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
