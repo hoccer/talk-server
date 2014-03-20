@@ -41,9 +41,6 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     private static final Logger LOG = Logger.getLogger(JongoDatabase.class);
 
-    /** Configuration instance */
-    TalkServerConfiguration mConfig;
-
     /** Mongo connection pool */
     Mongo mMongo;
 
@@ -65,33 +62,40 @@ public class JongoDatabase implements ITalkServerDatabase {
     MongoCollection mGroups;
     MongoCollection mGroupMembers;
 
-
     public JongoDatabase(TalkServerConfiguration configuration) {
-        mConfig = configuration;
         mCollections = new ArrayList<MongoCollection>();
-        initialize();
+        mMongo = createMongoClient(configuration);
+        initialize(configuration.getJongoDb());
     }
 
-    private void initialize() {
-        String dbname = mConfig.getJongoDb();
-        LOG.info("Initializing jongo with database " + dbname);
+    public JongoDatabase(TalkServerConfiguration configuration, Mongo mongodb) {
+        mCollections = new ArrayList<MongoCollection>();
+        mMongo = mongodb;
+        initialize(configuration.getJongoDb());
+    }
+
+    private Mongo createMongoClient(TalkServerConfiguration configuration) {
 
         // write concern for all collections
-        WriteConcern wc = WriteConcern.JOURNALED;
-
+        // WriteConcern wc = WriteConcern.JOURNALED; //??? not used?
         // create connection pool
         try {
             MongoOptions options = new MongoOptions();
             options.threadsAllowedToBlockForConnectionMultiplier = 1500;
             options.maxWaitTime = 5 * 1000;
             // options.connectionsPerHost
-            mMongo = new Mongo("localhost", options);
+            return new Mongo("localhost", options);
         } catch (UnknownHostException e) {
             e.printStackTrace();
-            return;
+            return null;
         }
+    }
+
+    private void initialize(String dbName) {
+        LOG.info("Initializing jongo with database " + dbName);
+
         // create db accessor
-        mDb = mMongo.getDB(dbname);
+        mDb = mMongo.getDB(dbName);
         // create object mapper
         mJongo = new Jongo(mDb);
         // create collection accessors

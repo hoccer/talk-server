@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>hoccer-talk-server</artifactId>
-  <version>1.0.4</version>
+  <version>${hoccer-talk-server.version}</version>
 
   <name>Hoccer Talk Server</name>
 
