@@ -11,6 +11,7 @@ import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
 import org.apache.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,11 +25,13 @@ public class UpdateAgent {
 
     private static final Logger LOG = Logger.getLogger(UpdateAgent.class);
 
-    private ScheduledExecutorService mExecutor;
+    private final ScheduledExecutorService mExecutor;
 
-    private TalkServer mServer;
+    private final TalkServer mServer;
 
-    private ITalkServerDatabase mDatabase;
+    private final ITalkServerDatabase mDatabase;
+
+    private static final ThreadLocal<ArrayList<Runnable>> context = new ThreadLocal<ArrayList<Runnable>>();
 
     public UpdateAgent(TalkServer server) {
         mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_UPDATE);
@@ -46,7 +49,7 @@ public class UpdateAgent {
     }
 
     public void requestPresenceUpdateForGroup(final String clientId, final String groupId) {
-        mExecutor.execute(new Runnable() {
+        Runnable notificationGenerator = new Runnable() {
             @Override
             public void run() {
                 LOG.debug("RPUFG: update " + clientId + " for group " + clientId);
@@ -66,6 +69,8 @@ public class UpdateAgent {
                                 LOG.debug("RPUFG: delivering presence of " + clientId);
                                 TalkPresence presence = mDatabase.findPresenceForClient(clientId);
                                 updateConnectionStatus(presence);
+
+                                // Calling Client via RPC
                                 rpc.presenceUpdated(presence);
                             } else {
                                 LOG.debug("RPUFG: target " + otherMember.getClientId() + " is not invited or joined");
@@ -78,28 +83,35 @@ public class UpdateAgent {
                     t.printStackTrace();
                 }
             }
-        });
-
+        };
+        queueOrExecute(notificationGenerator);
     }
 
     public void requestPresenceUpdateForClient(final String clientId, final String targetClientId) {
-        LOG.debug("RPUC: updating " + targetClientId + " with presence of " + clientId);
-        TalkPresence presence = mDatabase.findPresenceForClient(clientId);
-        TalkRpcConnection targetConnection = mServer.getClientConnection(targetClientId);
-        if (targetConnection == null || !targetConnection.isConnected()) {
-            LOG.debug("RPUC: target not connected");
-            return;
-        }
-        updateConnectionStatus(presence);
-        try {
-            targetConnection.getClientRpc().presenceUpdated(presence);
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
+        Runnable notificationGenerator = new Runnable() {
+            @Override
+            public void run() {
+                LOG.debug("RPUC: updating " + targetClientId + " with presence of " + clientId);
+                TalkPresence presence = mDatabase.findPresenceForClient(clientId);
+                TalkRpcConnection targetConnection = mServer.getClientConnection(targetClientId);
+                if (targetConnection == null || !targetConnection.isConnected()) {
+                    LOG.debug("RPUC: target not connected");
+                    return;
+                }
+                updateConnectionStatus(presence);
+                try {
+                    // Calling Client via RPC
+                    targetConnection.getClientRpc().presenceUpdated(presence);
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
+            }
+        };
+        queueOrExecute(notificationGenerator);
     }
 
     public void requestPresenceUpdate(final String clientId) {
-        mExecutor.execute(new Runnable() {
+        Runnable notificationGenerator = new Runnable() {
             @Override
             public void run() {
                 // retrieve the current presence of the client
@@ -112,7 +124,8 @@ public class UpdateAgent {
                     performPresenceUpdate(presence);
                 }
             }
-        });
+        };
+        queueOrExecute(notificationGenerator);
     }
 
     private void performPresenceUpdate(TalkPresence presence) {
@@ -161,6 +174,8 @@ public class UpdateAgent {
             if (connection != null && connection.isLoggedIn()) {
                 LOG.debug(tag + "client " + client + " is connected");
                 try {
+
+                    // Calling Client via RPC
                     // tell the client about the new presence
                     connection.getClientRpc().presenceUpdated(presence);
                 } catch (Throwable t) {
@@ -170,24 +185,26 @@ public class UpdateAgent {
                 LOG.debug(tag + "client " + client + " is disconnected");
             }
         }
-
         LOG.debug(tag + "complete");
     }
 
     public void requestRelationshipUpdate(final TalkRelationship relationship) {
-        mExecutor.execute(new Runnable() {
+        Runnable notificationGenerator = new Runnable() {
             @Override
             public void run() {
                 TalkRpcConnection clientConnection = mServer.getClientConnection(relationship.getClientId());
                 if (clientConnection != null && clientConnection.isLoggedIn()) {
+
+                    // Calling Client via RPC
                     clientConnection.getClientRpc().relationshipUpdated(relationship);
                 }
             }
-        });
+        };
+        queueOrExecute(notificationGenerator);
     }
 
     public void requestGroupUpdate(final String groupId, final String clientId) {
-        mExecutor.execute(new Runnable() {
+        Runnable notificationGenerator = new Runnable() {
             @Override
             public void run() {
                 TalkGroup updatedGroup = mDatabase.findGroupById(groupId);
@@ -196,6 +213,8 @@ public class UpdateAgent {
                     if (connection == null || !connection.isConnected()) {
                         return;
                     }
+
+                    // Calling Client via RPC
                     ITalkRpcClient rpc = connection.getClientRpc();
                     try {
                         rpc.groupUpdated(updatedGroup);
@@ -204,11 +223,12 @@ public class UpdateAgent {
                     }
                 }
             }
-        });
+        };
+        queueOrExecute(notificationGenerator);
     }
 
     public void requestGroupUpdate(final String groupId) {
-        mExecutor.execute(new Runnable() {
+        Runnable notification = new Runnable() {
             @Override
             public void run() {
                 TalkGroup updatedGroup = mDatabase.findGroupById(groupId);
@@ -220,6 +240,8 @@ public class UpdateAgent {
                             if (connection == null || !connection.isConnected()) {
                                 continue;
                             }
+
+                            // Calling Client via RPC
                             ITalkRpcClient rpc = connection.getClientRpc();
                             try {
                                 rpc.groupUpdated(updatedGroup);
@@ -230,11 +252,12 @@ public class UpdateAgent {
                     }
                 }
             }
-        });
+        };
+        queueOrExecute(notification);
     }
 
     public void requestGroupMembershipUpdate(final String groupId, final String clientId) {
-        mExecutor.execute(new Runnable() {
+        Runnable notificationGenerator = new Runnable() {
             @Override
             public void run() {
                 TalkGroupMember updatedMember = mDatabase.findGroupMemberForClient(groupId, clientId);
@@ -248,6 +271,8 @@ public class UpdateAgent {
                         if (connection == null || !connection.isConnected()) {
                             continue;
                         }
+
+                        // Calling Client via RPC
                         ITalkRpcClient rpc = connection.getClientRpc();
                         try {
                             rpc.groupMemberUpdated(updatedMember);
@@ -257,7 +282,50 @@ public class UpdateAgent {
                     }
                 }
             }
-        });
+        };
+        queueOrExecute(notificationGenerator);
+    }
+
+    private void queueOrExecute(Runnable notificationGenerator) {
+        if (context.get() != null) {
+            ArrayList<Runnable> queue = context.get();
+            LOG.info("context is currently set (" + queue.size() + " items). Queueing notification generator.");
+            queue.add(notificationGenerator);
+        } else {
+            LOG.info("context is currently NOT set. Immediately executing notification generators");
+            mExecutor.execute(notificationGenerator);
+        }
+    }
+
+    private void flushContext() {
+        LOG.debug("Flushing context.");
+        if (context.get() != null) {
+            ArrayList<Runnable> queue = context.get();
+
+            if (queue.size() > 0) {
+                LOG.info("  * " + queue.size() + " notification generators were queued. flushing them...");
+                for (Runnable notification : queue) {
+                    mExecutor.execute(notification);
+                }
+            } else {
+                LOG.info("  * No notification generators were queued - nothing to do.");
+            }
+        }
+        context.remove();
+    }
+
+    public void setRequestContext() {
+        LOG.info("Setting context.");
+        if (context.get() != null) {
+            LOG.warn("context still contains notification generators! Flushing(executing) them now.");
+            flushContext();
+        }
+        context.set(new ArrayList<Runnable>());
+    }
+
+    public void clearRequestContext() {
+        LOG.info("UpdateAgent: clearing context.");
+        flushContext();
     }
 
 }
