@@ -9,6 +9,7 @@ import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
+import com.hoccer.talk.util.NamedThreadFactory;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class UpdateAgent {
     private static final ThreadLocal<ArrayList<Runnable>> context = new ThreadLocal<ArrayList<Runnable>>();
 
     public UpdateAgent(TalkServer server) {
-        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_UPDATE);
+        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_UPDATE, new NamedThreadFactory("update-agent"));
         mServer = server;
         mDatabase = mServer.getDatabase();
     }
