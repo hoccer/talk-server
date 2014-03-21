@@ -328,7 +328,7 @@ public class UpdateAgent {
     }
 
     public void clearRequestContext() {
-        LOG.info("UpdateAgent: clearing context.");
+        LOG.info("Clearing context.");
         flushContext();
     }
 
