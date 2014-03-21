@@ -1239,4 +1239,14 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 .createFileForTransfer(mConnection.getClientId(), "application/octet-stream", contentLength);
     }
 
+    @Override
+    public String updateEnvironment(TalkEnvironment environment) {
+        return "";
+    }
+
+
+    @Override
+    public void destroyEnvironment(String clientId, String groupId) {
+
+    }
 }
