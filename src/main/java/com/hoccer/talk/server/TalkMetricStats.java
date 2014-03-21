@@ -89,6 +89,7 @@ public class TalkMetricStats implements ITalkServerStatistics {
     public void signalClientLoginSRP2Failed() {
         clientLoginsSRP2FailedMeter.mark();
     }
+
     @Override
     public void signalMessageAcceptedSucceeded() {
         messageAcceptedSucceededMeter.mark();

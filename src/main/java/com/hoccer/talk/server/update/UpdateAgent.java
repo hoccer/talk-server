@@ -35,7 +35,10 @@ public class UpdateAgent {
     private static final ThreadLocal<ArrayList<Runnable>> context = new ThreadLocal<ArrayList<Runnable>>();
 
     public UpdateAgent(TalkServer server) {
-        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_UPDATE, new NamedThreadFactory("update-agent"));
+        mExecutor = Executors.newScheduledThreadPool(
+            TalkServerConfiguration.THREADS_UPDATE,
+            new NamedThreadFactory("update-agent")
+        );
         mServer = server;
         mDatabase = mServer.getDatabase();
     }

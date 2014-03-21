@@ -41,14 +41,15 @@ public class CleaningAgent {
     static final int KEY_LIFE_TIME = 3; // in months
     static final int RELATIONSHIP_LIFE_TIME = 3; // in months
 
-    static final int THREAD_POOL_SIZE = 4;
-
     public CleaningAgent(TalkServer server) {
         mServer = server;
         mConfig = server.getConfiguration();
         mDatabase = server.getDatabase();
         mFilecache = server.getFilecacheClient();
-        mExecutor = Executors.newScheduledThreadPool(THREAD_POOL_SIZE, new NamedThreadFactory("cleaning-agent"));
+        mExecutor = Executors.newScheduledThreadPool(
+            TalkServerConfiguration.THREADS_CLEANING,
+            new NamedThreadFactory("cleaning-agent")
+        );
         LOG.info("Cleaning clients scheduling will start in '" + mConfig.getCleanupAllClientsDelay() + "' seconds.");
         mExecutor.schedule(new Runnable() {
             @Override

@@ -2,6 +2,7 @@ package com.hoccer.talk.server.delivery;
 
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
+import com.hoccer.talk.util.NamedThreadFactory;
 import org.apache.log4j.Logger;
 
 import java.util.concurrent.Executors;
@@ -16,7 +17,10 @@ public class DeliveryAgent {
     private TalkServer mServer;
 
     public DeliveryAgent(TalkServer server) {
-        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_DELIVERY);
+        mExecutor = Executors.newScheduledThreadPool(
+            TalkServerConfiguration.THREADS_DELIVERY,
+            new NamedThreadFactory("delivery-agent")
+        );
         mServer = server;
     }
 
