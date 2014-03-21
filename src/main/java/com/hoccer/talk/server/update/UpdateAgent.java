@@ -8,25 +8,19 @@ import com.hoccer.talk.rpc.ITalkRpcClient;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
+import com.hoccer.talk.server.agents.NotificationDeferrer;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
-import com.hoccer.talk.util.NamedThreadFactory;
-import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Agent for simple updates (presence, group presence, relationship)
  */
-public class UpdateAgent {
+public class UpdateAgent extends NotificationDeferrer {
 
-    private static final Logger LOG = Logger.getLogger(UpdateAgent.class);
-
-    private final ScheduledExecutorService mExecutor;
 
     private final TalkServer mServer;
 
@@ -35,10 +29,7 @@ public class UpdateAgent {
     private static final ThreadLocal<ArrayList<Runnable>> context = new ThreadLocal<ArrayList<Runnable>>();
 
     public UpdateAgent(TalkServer server) {
-        mExecutor = Executors.newScheduledThreadPool(
-            TalkServerConfiguration.THREADS_UPDATE,
-            new NamedThreadFactory("update-agent")
-        );
+        super(TalkServerConfiguration.THREADS_UPDATE, "update-agent");
         mServer = server;
         mDatabase = mServer.getDatabase();
     }
@@ -88,7 +79,7 @@ public class UpdateAgent {
                 }
             }
         };
-        queueOrExecute(notificationGenerator);
+        queueOrExecute(context, notificationGenerator);
     }
 
     public void requestPresenceUpdateForClient(final String clientId, final String targetClientId) {
@@ -111,7 +102,7 @@ public class UpdateAgent {
                 }
             }
         };
-        queueOrExecute(notificationGenerator);
+        queueOrExecute(context, notificationGenerator);
     }
 
     public void requestPresenceUpdate(final String clientId) {
@@ -129,7 +120,7 @@ public class UpdateAgent {
                 }
             }
         };
-        queueOrExecute(notificationGenerator);
+        queueOrExecute(context, notificationGenerator);
     }
 
     private void performPresenceUpdate(TalkPresence presence) {
@@ -204,7 +195,7 @@ public class UpdateAgent {
                 }
             }
         };
-        queueOrExecute(notificationGenerator);
+        queueOrExecute(context, notificationGenerator);
     }
 
     public void requestGroupUpdate(final String groupId, final String clientId) {
@@ -228,7 +219,7 @@ public class UpdateAgent {
                 }
             }
         };
-        queueOrExecute(notificationGenerator);
+        queueOrExecute(context, notificationGenerator);
     }
 
     public void requestGroupUpdate(final String groupId) {
@@ -257,7 +248,7 @@ public class UpdateAgent {
                 }
             }
         };
-        queueOrExecute(notification);
+        queueOrExecute(context, notification);
     }
 
     public void requestGroupMembershipUpdate(final String groupId, final String clientId) {
@@ -287,49 +278,15 @@ public class UpdateAgent {
                 }
             }
         };
-        queueOrExecute(notificationGenerator);
-    }
-
-    private void queueOrExecute(Runnable notificationGenerator) {
-        if (context.get() != null) {
-            ArrayList<Runnable> queue = context.get();
-            LOG.info("context is currently set (" + queue.size() + " items). Queueing notification generator.");
-            queue.add(notificationGenerator);
-        } else {
-            LOG.info("context is currently NOT set. Immediately executing notification generators");
-            mExecutor.execute(notificationGenerator);
-        }
-    }
-
-    private void flushContext() {
-        LOG.debug("Flushing context.");
-        if (context.get() != null) {
-            ArrayList<Runnable> queue = context.get();
-
-            if (queue.size() > 0) {
-                LOG.info("  * " + queue.size() + " notification generators were queued. flushing them...");
-                for (Runnable notification : queue) {
-                    mExecutor.execute(notification);
-                }
-            } else {
-                LOG.info("  * No notification generators were queued - nothing to do.");
-            }
-        }
-        context.remove();
+        queueOrExecute(context, notificationGenerator);
     }
 
     public void setRequestContext() {
-        LOG.info("Setting context.");
-        if (context.get() != null) {
-            LOG.warn("context still contains notification generators! Flushing(executing) them now.");
-            flushContext();
-        }
-        context.set(new ArrayList<Runnable>());
+        setRequestContext(context);
     }
 
     public void clearRequestContext() {
-        LOG.info("Clearing context.");
-        flushContext();
+        clearRequestContext(context);
     }
 
 }
