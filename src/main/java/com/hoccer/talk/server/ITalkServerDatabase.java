@@ -1,14 +1,6 @@
 package com.hoccer.talk.server;
 
-import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.model.TalkDelivery;
-import com.hoccer.talk.model.TalkGroup;
-import com.hoccer.talk.model.TalkGroupMember;
-import com.hoccer.talk.model.TalkKey;
-import com.hoccer.talk.model.TalkMessage;
-import com.hoccer.talk.model.TalkPresence;
-import com.hoccer.talk.model.TalkRelationship;
-import com.hoccer.talk.model.TalkToken;
+import com.hoccer.talk.model.*;
 
 import java.util.Date;
 import java.util.List;
@@ -73,8 +65,16 @@ public interface ITalkServerDatabase {
     public void saveGroup(TalkGroup group);
 
     public List<TalkGroupMember> findGroupMembersById(String groupId);
+    public List<TalkGroupMember> findGroupMembersByIdWithStates(String groupId, String[] states);
     public List<TalkGroupMember> findGroupMembersForClient(String clientId);
     public List<TalkGroupMember> findGroupMembersByIdChangedAfter(String groupId, Date lastKnown);
     public TalkGroupMember findGroupMemberForClient(String groupId, String clientId);
     public void saveGroupMember(TalkGroupMember groupMember);
+
+    public void saveEnvironment(TalkEnvironment environment) ;
+    public TalkEnvironment findEnvironmentByClientId(String clientId);
+    public List<TalkEnvironment> findEnvironmentsForGroup(String groupId);
+    public List<TalkEnvironment> findEnvironmentsMatching(TalkEnvironment environment);
+    public void deleteEnvironment(TalkEnvironment environment);
+
 }

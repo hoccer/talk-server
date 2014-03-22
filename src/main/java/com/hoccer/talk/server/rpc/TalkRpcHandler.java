@@ -8,6 +8,8 @@ import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.srp.SRP6Parameters;
 import com.hoccer.talk.srp.SRP6VerifyingServer;
+import com.hoccer.talk.util.MapUtil;
+import com.sun.tools.javac.util.Pair;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.log4j.Logger;
@@ -1239,14 +1241,144 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 .createFileForTransfer(mConnection.getClientId(), "application/octet-stream", contentLength);
     }
 
-    @Override
-    public String updateEnvironment(TalkEnvironment environment) {
-        return "";
+    private void createGroupWithEnvironment(TalkEnvironment environment) {
+        LOG.info("updateEnvironment: creating new group for client "+ mConnection.getClientId());
+        TalkGroup group = new TalkGroup();
+        group.setGroupTag(UUID.randomUUID().toString());
+        group.setGroupId(UUID.randomUUID().toString());
+        group.setState(TalkGroup.STATE_EXISTS);
+        group.setGroupName("Nearby");
+        TalkGroupMember groupAdmin = new TalkGroupMember();
+        groupAdmin.setClientId(mConnection.getClientId());
+        groupAdmin.setGroupId(group.getGroupId());
+        groupAdmin.setRole(TalkGroupMember.ROLE_ADMIN);
+        groupAdmin.setState(TalkGroupMember.STATE_JOINED);
+        changedGroup(group);
+        changedGroupMember(groupAdmin);
+
+        environment.setGroupId(group.getGroupId());
+        environment.setClientId(mConnection.getClientId());
+        mDatabase.saveEnvironment(environment);
     }
 
+    private void joinGroupWithEnvironment(TalkGroup group, TalkEnvironment environment) {
+        LOG.info("updateEnvironment: creating new group for client "+ mConnection.getClientId());
+
+        TalkGroupMember groupAdmin = new TalkGroupMember();
+        groupAdmin.setClientId(mConnection.getClientId());
+        groupAdmin.setGroupId(group.getGroupId());
+        groupAdmin.setRole(TalkGroupMember.ROLE_ADMIN);
+        groupAdmin.setState(TalkGroupMember.STATE_JOINED);
+        changedGroup(group);
+        changedGroupMember(groupAdmin);
+
+        environment.setGroupId(group.getGroupId());
+        environment.setClientId(mConnection.getClientId());
+        mDatabase.saveEnvironment(environment);
+    }
+
+    public ArrayList<Pair<String,Integer> > findGroupSortedBySize(List<TalkEnvironment> matchingEnvironments) {
+
+        Map<String,Integer> environmentsPerGroup = new HashMap<String, Integer>();
+        for (int i = 0; i < matchingEnvironments.size();++i) {
+            String key = matchingEnvironments.get(i).getGroupId();
+            if (environmentsPerGroup.containsKey(key)) {
+                 environmentsPerGroup.put(key, environmentsPerGroup.get(key)+1);
+            } else {
+                environmentsPerGroup.put(key, 1);
+            }
+        }
+        environmentsPerGroup = MapUtil.sortByValueDescending(environmentsPerGroup);
+
+        ArrayList<Pair<String,Integer> > result = new ArrayList<Pair<String,Integer> >();
+        for(Map.Entry<String, Integer> entry : environmentsPerGroup.entrySet()) {
+            result.add(new Pair<String, Integer>(entry.getKey(), entry.getValue()));
+        }
+        return result;
+    }
 
     @Override
-    public void destroyEnvironment(String clientId, String groupId) {
+    public String updateEnvironment(TalkEnvironment environment) {
+        logCall("updateEnvironment(" + mConnection.getClientId() + ")");
+        requireIdentification();
+        List<TalkEnvironment> matching = mDatabase.findEnvironmentsMatching(environment);
+        TalkEnvironment myEnvironment = mDatabase.findEnvironmentByClientId(mConnection.getClientId());
+        ArrayList<Pair<String,Integer> > environmentsPerGroup = findGroupSortedBySize(matching);
+        for (TalkEnvironment te : matching) {
+            if (te.getClientId().equals(mConnection.getClientId())) {
+                // there is already a matching environment for us
+                TalkGroupMember myMemberShip = mDatabase.findGroupMemberForClient(te.getGroupId(),te.getClientId());
+                TalkGroup myGroup = mDatabase.findGroupById(te.getGroupId());
+                if (myMemberShip != null && myGroup != null) {
+                    if (myMemberShip.isAdmin() && myMemberShip.isJoined() && myGroup.getState().equals(TalkGroup.STATE_EXISTS)) {
+                        // everything seems fine, but are we in the largest group?
+                        if (environmentsPerGroup.size() > 1) {
+                            if (!environmentsPerGroup.get(0).fst.equals(te.getGroupId())) {
+                                // we are not in the largest group, lets move over
+                                destroyEnvironment(myEnvironment);
+                                // join the largest group
+                                TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).fst);
+                                joinGroupWithEnvironment(largestGroup,environment);
+                                return largestGroup.getGroupId();
+                            }
+                        }
+                        // nothing has changed, we are still fine
+                        return myGroup.getGroupId();
+                    }
+                    // there is a group and a membership, but they seem to be tombstones, so lets ignore them, just get rid of the bad environment
+                    mDatabase.deleteEnvironment(te);
+                    TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).fst);
+                    joinGroupWithEnvironment(largestGroup,environment);
+                    return largestGroup.getGroupId();
+                }
+            }
+        }
+        // when we got here, there is no environment for us in the matching list
+        if (myEnvironment != null) {
+            // we have an environment for another location that does not match, lets get rid of it
+            destroyEnvironment(myEnvironment);
+        }
+        if (matching.size() > 0) {
+            // join the largest group
+            TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).fst);
+            joinGroupWithEnvironment(largestGroup,environment);
+            return largestGroup.getGroupId();
+        }
+        // we are alone or first at the location, lets create a new group
+        createGroupWithEnvironment(environment);
+        return environment.getGroupId();
+    }
 
+    private void destroyEnvironment(TalkEnvironment environment) {
+        logCall("destroyEnvironment(" + environment+")");
+        TalkGroup group = mDatabase.findGroupById(environment.getGroupId());
+        TalkGroupMember member = mDatabase.findGroupMemberForClient(environment.getGroupId(), environment.getClientId());
+        if (member != null && member.getState().equals(TalkGroupMember.STATE_JOINED)) {
+            // remove my membership
+            // set membership state to NONE
+            member.setState(TalkGroupMember.STATE_NONE);
+            // degrade removed users to member
+            member.setRole(TalkGroupMember.ROLE_MEMBER);
+            changedGroupMember(member); 
+            String[] states = {TalkGroupMember.STATE_JOINED};
+            List<TalkGroupMember> membersLeft = mDatabase.findGroupMembersByIdWithStates(environment.getGroupId(), states);
+            if (membersLeft.size() == 0) {
+                // last member removed, remove group
+                group.setState(TalkGroup.STATE_NONE);
+                changedGroup(group);
+            }
+        }
+        mDatabase.deleteEnvironment(environment);
+    }
+
+    @Override
+    // TODO: possibly remove parameters or do something with them
+    public void destroyEnvironment(String clientId, String groupId) {
+        logCall("destroyEnvironment(" + mConnection.getClientId() + ")");
+        requireIdentification();
+        TalkEnvironment myEnvironment = mDatabase.findEnvironmentByClientId(mConnection.getClientId());
+        if (myEnvironment != null) {
+            destroyEnvironment(myEnvironment);
+        }
     }
 }

@@ -1,14 +1,6 @@
 package com.hoccer.talk.server.database;
 
-import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.model.TalkDelivery;
-import com.hoccer.talk.model.TalkGroup;
-import com.hoccer.talk.model.TalkGroupMember;
-import com.hoccer.talk.model.TalkKey;
-import com.hoccer.talk.model.TalkMessage;
-import com.hoccer.talk.model.TalkPresence;
-import com.hoccer.talk.model.TalkRelationship;
-import com.hoccer.talk.model.TalkToken;
+import com.hoccer.talk.model.*;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.mongodb.DB;
@@ -20,14 +12,7 @@ import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Database implementation using the Jongo mapper to MongoDB
@@ -64,6 +49,7 @@ public class JongoDatabase implements ITalkServerDatabase {
     MongoCollection mKeys;
     MongoCollection mGroups;
     MongoCollection mGroupMembers;
+    MongoCollection mEnvironments;
 
 
     public JongoDatabase(TalkServerConfiguration configuration) {
@@ -104,6 +90,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         mKeys = getCollection("key");
         mGroups = getCollection("group");
         mGroupMembers = getCollection("groupMember");
+        mEnvironments = getCollection("enviroment");
     }
 
     private MongoCollection getCollection(String name) {
@@ -475,6 +462,18 @@ public class JongoDatabase implements ITalkServerDatabase {
         return res;
     }
 
+    public List<TalkGroupMember> findGroupMembersByIdWithStates(String groupId, String[] states) {
+        List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
+        Iterator<TalkGroupMember> it =
+                mGroupMembers.find("{groupId:#, state: { $in: # }}", groupId, states)
+                        .as(TalkGroupMember.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+
     @Override
     public List<TalkGroupMember> findGroupMembersForClient(String clientId) {
         List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
@@ -508,6 +507,116 @@ public class JongoDatabase implements ITalkServerDatabase {
     @Override
     public void saveGroupMember(TalkGroupMember groupMember) {
         mGroupMembers.save(groupMember);
+    }
+
+    @Override
+    public void saveEnvironment(TalkEnvironment environment) {
+        mEnvironments.save(environment);
+    }
+
+    @Override
+    public TalkEnvironment findEnvironmentByClientId(String clientId) {
+        return mEnvironments.findOne("{clientId:#}", clientId)
+                .as(TalkEnvironment.class);
+    }
+
+    @Override
+    public List<TalkEnvironment> findEnvironmentsForGroup(String groupId) {
+        List<TalkEnvironment> res = new ArrayList<TalkEnvironment>();
+        Iterator<TalkEnvironment> it =
+                mEnvironments.find("{groupId:#}", groupId)
+                        .as(TalkEnvironment.class).iterator();
+        while(it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
+    public List<TalkEnvironment> findEnvironmentsMatching(TalkEnvironment environment) {
+        mEnvironments.ensureIndex("{geoLocation: '2dsphere'}");
+        List<TalkEnvironment> res = new ArrayList<TalkEnvironment>();
+
+        // do geospatial search
+        Double[] searchCenter = environment.getGeoLocation();
+        Float accuracy = environment.getAccuracy();
+        if (searchCenter != null) {
+            Float searchRadius = accuracy;
+            if (searchRadius > 200.f) {
+                searchRadius = 200.f;
+            }
+            if (searchRadius < 100.f) {
+                searchRadius = 100.f;
+            }
+            Double EARTH_RADIUS        = 1000.0 * 6371.0;
+            Double searchRadiusRad = searchRadius / EARTH_RADIUS;
+            Iterator<TalkEnvironment> it = mEnvironments.find("{ geoLocation : { $geoWithin : { $centerSphere : [ [# , #] , # ] } } }", searchCenter[0], searchCenter[1], searchRadiusRad)
+                            .as(TalkEnvironment.class).iterator();
+            while(it.hasNext()) {
+                res.add(it.next());
+            }
+            LOG.debug("found "+res.size()+" environments by geolocation");
+        }
+
+        // do bssid search
+        if (environment.getBssids() != null) {
+            List<String> bssids = Arrays.asList(environment.getBssids());
+            Iterator<TalkEnvironment> it =
+                    mEnvironments.find("{ bssids :{ $in: # } }", bssids)
+                            .as(TalkEnvironment.class).iterator();
+            int totalFound = 0;
+            int newFound = 0;
+            while(it.hasNext()) {
+                TalkEnvironment te = it.next();
+                ++totalFound;
+                boolean found = false;
+                for (TalkEnvironment rte : res) {
+                    if (rte.getGroupId().equals(te.getGroupId()) && rte.getClientId().equals(te.getClientId())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    res.add(te);
+                    ++newFound;
+                }
+            }
+            LOG.debug("found "+totalFound+" environments by bssid, "+newFound+" of them are new");
+        }
+
+        // do identifiers search
+        if (environment.getIdentifiers() != null) {
+            List<String> identifiers = Arrays.asList(environment.getIdentifiers());
+            Iterator<TalkEnvironment> it =
+                    mEnvironments.find("{ identifiers :{ $in: # } }", identifiers)
+                            .as(TalkEnvironment.class).iterator();
+            int totalFound = 0;
+            int newFound = 0;
+            while(it.hasNext()) {
+                TalkEnvironment te = it.next();
+                ++totalFound;
+                boolean found = false;
+                for (TalkEnvironment rte : res) {
+                    if (rte.getGroupId().equals(te.getGroupId()) && rte.getClientId().equals(te.getClientId())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    res.add(te);
+                    ++newFound;
+                }
+            }
+
+            LOG.debug("found "+totalFound+" environments by identifiers, "+newFound+" of them are new");
+        }
+
+        return res;
+    }
+
+    @Override
+    public void deleteEnvironment(TalkEnvironment environment) {
+        mEnvironments.remove("{clientId:#}", environment.getClientId());
     }
 
 }
