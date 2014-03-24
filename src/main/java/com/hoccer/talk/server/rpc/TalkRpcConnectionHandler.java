@@ -20,16 +20,17 @@ import javax.servlet.http.HttpServletRequest;
 public class TalkRpcConnectionHandler extends WebSocketHandler {
 
     private static final Logger log = Logger.getLogger(TalkRpcConnectionHandler.class);
+    private static final int MAX_IDLE_TIME = 1800 * 1000; // in ms
 
     /**
      * Talk server instance
      */
-    TalkServer mTalkServer;
+    private final TalkServer mTalkServer;
 
     /**
      * JSON-RPC server object
      */
-    JsonRpcServer mRpcServer;
+    private final JsonRpcServer mJsonRpcServer;
 
     /**
      * Construct a handler for the given server
@@ -37,15 +38,15 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
      * @param server to add connections to
      */
     public TalkRpcConnectionHandler(TalkServer server) {
-        mRpcServer = server.getRpcServer();
+        mJsonRpcServer = server.getRpcServer();
         mTalkServer = server;
     }
 
     /**
      * Create a websocket for the given HTTP request and WS protocol
      *
-     * @param request
-     * @param protocol
+     * @param request which initiated websocket upgrade
+     * @param protocol the user defined websocket protocol (can be null!)
      * @return
      */
     @Override
@@ -71,10 +72,10 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
         TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection, request);
         // configure the connection
         connection.setSendBinaryMessages(binary);
-        connection.setMaxIdleTime(1800 * 1000);
+        connection.setMaxIdleTime(MAX_IDLE_TIME);
         connection.setAnswerKeepAlives(true);
         connection.bindClient(new JsonRpcClient());
-        connection.bindServer(mRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
+        connection.bindServer(mJsonRpcServer, new TalkRpcHandler(mTalkServer, rpcConnection));
         // return the raw connection (will be called by server for incoming messages)
         return connection;
     }
