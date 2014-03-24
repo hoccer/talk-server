@@ -1,8 +1,5 @@
 package com.hoccer.talk.server;
 
-import java.util.Date;
-import java.util.Map;
-
 /**
  * Common interface for server statistics
  *
@@ -21,8 +18,4 @@ public interface ITalkServerStatistics {
     void signalMessageAcceptedSucceeded();
     void signalMessageConfirmedSucceeded();
     void signalMessageAcknowledgedSucceeded();
-
-    public Date getStartTime();
-    public Map<String, Long> getMap();
-
 }

@@ -1,16 +1,11 @@
 package com.hoccer.talk.server;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-
-import java.util.*;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
 public class TalkMetricStats implements ITalkServerStatistics {
-
-    Date startTime = new Date();
 
     MetricRegistry mMetrics;
     private final Meter clientRegistrationSucceededMeter;
@@ -37,27 +32,6 @@ public class TalkMetricStats implements ITalkServerStatistics {
         messageAcceptedSucceededMeter = metrics.meter(name(TalkServer.class, "message-accepts-succeeded-meter"));
         messageConfirmedSucceededMeter = metrics.meter(name(TalkServer.class, "message-confirmations-succeeded-meter"));
         messageAcknowledgedSucceededMeter = metrics.meter(name(TalkServer.class, "message-acknowledgements-succeeded-meter"));
-    }
-
-    @Override
-    public Map<String, Long> getMap() {
-        HashMap<String, Long> result = new HashMap<String, Long>();
-        SortedMap<String, Counter> counters = mMetrics.getCounters();
-        for(Map.Entry<String, Counter> counter: counters.entrySet()) {
-            result.put(counter.getKey(), counter.getValue().getCount());
-        }
-
-/*        SortedMap<String, Meter> meters = mMetrics.getMeters();
-        for(Map.Entry<String, Meter> meter: meters.entrySet()) {
-            result.put(meter.getKey(), meter.getValue().getOneMinuteRate());
-        }*/
-
-        return result;
-    }
-
-    @Override
-    public Date getStartTime() {
-        return startTime;
     }
 
     @Override
