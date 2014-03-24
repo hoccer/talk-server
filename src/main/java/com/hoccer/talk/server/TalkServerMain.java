@@ -28,17 +28,9 @@ public class TalkServerMain {
 
     private static final Logger LOG = Logger.getLogger(TalkServerMain.class);
 
-    @Parameter(names={"-c", "-config"},
-               description = "Configuration file to use")
+    @Parameter(names = {"-c", "-config"},
+            description = "Configuration file to use")
     String config = null;
-
-    @Parameter(names={"-l", "-listen"},
-               description = "Address/host to listen on")
-    String listen = "0.0.0.0";
-
-    @Parameter(names={"-p", "-port"},
-               description = "Port to listen on")
-    int port = 8080;
 
     private void run() {
         // load configuration
@@ -91,7 +83,7 @@ public class TalkServerMain {
         TalkServerConfiguration configuration = new TalkServerConfiguration();
 
         // configure from file
-        if(config != null) {
+        if (config != null) {
             Properties properties = null;
             // load the property file
             LOG.info("Loading configuration from property file " + config);
@@ -105,7 +97,7 @@ public class TalkServerMain {
                 LOG.error("Could not load configuration", e);
             }
             // if we could load it then configure using it
-            if(properties != null) {
+            if (properties != null) {
                 configuration.configureFromProperties(properties);
             }
         }
@@ -117,28 +109,30 @@ public class TalkServerMain {
     private ITalkServerDatabase initializeDatabase(TalkServerConfiguration config) {
         LOG.info("Determining database");
         String backend = config.getDatabaseBackend();
-        if(backend.equals("jongo")) {
+        if (backend.equals("jongo")) {
             return new JongoDatabase(config);
         }
-        if(backend.equals("ormlite")) {
+        if (backend.equals("ormlite")) {
             return new OrmliteDatabase();
         }
         throw new RuntimeException("Unknown database backend: " + backend);
     }
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
         BasicConfigurator.configure();
         TalkServerMain main = new TalkServerMain();
         JCommander commander = new JCommander(main, args);
         PropertyConfigurator.configure(main.config);
         main.run();
-	}
+    }
 
     private static class MyMetricsServletContextListener extends MetricsServlet.ContextListener {
         private MetricRegistry _metricRegistry;
+
         public MyMetricsServletContextListener(MetricRegistry metricRegistry) {
             _metricRegistry = metricRegistry;
         }
+
         @Override
         protected MetricRegistry getMetricRegistry() {
             return _metricRegistry;
