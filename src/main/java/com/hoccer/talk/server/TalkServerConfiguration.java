@@ -23,6 +23,7 @@ public class TalkServerConfiguration {
     public static final int THREADS_UPDATE = 1;
     public static final int THREADS_PUSH = 1;
     public static final int THREADS_PING = 2; // XXX HIGHER COUNT?
+    public static final int THREADS_CLEANING = 4;
 
     private static final String PROPERTY_PREFIX = "talk";
 

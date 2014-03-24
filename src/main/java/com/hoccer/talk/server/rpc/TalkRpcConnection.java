@@ -2,6 +2,7 @@ package com.hoccer.talk.server.rpc;
 
 import better.jsonrpc.core.JsonRpcConnection;
 import better.jsonrpc.websocket.JsonRpcWsConnection;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.ITalkRpcClient;
 import com.hoccer.talk.server.ITalkServerDatabase;
@@ -18,7 +19,7 @@ import java.util.Date;
  * as for binding JSON-RPC handlers and Talk messaging state to
  * the connection based on user identity and state.
  */
-public class TalkRpcConnection implements JsonRpcConnection.Listener {
+public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcConnection.ConnectionEventListener {
 
     /**
      * Logger for connection-related things
@@ -80,6 +81,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
         mClientRpc = (ITalkRpcClient) connection.makeProxy(ITalkRpcClient.class);
         // register ourselves for connection events
         mConnection.addListener(this);
+        mConnection.addConnectionEventListener(this);
     }
 
     /**
@@ -251,4 +253,31 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener {
         mSupportMode = true;
     }
 
+    @Override
+    public void onPreHandleRequest(JsonRpcConnection connection, ObjectNode request) {
+        LOG.info("onPreHandleRequest -- connectionId: '" +
+                 connection.getConnectionId() + "', clientId: '" +
+                 ((mClient == null) ? "null": mClient.getClientId()) + "'");
+        mServer.getUpdateAgent().setRequestContext();
+        mServer.getDeliveryAgent().setRequestContext();
+    }
+
+    @Override
+    public void onPostHandleRequest(JsonRpcConnection connection, ObjectNode request) {
+        LOG.info("onPostHandleRequest -- connectionId: '" +
+                 connection.getConnectionId() + "', clientId: '" +
+                 ((mClient == null) ? "null": mClient.getClientId()) + "'");
+        mServer.getUpdateAgent().clearRequestContext();
+        mServer.getDeliveryAgent().clearRequestContext();
+    }
+
+    @Override
+    public void onPreHandleNotification(JsonRpcConnection connection, ObjectNode notification) {
+
+    }
+
+    @Override
+    public void onPostHandleNotification(JsonRpcConnection connection, ObjectNode notification) {
+
+    }
 }

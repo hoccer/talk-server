@@ -9,6 +9,7 @@ import com.hoccer.talk.rpc.ITalkRpcClient;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
+import com.hoccer.talk.util.NamedThreadFactory;
 import org.apache.log4j.Logger;
 
 import java.util.concurrent.Executors;
@@ -42,7 +43,10 @@ public class PingAgent {
 
     public PingAgent(TalkServer server) {
         mServer = server;
-        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PING);
+        mExecutor = Executors.newScheduledThreadPool(
+            TalkServerConfiguration.THREADS_PING,
+            new NamedThreadFactory("ping-agent")
+        );
         initializeMetrics(mServer.getMetrics());
     }
 
@@ -91,16 +95,16 @@ public class PingAgent {
                     try {
                         rpc.ping();
                         long elapsed = (timer.stop() / 1000000);
-                        LOG.info("ping on " + clientId + " took " + elapsed + " msecs");
+                        LOG.debug("ping on " + clientId + " took " + elapsed + " msecs");
                         mPingSuccesses.incrementAndGet();
                     } catch (JsonRpcClientDisconnect e) {
-                        LOG.info("ping on " + clientId + " disconnect");
+                        LOG.debug("ping on " + clientId + " disconnect");
                         mPingFailures.incrementAndGet();
                     } catch (JsonRpcClientTimeout e) {
-                        LOG.info("ping on " + clientId + " timeout");
+                        LOG.debug("ping on " + clientId + " timeout");
                         mPingFailures.incrementAndGet();
                     } catch (Throwable t) {
-                        LOG.info("exception in ping on " + clientId, t);
+                        LOG.error("exception in ping on " + clientId, t);
                         mPingFailures.incrementAndGet();
                     }
                 }

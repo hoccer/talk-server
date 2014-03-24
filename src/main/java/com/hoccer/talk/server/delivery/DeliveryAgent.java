@@ -2,21 +2,21 @@ package com.hoccer.talk.server.delivery;
 
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
-import org.apache.log4j.Logger;
+import com.hoccer.talk.server.agents.NotificationDeferrer;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.ArrayList;
 
-public class DeliveryAgent {
+public class DeliveryAgent extends NotificationDeferrer {
 
-    private static final Logger LOG = Logger.getLogger(DeliveryAgent.class);
-
-    private ScheduledExecutorService mExecutor;
+    private static final ThreadLocal<ArrayList<Runnable>> context = new ThreadLocal<ArrayList<Runnable>>();
 
     private TalkServer mServer;
 
     public DeliveryAgent(TalkServer server) {
-        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_DELIVERY);
+        super(
+            TalkServerConfiguration.THREADS_DELIVERY,
+            "delivery-agent"
+        );
         mServer = server;
     }
 
@@ -25,17 +25,27 @@ public class DeliveryAgent {
     }
 
     public void requestDelivery(String clientId) {
-        final DeliveryRequest request = new DeliveryRequest(this, clientId);
-        mExecutor.execute(new Runnable() {
+        final DeliveryRequest deliveryRequest = new DeliveryRequest(this, clientId);
+
+        Runnable notificationGenerator = new Runnable() {
             @Override
             public void run() {
                 try {
-                    request.perform();
+                    deliveryRequest.perform();
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
             }
-        });
+        };
+
+        queueOrExecute(context, notificationGenerator);
     }
 
+    public void setRequestContext() {
+        setRequestContext(context);
+    }
+
+    public void clearRequestContext() {
+        clearRequestContext(context);
+    }
 }

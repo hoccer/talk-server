@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * Delivery requests encapsulate a delivery run for a given client
- *
+ * <p/>
  * Both incoming and outgoing deliveries are handled in one go.
  * If clients are not connected the request is passed on to the push agent.
  * Deliveries are rate-limited to one update every 5 seconds.
@@ -44,7 +44,7 @@ public class DeliveryRequest {
         // determine if the client is currently connected
         TalkRpcConnection connection = mServer.getClientConnection(mClientId);
         ITalkRpcClient rpc = null;
-        if(connection != null && connection.isConnected()) {
+        if (connection != null && connection.isConnected()) {
             currentlyConnected = true;
             rpc = connection.getClientRpc();
         }
@@ -52,27 +52,27 @@ public class DeliveryRequest {
         // get all outstanding deliveries for the client
         List<TalkDelivery> inDeliveries =
                 mDatabase.findDeliveriesForClientInState(mClientId, TalkDelivery.STATE_DELIVERING);
-        if(inDeliveries.size() > 0) {
+        if (inDeliveries.size() > 0) {
             LOG.info("has " + inDeliveries.size() + " incoming deliveries");
             // we will need to push if we don't succeed
             needToNotify = true;
             // deliver one by one
-            for(TalkDelivery delivery: inDeliveries) {
+            for (TalkDelivery delivery : inDeliveries) {
                 // we lost the connection somehow
-                if(!currentlyConnected) {
+                if (!currentlyConnected) {
                     break;
                 }
 
                 // rate limit
                 long now = System.currentTimeMillis();
                 long delta = Math.max(0, now - delivery.getTimeUpdatedIn().getTime());
-                if(delta < 5000) {
+                if (delta < 5000) {
                     continue;
                 }
 
                 // get the matching message
                 TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
-                if(message == null) {
+                if (message == null) {
                     LOG.warn("message not found: " + delivery.getMessageId());
                     continue;
                 }
@@ -88,7 +88,7 @@ public class DeliveryRequest {
                 }
 
                 // check for disconnects
-                if(!connection.isConnected()) {
+                if (!connection.isConnected()) {
                     currentlyConnected = false;
                 }
 
@@ -97,19 +97,19 @@ public class DeliveryRequest {
 
         List<TalkDelivery> outDeliveries =
                 mDatabase.findDeliveriesFromClientInState(mClientId, TalkDelivery.STATE_DELIVERED);
-        if(currentlyConnected && outDeliveries.size() > 0) {
+        if (currentlyConnected && outDeliveries.size() > 0) {
             LOG.info("has " + outDeliveries.size() + " outgoing deliveries");
             // deliver one by one
-            for(TalkDelivery delivery: outDeliveries) {
+            for (TalkDelivery delivery : outDeliveries) {
                 // we lost the connection somehow
-                if(!currentlyConnected) {
+                if (!currentlyConnected) {
                     break;
                 }
 
                 // rate limit
                 long now = System.currentTimeMillis();
                 long delta = Math.max(0, now - delivery.getTimeUpdatedOut().getTime());
-                if(delta < 5000) {
+                if (delta < 5000) {
                     continue;
                 }
 
@@ -123,14 +123,14 @@ public class DeliveryRequest {
                 }
 
                 // check for disconnects
-                if(!connection.isConnected()) {
+                if (!connection.isConnected()) {
                     currentlyConnected = false;
                 }
             }
         }
 
         // initiate push delivery if needed
-        if(needToNotify && !currentlyConnected) {
+        if (needToNotify && !currentlyConnected) {
             LOG.info("pushing " + mClientId);
             performPush();
         }
@@ -140,7 +140,7 @@ public class DeliveryRequest {
         // find client in database
         TalkClient client = mDatabase.findClientById(mClientId);
         // send push request
-        if(client.isPushCapable()) {
+        if (client.isPushCapable()) {
             mServer.getPushAgent().submitRequest(client);
         } else {
             LOG.info("push unconfigured for " + mClientId);
