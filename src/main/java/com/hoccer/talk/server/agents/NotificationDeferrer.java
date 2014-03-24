@@ -22,6 +22,8 @@ public class NotificationDeferrer {
     protected final Logger LOG = Logger.getLogger(getClass());
 
     protected void queueOrExecute(ThreadLocal<ArrayList<Runnable>> context, Runnable notificationGenerator) {
+        // TODO: Maybe a Queue instead of an ArrayList would be more appropriate here.
+
         if (context.get() != null) {
             ArrayList<Runnable> queue = context.get();
             LOG.info("context is currently set (" + queue.size() + " items). Queueing notification generator.");
