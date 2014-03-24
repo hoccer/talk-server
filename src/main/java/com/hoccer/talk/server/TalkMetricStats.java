@@ -1,13 +1,22 @@
 package com.hoccer.talk.server;
 
+import better.jsonrpc.core.JsonRpcConnection;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+
+import org.apache.log4j.Logger;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
 public class TalkMetricStats implements ITalkServerStatistics {
 
-    MetricRegistry mMetrics;
+    private static final Logger LOG = Logger.getLogger(TalkMetricStats.class);
+    MetricRegistry mMetricsRegistry;
+
+    // Meters
     private final Meter clientRegistrationSucceededMeter;
     private final Meter clientRegistrationFailedMeter;
     private final Meter clientLoginsSRP1SucceededMeter;
@@ -18,9 +27,11 @@ public class TalkMetricStats implements ITalkServerStatistics {
     private final Meter messageConfirmedSucceededMeter;
     private final Meter messageAcknowledgedSucceededMeter;
 
+    //Timers
+    private final Timer mRequestTimer;
 
     public TalkMetricStats(MetricRegistry metrics) {
-        mMetrics = metrics;
+        mMetricsRegistry = metrics;
 
         // Meters
         clientRegistrationSucceededMeter = metrics.meter(name(TalkServer.class, "client-registrations-succeeded-meter"));
@@ -32,6 +43,9 @@ public class TalkMetricStats implements ITalkServerStatistics {
         messageAcceptedSucceededMeter = metrics.meter(name(TalkServer.class, "message-accepts-succeeded-meter"));
         messageConfirmedSucceededMeter = metrics.meter(name(TalkServer.class, "message-confirmations-succeeded-meter"));
         messageAcknowledgedSucceededMeter = metrics.meter(name(TalkServer.class, "message-acknowledgements-succeeded-meter"));
+
+        // Timers
+        mRequestTimer = mMetricsRegistry.timer("requests");
     }
 
     @Override
@@ -78,5 +92,18 @@ public class TalkMetricStats implements ITalkServerStatistics {
     public void signalMessageAcknowledgedSucceeded() {
         messageAcknowledgedSucceededMeter.mark();
     }
+
+    @Override
+    public Timer.Context signalRequestStart(JsonRpcConnection connection, ObjectNode request) {
+        LOG.info("signalRequestStart for request id: '" + request.get("id") + "'");
+        return mRequestTimer.time();
+    }
+
+    @Override
+    public void signalRequestStop(JsonRpcConnection connection, ObjectNode request, Timer.Context timerContext) {
+        LOG.info("signalRequestStop for request id: '" + request.get("id") + "'");
+        timerContext.stop();
+    }
+
 }
 

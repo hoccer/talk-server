@@ -259,6 +259,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
         LOG.info("onPreHandleRequest -- connectionId: '" +
                 connection.getConnectionId() + "', clientId: '" +
                 ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
+        //mServer.getStatistics().signalRequestStart(connection, request);
         mServer.getUpdateAgent().setRequestContext();
         mServer.getDeliveryAgent().setRequestContext();
     }
@@ -268,6 +269,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
         LOG.info("onPostHandleRequest -- connectionId: '" +
                 connection.getConnectionId() + "', clientId: '" +
                 ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
+        //mServer.getStatistics().signalRequestStop(connection, request);
         mServer.getUpdateAgent().clearRequestContext();
         mServer.getDeliveryAgent().clearRequestContext();
     }
