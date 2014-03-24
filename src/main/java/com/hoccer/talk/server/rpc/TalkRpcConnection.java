@@ -54,7 +54,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     /**
      * Client object (if logged in)
      */
-    TalkClient mClient;
+    TalkClient mTalkClient;
 
     /**
      * Client id provided for client registration
@@ -110,7 +110,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      * Indicate if the connection is currently logged in
      */
     public boolean isLoggedIn() {
-        return isConnected() && mClient != null;
+        return isConnected() && mTalkClient != null;
     }
 
     /**
@@ -119,7 +119,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      * @return
      */
     public TalkClient getClient() {
-        return mClient;
+        return mTalkClient;
     }
 
     /**
@@ -128,8 +128,8 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      * @return
      */
     public String getClientId() {
-        if (mClient != null) {
-            return mClient.getClientId();
+        if (mTalkClient != null) {
+            return mTalkClient.getClientId();
         }
         return null;
     }
@@ -201,7 +201,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      * Disconnect the underlying connection and finish up
      */
     public void disconnect() {
-        mClient = null;
+        mTalkClient = null;
         mConnection.disconnect();
     }
 
@@ -214,27 +214,27 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
         ITalkServerDatabase database = mServer.getDatabase();
 
         // mark connection as logged in
-        mClient = database.findClientById(clientId);
-        if (mClient == null) {
+        mTalkClient = database.findClientById(clientId);
+        if (mTalkClient == null) {
             throw new RuntimeException("Client does not exist");
         } else {
-            mServer.identifyClient(mClient, this);
+            mServer.identifyClient(mTalkClient, this);
         }
 
         // update login time
-        mClient.setTimeLastLogin(new Date());
-        database.saveClient(mClient);
+        mTalkClient.setTimeLastLogin(new Date());
+        database.saveClient(mTalkClient);
 
         // tell the client if it doesn't have push
-        if (!mClient.isPushCapable()) {
+        if (!mTalkClient.isPushCapable()) {
             mClientRpc.pushNotRegistered();
         }
 
         // attempt to deliver anything we might have
-        mServer.getDeliveryAgent().requestDelivery(mClient.getClientId());
+        mServer.getDeliveryAgent().requestDelivery(mTalkClient.getClientId());
 
         // request a ping in a few seconds
-        mServer.getPingAgent().requestPing(mClient.getClientId());
+        mServer.getPingAgent().requestPing(mTalkClient.getClientId());
     }
 
     /**
@@ -256,8 +256,8 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     @Override
     public void onPreHandleRequest(JsonRpcConnection connection, ObjectNode request) {
         LOG.info("onPreHandleRequest -- connectionId: '" +
-                 connection.getConnectionId() + "', clientId: '" +
-                 ((mClient == null) ? "null": mClient.getClientId()) + "'");
+                connection.getConnectionId() + "', clientId: '" +
+                ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
         mServer.getUpdateAgent().setRequestContext();
         mServer.getDeliveryAgent().setRequestContext();
     }
@@ -265,8 +265,8 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     @Override
     public void onPostHandleRequest(JsonRpcConnection connection, ObjectNode request) {
         LOG.info("onPostHandleRequest -- connectionId: '" +
-                 connection.getConnectionId() + "', clientId: '" +
-                 ((mClient == null) ? "null": mClient.getClientId()) + "'");
+                connection.getConnectionId() + "', clientId: '" +
+                ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
         mServer.getUpdateAgent().clearRequestContext();
         mServer.getDeliveryAgent().clearRequestContext();
     }
@@ -278,6 +278,16 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
     @Override
     public void onPostHandleNotification(JsonRpcConnection connection, ObjectNode notification) {
+
+    }
+
+    @Override
+    public void onPreHandleResponse(JsonRpcConnection connection, ObjectNode response) {
+
+    }
+
+    @Override
+    public void onPostHandleResponse(JsonRpcConnection connection, ObjectNode response) {
 
     }
 }
