@@ -95,13 +95,11 @@ public class TalkMetricStats implements ITalkServerStatistics {
 
     @Override
     public Timer.Context signalRequestStart(JsonRpcConnection connection, ObjectNode request) {
-        LOG.info("signalRequestStart for request id: '" + request.get("id") + "'");
         return mRequestTimer.time();
     }
 
     @Override
     public void signalRequestStop(JsonRpcConnection connection, ObjectNode request, Timer.Context timerContext) {
-        LOG.info("signalRequestStop for request id: '" + request.get("id") + "'");
         timerContext.stop();
     }
 

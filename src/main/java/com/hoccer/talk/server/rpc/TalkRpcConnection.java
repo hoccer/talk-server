@@ -1,7 +1,9 @@
 package com.hoccer.talk.server.rpc;
 
 import better.jsonrpc.core.JsonRpcConnection;
+import better.jsonrpc.util.ProtocolUtils;
 import better.jsonrpc.websocket.JsonRpcWsConnection;
+import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.ITalkRpcClient;
@@ -11,6 +13,7 @@ import org.apache.log4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * Connection object representing one JSON-RPC connection each
@@ -66,6 +69,11 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      * Support mode flag
      */
     private boolean mSupportMode;
+
+    /**
+     * User data associated to requests
+     */
+    private final HashMap<Object, Timer.Context> requestTimers= new HashMap<Object, Timer.Context>();
 
     /**
      * Construct a connection for the given server using the given connection
@@ -259,7 +267,10 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
         LOG.info("onPreHandleRequest -- connectionId: '" +
                 connection.getConnectionId() + "', clientId: '" +
                 ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
-        //mServer.getStatistics().signalRequestStart(connection, request);
+
+        Timer.Context timerContext = mServer.getStatistics().signalRequestStart(connection, request);
+        requestTimers.put(getIdFromRequest(request), timerContext);
+
         mServer.getUpdateAgent().setRequestContext();
         mServer.getDeliveryAgent().setRequestContext();
     }
@@ -269,7 +280,11 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
         LOG.info("onPostHandleRequest -- connectionId: '" +
                 connection.getConnectionId() + "', clientId: '" +
                 ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
-        //mServer.getStatistics().signalRequestStop(connection, request);
+
+        Object jsonRpcId = getIdFromRequest(request);
+        mServer.getStatistics().signalRequestStop(connection, request, requestTimers.get(jsonRpcId));
+        requestTimers.remove(jsonRpcId);
+
         mServer.getUpdateAgent().clearRequestContext();
         mServer.getDeliveryAgent().clearRequestContext();
     }
@@ -292,5 +307,9 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     @Override
     public void onPostHandleResponse(JsonRpcConnection connection, ObjectNode response) {
 
+    }
+
+    private static Object getIdFromRequest(ObjectNode request) {
+        return ProtocolUtils.parseId(request.get("id"));
     }
 }
