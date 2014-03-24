@@ -30,7 +30,7 @@ public class TalkServerMain {
 
     @Parameter(names = {"-c", "-config"},
             description = "Configuration file to use")
-    String config = null;
+    private final String config = null;
 
     private void run() {
         // load configuration
@@ -121,13 +121,13 @@ public class TalkServerMain {
     public static void main(String[] args) {
         BasicConfigurator.configure();
         TalkServerMain main = new TalkServerMain();
-        JCommander commander = new JCommander(main, args);
+        new JCommander(main, args);
         PropertyConfigurator.configure(main.config);
         main.run();
     }
 
     private static class MyMetricsServletContextListener extends MetricsServlet.ContextListener {
-        private MetricRegistry _metricRegistry;
+        private final MetricRegistry _metricRegistry;
 
         public MyMetricsServletContextListener(MetricRegistry metricRegistry) {
             _metricRegistry = metricRegistry;
