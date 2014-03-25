@@ -36,6 +36,8 @@ public class TalkServerMain {
         // load configuration
         TalkServerConfiguration config = initializeConfiguration();
 
+        config.report();
+
         // select and instantiate database backend
         ITalkServerDatabase db = initializeDatabase(config);
 
@@ -82,8 +84,7 @@ public class TalkServerMain {
         // configure from file
         if (config != null) {
             Properties properties = null;
-            // load the property file
-            LOG.info("Loading configuration from property file " + config);
+            LOG.info("Loading configuration from property file: '" + config + "'");
             try {
                 FileInputStream configIn = new FileInputStream(config);
                 properties = new Properties();

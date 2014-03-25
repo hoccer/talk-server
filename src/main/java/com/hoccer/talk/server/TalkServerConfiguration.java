@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.MessageFormat;
 import java.util.Properties;
 
 /**
@@ -12,6 +13,8 @@ import java.util.Properties;
  * This gets initialized with defaults and can then
  * be overloaded from a property file.
  */
+
+// TODO: maybe use Lombok's @Data and @ToString ?
 public class TalkServerConfiguration {
 
     private static final Logger LOG = Logger.getLogger(TalkServerConfiguration.class);
@@ -19,7 +22,6 @@ public class TalkServerConfiguration {
     public static final boolean LOG_ALL_CALLS = false;
 
     public static final int THREADS_DELIVERY = 1;
-    public static final int THREADS_GROUP = 1;
     public static final int THREADS_UPDATE = 1;
     public static final int THREADS_PUSH = 1;
     public static final int THREADS_PING = 2; // XXX HIGHER COUNT?
@@ -31,7 +33,7 @@ public class TalkServerConfiguration {
     private int    mListenPort = 8080;
 
 
-    private int mPushRateLimit = 15000;
+    private int     mPushRateLimit = 15000;
     private boolean mGcmEnabled = false;
     private String  mGcmApiKey = "AIzaSyA25wabV4kSQTaF73LTgTkjmw0yZ8inVr8";
     private int     mGcmWakeTtl = 1 * 7 * 24 * 3600; // 1 week
@@ -46,9 +48,9 @@ public class TalkServerConfiguration {
     private String mJongoDb = "talk";
 
     private int mCleanupAllClientsDelay = 7200; // 2 hours //300;
-    private int mCleanupAllClientsInterval = 60*60*24; // once a day //900;
+    private int mCleanupAllClientsInterval = 60 * 60 * 24; // once a day //900;
     private int mCleanupAllDeliveriesDelay = 3600; // 1 hour //600;
-    private int mCleanupAllDeliveriesInterval = 60*60*6; // every 6 hours //900;
+    private int mCleanupAllDeliveriesInterval = 60 * 60 * 6; // every 6 hours //900;
 
     private String mFilecacheControlUrl = "http://localhost:8081/control";
     private String mFilecacheUploadBase = "http://localhost:8081/upload/";
@@ -59,6 +61,46 @@ public class TalkServerConfiguration {
     public TalkServerConfiguration() {
     }
 
+    public void report() {
+        LOG.info("Current configuration:" +
+                        "\n - WebServer Configuration:" +
+                        MessageFormat.format("\n   * listen address:                     ''{0}''", mListenAddress) +
+                        MessageFormat.format("\n   * listen port:                        ''{0}''", mListenPort) +
+                        "\n - Database Configuration:" +
+                        MessageFormat.format("\n   * database backend:                   ''{0}''", mDatabaseBackend) +
+                        MessageFormat.format("\n   * jongo database:                     ''{0}''", mJongoDb) +
+                        "\n - Push Configuration:" +
+                        MessageFormat.format("\n   * push rate limit:                    ''{0}''", mPushRateLimit) +
+                        "\n   - APNS:" +
+                        MessageFormat.format("\n     * apns enabled:                     ''{0}''", mApnsEnabled) +
+                        MessageFormat.format("\n     * apns sandbox:                     ''{0}''", mApnsSandbox) +
+                        MessageFormat.format("\n     * apns cert file:                   ''{0}''", mApnsCertPath) +
+                        MessageFormat.format("\n     * apns cert password (length):      ''{0}''", mApnsCertPassword.length()) +
+                        MessageFormat.format("\n     * apns invalidate delay:            ''{0}''", mApnsInvalidateDelay) +
+                        MessageFormat.format("\n     * apns invalidate interval:         ''{0}''", mApnsSandbox) +
+                        "\n   - GCM:" +
+                        MessageFormat.format("\n     * gcm enabled:                      ''{0}''", mGcmEnabled) +
+                        MessageFormat.format("\n     * gcm api key (length):             ''{0}''", mGcmApiKey.length()) +
+                        "\n - Cleaning Agent Configuration:" +
+                        MessageFormat.format("\n   * clients cleanup delay (in s):       ''{0}''", mCleanupAllClientsDelay) +
+                        MessageFormat.format("\n   * clients cleanup interval (in s):    ''{0}''", mCleanupAllClientsInterval) +
+                        MessageFormat.format("\n   * deliveries cleanup delay (in s):    ''{0}''", mCleanupAllDeliveriesDelay) +
+                        MessageFormat.format("\n   * deliveries cleanup interval (in s): ''{0}''", mCleanupAllDeliveriesInterval) +
+                        "\n - Filecache Configuration:" +
+                        MessageFormat.format("\n   * filecache control url:              ''{0}''", mFilecacheControlUrl) +
+                        MessageFormat.format("\n   * filecache upload base url:          ''{0}''", mFilecacheDownloadBase) +
+                        MessageFormat.format("\n   * filecache download base url:        ''{0}''", mFilecacheDownloadBase) +
+                        "\n - Other:" +
+                        MessageFormat.format("\n   * support tag: ''{0}''", mSupportTag) +
+                        "\n - Constants:" +
+                        MessageFormat.format("\n   * DeliveryAgent Threads Poolsize:     ''{0}''", THREADS_DELIVERY) +
+                        MessageFormat.format("\n   * CleanupAgent  Threads Poolsize:     ''{0}''", THREADS_CLEANING) +
+                        MessageFormat.format("\n   * PushAgent     Threads Poolsize:     ''{0}''", THREADS_PUSH) +
+                        MessageFormat.format("\n   * PingAgent     Threads Poolsize:     ''{0}''", THREADS_PING) +
+                        MessageFormat.format("\n   * UpdateAgebt   Threads Poolsize:     ''{0}''", THREADS_UPDATE)
+        );
+    }
+
     public void configureFromProperties(Properties properties) {
         // listening
         mListenAddress = properties.getProperty(PROPERTY_PREFIX + ".listen.address", mListenAddress);
@@ -66,11 +108,13 @@ public class TalkServerConfiguration {
 
         // Database
         mDatabaseBackend = properties.getProperty(PROPERTY_PREFIX + ".db.backend", mDatabaseBackend);
+
         // Jongo
         mJongoDb = properties.getProperty(PROPERTY_PREFIX + ".jongo.db", mJongoDb);
 
         // Push
         mPushRateLimit = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".push.rateLimit", Integer.toString(mPushRateLimit)));
+
         // APNS
         mApnsEnabled = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.enabled", Boolean.toString(mApnsEnabled)));
         mApnsSandbox = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.sandbox", Boolean.toString(mApnsSandbox)));
@@ -78,6 +122,7 @@ public class TalkServerConfiguration {
         mApnsCertPassword = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.password", mApnsCertPassword);
         mApnsInvalidateDelay = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.invalidate.delay", Integer.toString(mApnsInvalidateDelay)));
         mApnsInvalidateInterval = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.invalidate.interval", Integer.toString(mApnsInvalidateInterval)));
+
         // GCM
         mGcmEnabled = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".gcm.enabled", Boolean.toString(mGcmEnabled)));
         mGcmApiKey  = properties.getProperty(PROPERTY_PREFIX + ".gcm.apikey", mGcmApiKey);
