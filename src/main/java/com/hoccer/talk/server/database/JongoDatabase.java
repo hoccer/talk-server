@@ -11,10 +11,7 @@ import com.hoccer.talk.model.TalkRelationship;
 import com.hoccer.talk.model.TalkToken;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServerConfiguration;
-import com.mongodb.DB;
-import com.mongodb.Mongo;
-import com.mongodb.MongoOptions;
-import com.mongodb.WriteConcern;
+import com.mongodb.*;
 import org.apache.log4j.Logger;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
@@ -514,4 +511,8 @@ public class JongoDatabase implements ITalkServerDatabase {
         mGroupMembers.save(groupMember);
     }
 
+    @Override
+    public boolean ping() {
+        return mDb.command("ping").ok();
+    }
 }

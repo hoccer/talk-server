@@ -77,4 +77,6 @@ public interface ITalkServerDatabase {
     public List<TalkGroupMember> findGroupMembersByIdChangedAfter(String groupId, Date lastKnown);
     public TalkGroupMember findGroupMemberForClient(String groupId, String clientId);
     public void saveGroupMember(TalkGroupMember groupMember);
+
+    public boolean ping();
 }

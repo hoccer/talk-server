@@ -561,4 +561,10 @@ public class OrmliteDatabase implements ITalkServerDatabase {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public boolean ping() {
+        // TODO: implement me properly!
+        return false;
+    }
 }

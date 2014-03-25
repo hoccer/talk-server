@@ -3,6 +3,8 @@ package com.hoccer.talk.server;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;
 import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.OrmliteDatabase;
@@ -11,7 +13,6 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.websocket.WebSocketHandler;
 
@@ -45,7 +46,7 @@ public class TalkServerMain {
         LOG.info("Initializing talk server");
 
         // create the talk server
-        TalkServer ts = new TalkServer(config, db);
+        TalkServer talkServer = new TalkServer(config, db);
 
         // log about jetty init
         LOG.info("Initializing jetty");
@@ -57,11 +58,14 @@ public class TalkServerMain {
         metricsContextHandler.setContextPath("/metrics");
         metricsContextHandler.setInitParameter("show-jvm-metrics", "true");
 
-        metricsContextHandler.addEventListener(new MyMetricsServletContextListener(ts.getMetrics()));
+        metricsContextHandler.addEventListener(new MyMetricsServletContextListener(talkServer.getMetrics()));
         metricsContextHandler.addServlet(MetricsServlet.class, "/registry");
 
+        metricsContextHandler.addEventListener(new MyHealtchecksServletContextListener(talkServer.getHealthCheckRegistry()));
+        metricsContextHandler.addServlet(HealthCheckServlet.class, "/health");
+
         // handler for talk websocket connections
-        WebSocketHandler clientHandler = new TalkRpcConnectionHandler(ts);
+        WebSocketHandler clientHandler = new TalkRpcConnectionHandler(talkServer);
         clientHandler.setHandler(metricsContextHandler);
         // set root handler of the server
         s.setHandler(clientHandler);
@@ -132,6 +136,19 @@ public class TalkServerMain {
         @Override
         protected MetricRegistry getMetricRegistry() {
             return _metricRegistry;
+        }
+    }
+
+    private static class MyHealtchecksServletContextListener extends HealthCheckServlet.ContextListener {
+        private final HealthCheckRegistry _healthCheckRegistry;
+
+        public MyHealtchecksServletContextListener(HealthCheckRegistry healthCheckRegistry) {
+            _healthCheckRegistry = healthCheckRegistry;
+        }
+
+        @Override
+        protected HealthCheckRegistry getHealthCheckRegistry() {
+            return _healthCheckRegistry;
         }
     }
 
