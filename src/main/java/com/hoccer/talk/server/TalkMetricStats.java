@@ -5,8 +5,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-
 import org.apache.log4j.Logger;
 
 import static com.codahale.metrics.MetricRegistry.name;
@@ -35,7 +33,7 @@ public class TalkMetricStats implements ITalkServerStatistics {
 
         // Meters
         clientRegistrationSucceededMeter = metrics.meter(name(TalkServer.class, "client-registrations-succeeded-meter"));
-        clientRegistrationFailedMeter =  metrics.meter(name(TalkServer.class, "client-registrations-failed-meter"));
+        clientRegistrationFailedMeter = metrics.meter(name(TalkServer.class, "client-registrations-failed-meter"));
         clientLoginsSRP1SucceededMeter = metrics.meter(name(TalkServer.class, "client-logins-srp1-succeeded-meter"));
         clientLoginsSRP1FailedMeter = metrics.meter(name(TalkServer.class, "client-logins-srp1-failed-meter"));
         clientLoginsSRP2SucceededMeter = metrics.meter(name(TalkServer.class, "client-logins-srp2-succeeded-meter"));
