@@ -50,9 +50,6 @@ public class TalkServerMain {
 
         // create jetty instance
         Server s = new Server(new InetSocketAddress(config.getListenAddress(), config.getListenPort()));
-        // default handler for non-talk http requests
-        DefaultHandler fallbackHandler = new DefaultHandler();
-        fallbackHandler.setServeIcon(false);
 
         ServletContextHandler metricsContextHandler = new ServletContextHandler();
         metricsContextHandler.setContextPath("/metrics");
@@ -101,8 +98,6 @@ public class TalkServerMain {
                 configuration.configureFromProperties(properties);
             }
         }
-
-        // return the configuration
         return configuration;
     }
 
