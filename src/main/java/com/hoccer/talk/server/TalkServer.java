@@ -4,6 +4,10 @@ import better.jsonrpc.server.JsonRpcServer;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jvm.FileDescriptorRatioGauge;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -18,7 +22,6 @@ import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
 import com.hoccer.talk.server.update.UpdateAgent;
 import de.undercouch.bson4jackson.BsonFactory;
-import org.apache.log4j.Logger;
 
 import java.util.Hashtable;
 import java.util.Vector;
@@ -31,11 +34,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * references to common database mapping helpers and so on.
  */
 public class TalkServer {
-
-    /**
-     * Logger for changes in global server state
-     */
-    private static final Logger log = Logger.getLogger(TalkServer.class);
 
     /**
      * server-global JSON mapper
@@ -140,16 +138,9 @@ public class TalkServer {
         mCleaningAgent = new CleaningAgent(this);
         mFilecacheClient = new FilecacheClient(this);
 
+        // For instrumenting metrics via JMX
         mJmxReporter = JmxReporter.forRegistry(mMetrics).build();
         mJmxReporter.start();
-    }
-
-    public int getNumTotalConnections() {
-        return mConnectionsTotal.intValue();
-    }
-
-    public int getNumCurrentConnections() {
-        return mConnectionsOpen.intValue();
     }
 
     /**
@@ -341,6 +332,11 @@ public class TalkServer {
                         return mConnectionsTotal.intValue();
                     }
                 });
+        // For instrumenting JMX via Metrics
+        mMetrics.register(MetricRegistry.name("jvm", "gc"), new GarbageCollectorMetricSet());
+        mMetrics.register(MetricRegistry.name("jvm", "memory"), new MemoryUsageGaugeSet());
+        mMetrics.register(MetricRegistry.name("jvm", "thread-states"), new ThreadStatesGaugeSet());
+        mMetrics.register(MetricRegistry.name("jvm", "fd", "usage"), new FileDescriptorRatioGauge());
     }
 
 }
