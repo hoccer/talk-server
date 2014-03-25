@@ -79,4 +79,5 @@ public interface ITalkServerDatabase {
     public void saveGroupMember(TalkGroupMember groupMember);
 
     public boolean ping();
+    public void reportPing();
 }

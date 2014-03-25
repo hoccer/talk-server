@@ -515,4 +515,14 @@ public class JongoDatabase implements ITalkServerDatabase {
     public boolean ping() {
         return mDb.command("ping").ok();
     }
+
+    @Override
+    public void reportPing() {
+        try {
+            ping();
+            LOG.info("Database is online");
+        } catch (Exception e) {
+            LOG.error("Database is not online:", e);
+        }
+    }
 }

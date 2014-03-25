@@ -41,6 +41,7 @@ public class TalkServerMain {
 
         // select and instantiate database backend
         ITalkServerDatabase db = initializeDatabase(config);
+        db.reportPing();
 
         // log about server init
         LOG.info("Initializing talk server");

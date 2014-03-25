@@ -14,6 +14,7 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import org.apache.log4j.Logger;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -29,6 +30,8 @@ import java.util.Set;
  * XXX WARNING broken and incomplete, use as inspiration only...
  */
 public class OrmliteDatabase implements ITalkServerDatabase {
+
+    private static final Logger LOG = Logger.getLogger(OrmliteDatabase.class);
 
     JdbcConnectionSource mConnectionSource;
 
@@ -566,5 +569,10 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public boolean ping() {
         // TODO: implement me properly!
         return false;
+    }
+
+    @Override
+    public void reportPing() {
+        LOG.info(ping());
     }
 }
