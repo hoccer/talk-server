@@ -105,9 +105,13 @@ public interface ITalkServerDatabase {
     public void saveGroupMember(TalkGroupMember groupMember);
 
     public void saveEnvironment(TalkEnvironment environment);
+
     public TalkEnvironment findEnvironmentByClientId(String clientId);
+
     public List<TalkEnvironment> findEnvironmentsForGroup(String groupId);
+
     public List<TalkEnvironment> findEnvironmentsMatching(TalkEnvironment environment);
+
     public void deleteEnvironment(TalkEnvironment environment);
 
     public boolean ping();

@@ -1242,7 +1242,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     private void createGroupWithEnvironment(TalkEnvironment environment) {
-        LOG.info("updateEnvironment: creating new group for client "+ mConnection.getClientId());
+        LOG.info("updateEnvironment: creating new group for client " + mConnection.getClientId());
         TalkGroup group = new TalkGroup();
         group.setGroupTag(UUID.randomUUID().toString());
         group.setGroupId(UUID.randomUUID().toString());
@@ -1262,7 +1262,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     private void joinGroupWithEnvironment(TalkGroup group, TalkEnvironment environment) {
-        LOG.info("updateEnvironment: creating new group for client "+ mConnection.getClientId());
+        LOG.info("updateEnvironment: creating new group for client " + mConnection.getClientId());
 
         TalkGroupMember groupAdmin = new TalkGroupMember();
         groupAdmin.setClientId(mConnection.getClientId());
@@ -1277,21 +1277,21 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mDatabase.saveEnvironment(environment);
     }
 
-    public ArrayList<Pair<String,Integer> > findGroupSortedBySize(List<TalkEnvironment> matchingEnvironments) {
+    public ArrayList<Pair<String, Integer>> findGroupSortedBySize(List<TalkEnvironment> matchingEnvironments) {
 
-        Map<String,Integer> environmentsPerGroup = new HashMap<String, Integer>();
-        for (int i = 0; i < matchingEnvironments.size();++i) {
+        Map<String, Integer> environmentsPerGroup = new HashMap<String, Integer>();
+        for (int i = 0; i < matchingEnvironments.size(); ++i) {
             String key = matchingEnvironments.get(i).getGroupId();
             if (environmentsPerGroup.containsKey(key)) {
-                 environmentsPerGroup.put(key, environmentsPerGroup.get(key)+1);
+                environmentsPerGroup.put(key, environmentsPerGroup.get(key) + 1);
             } else {
                 environmentsPerGroup.put(key, 1);
             }
         }
         environmentsPerGroup = MapUtil.sortByValueDescending(environmentsPerGroup);
 
-        ArrayList<Pair<String,Integer> > result = new ArrayList<Pair<String,Integer> >();
-        for(Map.Entry<String, Integer> entry : environmentsPerGroup.entrySet()) {
+        ArrayList<Pair<String, Integer>> result = new ArrayList<Pair<String, Integer>>();
+        for (Map.Entry<String, Integer> entry : environmentsPerGroup.entrySet()) {
             result.add(new Pair<String, Integer>(entry.getKey(), entry.getValue()));
         }
         return result;
@@ -1303,11 +1303,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
         List<TalkEnvironment> matching = mDatabase.findEnvironmentsMatching(environment);
         TalkEnvironment myEnvironment = mDatabase.findEnvironmentByClientId(mConnection.getClientId());
-        ArrayList<Pair<String,Integer> > environmentsPerGroup = findGroupSortedBySize(matching);
+        ArrayList<Pair<String, Integer>> environmentsPerGroup = findGroupSortedBySize(matching);
         for (TalkEnvironment te : matching) {
             if (te.getClientId().equals(mConnection.getClientId())) {
                 // there is already a matching environment for us
-                TalkGroupMember myMemberShip = mDatabase.findGroupMemberForClient(te.getGroupId(),te.getClientId());
+                TalkGroupMember myMemberShip = mDatabase.findGroupMemberForClient(te.getGroupId(), te.getClientId());
                 TalkGroup myGroup = mDatabase.findGroupById(te.getGroupId());
                 if (myMemberShip != null && myGroup != null) {
                     if (myMemberShip.isAdmin() && myMemberShip.isJoined() && myGroup.getState().equals(TalkGroup.STATE_EXISTS)) {
@@ -1318,7 +1318,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                                 destroyEnvironment(myEnvironment);
                                 // join the largest group
                                 TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).fst);
-                                joinGroupWithEnvironment(largestGroup,environment);
+                                joinGroupWithEnvironment(largestGroup, environment);
                                 return largestGroup.getGroupId();
                             }
                         }
@@ -1328,7 +1328,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     // there is a group and a membership, but they seem to be tombstones, so lets ignore them, just get rid of the bad environment
                     mDatabase.deleteEnvironment(te);
                     TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).fst);
-                    joinGroupWithEnvironment(largestGroup,environment);
+                    joinGroupWithEnvironment(largestGroup, environment);
                     return largestGroup.getGroupId();
                 }
             }
@@ -1341,7 +1341,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         if (matching.size() > 0) {
             // join the largest group
             TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).fst);
-            joinGroupWithEnvironment(largestGroup,environment);
+            joinGroupWithEnvironment(largestGroup, environment);
             return largestGroup.getGroupId();
         }
         // we are alone or first at the location, lets create a new group
@@ -1350,7 +1350,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     private void destroyEnvironment(TalkEnvironment environment) {
-        logCall("destroyEnvironment(" + environment+")");
+        logCall("destroyEnvironment(" + environment + ")");
         TalkGroup group = mDatabase.findGroupById(environment.getGroupId());
         TalkGroupMember member = mDatabase.findGroupMemberForClient(environment.getGroupId(), environment.getClientId());
         if (member != null && member.getState().equals(TalkGroupMember.STATE_JOINED)) {
@@ -1359,7 +1359,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             member.setState(TalkGroupMember.STATE_NONE);
             // degrade removed users to member
             member.setRole(TalkGroupMember.ROLE_MEMBER);
-            changedGroupMember(member); 
+            changedGroupMember(member);
             String[] states = {TalkGroupMember.STATE_JOINED};
             List<TalkGroupMember> membersLeft = mDatabase.findGroupMembersByIdWithStates(environment.getGroupId(), states);
             if (membersLeft.size() == 0) {

@@ -476,7 +476,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         Iterator<TalkGroupMember> it =
                 mGroupMembers.find("{groupId:#, state: { $in: # }}", groupId, states)
                         .as(TalkGroupMember.class).iterator();
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             res.add(it.next());
         }
         return res;
@@ -535,7 +535,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         Iterator<TalkEnvironment> it =
                 mEnvironments.find("{groupId:#}", groupId)
                         .as(TalkEnvironment.class).iterator();
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             res.add(it.next());
         }
         return res;
@@ -557,14 +557,14 @@ public class JongoDatabase implements ITalkServerDatabase {
             if (searchRadius < 100.f) {
                 searchRadius = 100.f;
             }
-            Double EARTH_RADIUS        = 1000.0 * 6371.0;
+            Double EARTH_RADIUS = 1000.0 * 6371.0;
             Double searchRadiusRad = searchRadius / EARTH_RADIUS;
             Iterator<TalkEnvironment> it = mEnvironments.find("{ geoLocation : { $geoWithin : { $centerSphere : [ [# , #] , # ] } } }", searchCenter[0], searchCenter[1], searchRadiusRad)
-                            .as(TalkEnvironment.class).iterator();
-            while(it.hasNext()) {
+                    .as(TalkEnvironment.class).iterator();
+            while (it.hasNext()) {
                 res.add(it.next());
             }
-            LOG.debug("found "+res.size()+" environments by geolocation");
+            LOG.debug("found " + res.size() + " environments by geolocation");
         }
 
         // do bssid search
@@ -575,7 +575,7 @@ public class JongoDatabase implements ITalkServerDatabase {
                             .as(TalkEnvironment.class).iterator();
             int totalFound = 0;
             int newFound = 0;
-            while(it.hasNext()) {
+            while (it.hasNext()) {
                 TalkEnvironment te = it.next();
                 ++totalFound;
                 boolean found = false;
@@ -590,7 +590,7 @@ public class JongoDatabase implements ITalkServerDatabase {
                     ++newFound;
                 }
             }
-            LOG.debug("found "+totalFound+" environments by bssid, "+newFound+" of them are new");
+            LOG.debug("found " + totalFound + " environments by bssid, " + newFound + " of them are new");
         }
 
         // do identifiers search
@@ -601,7 +601,7 @@ public class JongoDatabase implements ITalkServerDatabase {
                             .as(TalkEnvironment.class).iterator();
             int totalFound = 0;
             int newFound = 0;
-            while(it.hasNext()) {
+            while (it.hasNext()) {
                 TalkEnvironment te = it.next();
                 ++totalFound;
                 boolean found = false;
@@ -617,7 +617,7 @@ public class JongoDatabase implements ITalkServerDatabase {
                 }
             }
 
-            LOG.debug("found "+totalFound+" environments by identifiers, "+newFound+" of them are new");
+            LOG.debug("found " + totalFound + " environments by identifiers, " + newFound + " of them are new");
         }
 
         return res;
