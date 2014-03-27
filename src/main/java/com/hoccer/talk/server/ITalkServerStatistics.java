@@ -1,28 +1,36 @@
 package com.hoccer.talk.server;
 
-import java.util.Date;
-import java.util.Map;
+import better.jsonrpc.core.JsonRpcConnection;
+import com.codahale.metrics.Timer;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Common interface for server statistics
- *
+ * <p/>
  * This is here so the crappy in-memory statistics
  * can be replaced with Metrics easily.
  */
 public interface ITalkServerStatistics {
 
     void signalClientRegisteredSucceeded();
+
     void signalClientRegisteredFailed();
+
     void signalClientLoginSRP1Succeeded();
+
     void signalClientLoginSRP1Failed();
+
     void signalClientLoginSRP2Succeeded();
+
     void signalClientLoginSRP2Failed();
 
     void signalMessageAcceptedSucceeded();
+
     void signalMessageConfirmedSucceeded();
+
     void signalMessageAcknowledgedSucceeded();
 
-    public Date getStartTime();
-    public Map<String, Long> getMap();
+    com.codahale.metrics.Timer.Context signalRequestStart(JsonRpcConnection connection, ObjectNode request);
 
+    void signalRequestStop(JsonRpcConnection connection, ObjectNode request, Timer.Context timerContext);
 }

@@ -7,6 +7,7 @@ import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
+import com.hoccer.talk.util.NamedThreadFactory;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.ApnsServiceBuilder;
@@ -45,7 +46,10 @@ public class PushAgent {
     AtomicInteger mPushBatched = new AtomicInteger();
 
     public PushAgent(TalkServer server) {
-        mExecutor = Executors.newScheduledThreadPool(TalkServerConfiguration.THREADS_PUSH);
+        mExecutor = Executors.newScheduledThreadPool(
+            TalkServerConfiguration.THREADS_PUSH,
+            new NamedThreadFactory("push-agent")
+        );
         mServer = server;
         mDatabase = mServer.getDatabase();
         mConfig = mServer.getConfiguration();

@@ -1,18 +1,20 @@
 package com.hoccer.talk.server;
 
-import com.codahale.metrics.Counter;
+import better.jsonrpc.core.JsonRpcConnection;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-
-import java.util.*;
+import com.codahale.metrics.Timer;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.log4j.Logger;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
 public class TalkMetricStats implements ITalkServerStatistics {
 
-    Date startTime = new Date();
+    private static final Logger LOG = Logger.getLogger(TalkMetricStats.class);
+    MetricRegistry mMetricsRegistry;
 
-    MetricRegistry mMetrics;
+    // Meters
     private final Meter clientRegistrationSucceededMeter;
     private final Meter clientRegistrationFailedMeter;
     private final Meter clientLoginsSRP1SucceededMeter;
@@ -23,13 +25,15 @@ public class TalkMetricStats implements ITalkServerStatistics {
     private final Meter messageConfirmedSucceededMeter;
     private final Meter messageAcknowledgedSucceededMeter;
 
+    //Timers
+    private final Timer mRequestTimer;
 
     public TalkMetricStats(MetricRegistry metrics) {
-        mMetrics = metrics;
+        mMetricsRegistry = metrics;
 
         // Meters
         clientRegistrationSucceededMeter = metrics.meter(name(TalkServer.class, "client-registrations-succeeded-meter"));
-        clientRegistrationFailedMeter =  metrics.meter(name(TalkServer.class, "client-registrations-failed-meter"));
+        clientRegistrationFailedMeter = metrics.meter(name(TalkServer.class, "client-registrations-failed-meter"));
         clientLoginsSRP1SucceededMeter = metrics.meter(name(TalkServer.class, "client-logins-srp1-succeeded-meter"));
         clientLoginsSRP1FailedMeter = metrics.meter(name(TalkServer.class, "client-logins-srp1-failed-meter"));
         clientLoginsSRP2SucceededMeter = metrics.meter(name(TalkServer.class, "client-logins-srp2-succeeded-meter"));
@@ -37,27 +41,9 @@ public class TalkMetricStats implements ITalkServerStatistics {
         messageAcceptedSucceededMeter = metrics.meter(name(TalkServer.class, "message-accepts-succeeded-meter"));
         messageConfirmedSucceededMeter = metrics.meter(name(TalkServer.class, "message-confirmations-succeeded-meter"));
         messageAcknowledgedSucceededMeter = metrics.meter(name(TalkServer.class, "message-acknowledgements-succeeded-meter"));
-    }
 
-    @Override
-    public Map<String, Long> getMap() {
-        HashMap<String, Long> result = new HashMap<String, Long>();
-        SortedMap<String, Counter> counters = mMetrics.getCounters();
-        for(Map.Entry<String, Counter> counter: counters.entrySet()) {
-            result.put(counter.getKey(), counter.getValue().getCount());
-        }
-
-/*        SortedMap<String, Meter> meters = mMetrics.getMeters();
-        for(Map.Entry<String, Meter> meter: meters.entrySet()) {
-            result.put(meter.getKey(), meter.getValue().getOneMinuteRate());
-        }*/
-
-        return result;
-    }
-
-    @Override
-    public Date getStartTime() {
-        return startTime;
+        // Timers
+        mRequestTimer = mMetricsRegistry.timer("requests");
     }
 
     @Override
@@ -89,6 +75,7 @@ public class TalkMetricStats implements ITalkServerStatistics {
     public void signalClientLoginSRP2Failed() {
         clientLoginsSRP2FailedMeter.mark();
     }
+
     @Override
     public void signalMessageAcceptedSucceeded() {
         messageAcceptedSucceededMeter.mark();
@@ -103,5 +90,16 @@ public class TalkMetricStats implements ITalkServerStatistics {
     public void signalMessageAcknowledgedSucceeded() {
         messageAcknowledgedSucceededMeter.mark();
     }
+
+    @Override
+    public Timer.Context signalRequestStart(JsonRpcConnection connection, ObjectNode request) {
+        return mRequestTimer.time();
+    }
+
+    @Override
+    public void signalRequestStop(JsonRpcConnection connection, ObjectNode request, Timer.Context timerContext) {
+        timerContext.stop();
+    }
+
 }
 

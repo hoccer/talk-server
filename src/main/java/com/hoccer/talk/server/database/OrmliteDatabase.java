@@ -6,33 +6,31 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import org.apache.log4j.Logger;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Ormlite-based database backend
- *
+ * <p/>
  * XXX WARNING broken and incomplete, use as inspiration only...
  */
 public class OrmliteDatabase implements ITalkServerDatabase {
 
+    private static final Logger LOG = Logger.getLogger(OrmliteDatabase.class);
+
     JdbcConnectionSource mConnectionSource;
 
     /* OWN SIMPLE IDENTITY */
-    Dao<TalkClient, String>  mClients;
+    Dao<TalkClient, String> mClients;
     Dao<TalkMessage, String> mMessages;
     Dao<TalkPresence, String> mPresence;
     Dao<TalkGroup, String> mGroups;
 
     /* COMPOSITE IDENTITY */
     Dao<TalkDelivery, Long> mDeliveries;
-    Dao<TalkToken, Long>    mTokens;
+    Dao<TalkToken, Long> mTokens;
     Dao<TalkRelationship, Long> mRelationships;
     Dao<TalkKey, Long> mKeys;
     Dao<TalkGroupMember, Long> mGroupMembers;
@@ -81,7 +79,8 @@ public class OrmliteDatabase implements ITalkServerDatabase {
         try {
             return mClients.queryForAll();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -90,7 +89,8 @@ public class OrmliteDatabase implements ITalkServerDatabase {
         try {
             return mClients.queryForId(clientId);
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -98,10 +98,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public TalkClient findClientByApnsToken(String apnsToken) {
         try {
             return mClients.queryBuilder().where()
-                             .eq("apnsToken", apnsToken)
-                           .queryForFirst();
+                    .eq("apnsToken", apnsToken)
+                    .queryForFirst();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -119,7 +120,8 @@ public class OrmliteDatabase implements ITalkServerDatabase {
         try {
             return mMessages.queryForId(messageId);
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -145,12 +147,13 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public TalkDelivery findDelivery(String messageId, String clientId) {
         try {
             return mDeliveries.queryBuilder().where()
-                                .eq("messageId", messageId)
-                                .and()
-                                .eq("clientId", clientId)
-                              .queryForFirst();
+                    .eq("messageId", messageId)
+                    .and()
+                    .eq("clientId", clientId)
+                    .queryForFirst();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -158,10 +161,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkDelivery> findDeliveriesInState(String state) {
         try {
             return mDeliveries.queryBuilder().where()
-                                .eq("state", state)
-                              .query();
+                    .eq("state", state)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -169,10 +173,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkDelivery> findDeliveriesForMessage(String messageId) {
         try {
             return mDeliveries.queryBuilder().where()
-                                .eq("messageId", messageId)
-                              .query();
+                    .eq("messageId", messageId)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -180,10 +185,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkDelivery> findDeliveriesForClient(String clientId) {
         try {
             return mDeliveries.queryBuilder().where()
-                                .eq("receiverId", clientId)
-                              .query();
+                    .eq("receiverId", clientId)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -191,10 +197,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkDelivery> findDeliveriesFromClient(String clientId) {
         try {
             return mDeliveries.queryBuilder().where()
-                                .eq("senderId", clientId)
-                              .query();
+                    .eq("senderId", clientId)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -202,12 +209,13 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkDelivery> findDeliveriesForClientInState(String clientId, String state) {
         try {
             return mDeliveries.queryBuilder().where()
-                                .eq("receiverId", clientId)
-                                .and()
-                                .eq("state", state)
-                              .query();
+                    .eq("receiverId", clientId)
+                    .and()
+                    .eq("state", state)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -220,7 +228,8 @@ public class OrmliteDatabase implements ITalkServerDatabase {
                     .eq("state", state)
                     .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -246,10 +255,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkToken> findTokensByClient(String clientId) {
         try {
             return mTokens.queryBuilder().where()
-                            .eq("clientId", clientId)
-                          .query();
+                    .eq("clientId", clientId)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -257,12 +267,13 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public TalkToken findTokenByPurposeAndSecret(String purpose, String secret) {
         try {
             return mTokens.queryBuilder().where()
-                            .eq("purpose", purpose)
-                            .and()
-                            .eq("secret", secret)
-                          .queryForFirst();
+                    .eq("purpose", purpose)
+                    .and()
+                    .eq("secret", secret)
+                    .queryForFirst();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -289,7 +300,8 @@ public class OrmliteDatabase implements ITalkServerDatabase {
         try {
             return mPresence.queryForId(clientId);
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -311,40 +323,41 @@ public class OrmliteDatabase implements ITalkServerDatabase {
 
             List<TalkRelationship> relationships =
                     mRelationships.queryBuilder().where()
-                        .eq("otherClientId", clientId)
-                        .and()
-                        .eq("state", TalkRelationship.STATE_FRIEND)
-                    .query();
-            for(TalkRelationship relationship: relationships) {
+                            .eq("otherClientId", clientId)
+                            .and()
+                            .eq("state", TalkRelationship.STATE_FRIEND)
+                            .query();
+            for (TalkRelationship relationship : relationships) {
                 clientsToQuery.add(relationship.getClientId());
             }
 
             List<TalkGroupMember> ownMembers =
                     mGroupMembers.queryBuilder().where()
                             .eq("clientId", clientId)
-                                .eq("state", TalkGroupMember.STATE_JOINED)
-                                .eq("state", TalkGroupMember.STATE_INVITED)
+                            .eq("state", TalkGroupMember.STATE_JOINED)
+                            .eq("state", TalkGroupMember.STATE_INVITED)
                             .or(2)
-                        .and(2)
-                    .query();
-            for(TalkGroupMember ownMember: ownMembers) {
+                            .and(2)
+                            .query();
+            for (TalkGroupMember ownMember : ownMembers) {
                 List<TalkGroupMember> otherMembers = findGroupMembersById(ownMember.getGroupId());
-                for(TalkGroupMember otherMember: otherMembers) {
+                for (TalkGroupMember otherMember : otherMembers) {
                     clientsToQuery.add(otherMember.getClientId());
                 }
             }
 
             clientsToQuery.remove(clientId);
 
-            for(String otherClient: clientsToQuery) {
+            for (String otherClient : clientsToQuery) {
                 TalkPresence presence = findPresenceForClient(otherClient);
-                if(presence != null) {
+                if (presence != null) {
                     result.add(presence);
                 }
             }
             return result;
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -352,10 +365,10 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public TalkKey findKey(String clientId, String keyId) {
         try {
             return mKeys.queryBuilder().where()
-                          .eq("clientId", clientId)
-                          .and()
-                          .eq("keyId", keyId)
-                        .queryForFirst();
+                    .eq("clientId", clientId)
+                    .and()
+                    .eq("keyId", keyId)
+                    .queryForFirst();
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
@@ -394,10 +407,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkRelationship> findRelationships(String client) {
         try {
             return mRelationships.queryBuilder().where()
-                                   .eq("clientId", client)
-                                 .query();
+                    .eq("clientId", client)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -405,12 +419,13 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkRelationship> findRelationshipsForClientInState(String clientId, String state) {
         try {
             return mRelationships.queryBuilder().where()
-                                    .eq("clientId", clientId)
-                                    .and()
-                                    .eq("state", state)
-                                 .query();
+                    .eq("clientId", clientId)
+                    .and()
+                    .eq("state", state)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -421,7 +436,8 @@ public class OrmliteDatabase implements ITalkServerDatabase {
                     .eq("otherClientId", other)
                     .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -429,12 +445,13 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkRelationship> findRelationshipsChangedAfter(String client, Date lastKnown) {
         try {
             return mRelationships.queryBuilder().where()
-                                   .eq("clientId", client)
-                                   .and()
-                                   .gt("lastChanged", lastKnown)
-                                 .query();
+                    .eq("clientId", client)
+                    .and()
+                    .gt("lastChanged", lastKnown)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -442,12 +459,13 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public TalkRelationship findRelationshipBetween(String client, String otherClient) {
         try {
             return mRelationships.queryBuilder().where()
-                                   .eq("clientId", client)
-                                   .and()
-                                   .eq("otherClientId", otherClient)
-                                 .queryForFirst();
+                    .eq("clientId", client)
+                    .and()
+                    .eq("otherClientId", otherClient)
+                    .queryForFirst();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -474,7 +492,8 @@ public class OrmliteDatabase implements ITalkServerDatabase {
         try {
             return mGroups.queryForId(groupId);
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -482,7 +501,7 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkGroup> findGroupsByClientIdChangedAfter(String clientId, Date lastKnown) {
         List<TalkGroup> result = new ArrayList<TalkGroup>();
         List<TalkGroupMember> memberships = findGroupMembersForClient(clientId);
-        for(TalkGroupMember membership: memberships) {
+        for (TalkGroupMember membership : memberships) {
             result.add(findGroupById(membership.getGroupId()));
         }
         return result;
@@ -501,10 +520,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkGroupMember> findGroupMembersById(String groupId) {
         try {
             return mGroupMembers.queryBuilder().where()
-                                  .eq("groupId", groupId)
-                                .query();
+                    .eq("groupId", groupId)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -512,10 +532,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkGroupMember> findGroupMembersForClient(String clientId) {
         try {
             return mGroupMembers.queryBuilder().where()
-                                  .eq("clientId", clientId)
-                                .query();
+                    .eq("clientId", clientId)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -527,12 +548,13 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public List<TalkGroupMember> findGroupMembersByIdChangedAfter(String groupId, Date lastKnown) {
         try {
             return mGroupMembers.queryBuilder().where()
-                                  .eq("groupId", groupId)
-                                  .and()
-                                  .gt("lastChanged", lastKnown)
-                                .query();
+                    .eq("groupId", groupId)
+                    .and()
+                    .gt("lastChanged", lastKnown)
+                    .query();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -540,12 +562,13 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public TalkGroupMember findGroupMemberForClient(String groupId, String clientId) {
         try {
             return mGroupMembers.queryBuilder().where()
-                                  .eq("groupId", groupId)
-                                  .and()
-                                  .eq("clientId", clientId)
-                                .queryForFirst();
+                    .eq("groupId", groupId)
+                    .and()
+                    .eq("clientId", clientId)
+                    .queryForFirst();
         } catch (SQLException e) {
-            e.printStackTrace(); return null;
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -569,4 +592,14 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     @Override
     public void deleteEnvironment(TalkEnvironment environment) { }
 
+    @Override
+    public boolean ping() {
+        // TODO: implement me properly!
+        return false;
     }
+
+    @Override
+    public void reportPing() {
+        LOG.info(ping());
+    }
+}

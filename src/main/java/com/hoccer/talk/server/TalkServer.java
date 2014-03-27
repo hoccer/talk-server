@@ -4,6 +4,11 @@ import better.jsonrpc.server.JsonRpcServer;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import com.codahale.metrics.jvm.FileDescriptorRatioGauge;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -11,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.cleaning.CleaningAgent;
+import com.hoccer.talk.server.database.DatabaseHealthCheck;
 import com.hoccer.talk.server.delivery.DeliveryAgent;
 import com.hoccer.talk.server.filecache.FilecacheClient;
 import com.hoccer.talk.server.ping.PingAgent;
@@ -18,7 +24,6 @@ import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
 import com.hoccer.talk.server.update.UpdateAgent;
 import de.undercouch.bson4jackson.BsonFactory;
-import org.apache.log4j.Logger;
 
 import java.util.Hashtable;
 import java.util.Vector;
@@ -33,11 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TalkServer {
 
     /**
-     * Logger for changes in global server state
-     */
-    private static final Logger log = Logger.getLogger(TalkServer.class);
-
-    /**
      * server-global JSON mapper
      */
     ObjectMapper mJsonMapper;
@@ -50,7 +50,8 @@ public class TalkServer {
     /**
      * Metrics registry
      */
-    MetricRegistry mMetrics;
+    MetricRegistry mMetricsRegistry;
+    HealthCheckRegistry mHealthRegistry;
     JmxReporter mJmxReporter;
 
     /**
@@ -128,9 +129,11 @@ public class TalkServer {
         mJsonMapper = createObjectMapper(new JsonFactory());
         mBsonMapper = createObjectMapper(new BsonFactory());
 
-        mMetrics = new MetricRegistry();
+        mMetricsRegistry = new MetricRegistry();
         initializeMetrics();
-        mStatistics = new TalkMetricStats(mMetrics);
+        mHealthRegistry = new HealthCheckRegistry();
+        initializeHealthChecks();
+        mStatistics = new TalkMetricStats(mMetricsRegistry);
 
         mRpcServer = new JsonRpcServer(ITalkRpcServer.class);
         mDeliveryAgent = new DeliveryAgent(this);
@@ -140,16 +143,9 @@ public class TalkServer {
         mCleaningAgent = new CleaningAgent(this);
         mFilecacheClient = new FilecacheClient(this);
 
-        mJmxReporter = JmxReporter.forRegistry(mMetrics).build();
+        // For instrumenting metrics via JMX
+        mJmxReporter = JmxReporter.forRegistry(mMetricsRegistry).build();
         mJmxReporter.start();
-    }
-
-    public int getNumTotalConnections() {
-        return mConnectionsTotal.intValue();
-    }
-
-    public int getNumCurrentConnections() {
-        return mConnectionsOpen.intValue();
     }
 
     /**
@@ -170,7 +166,7 @@ public class TalkServer {
      * @return the metrics registry for the server
      */
     public MetricRegistry getMetrics() {
-        return mMetrics;
+        return mMetricsRegistry;
     }
 
     /**
@@ -327,20 +323,34 @@ public class TalkServer {
      * Set up server metrics
      */
     private void initializeMetrics() {
-        mMetrics.register(MetricRegistry.name(TalkServer.class, "connectionsOpen"),
+        mMetricsRegistry.register(MetricRegistry.name(TalkServer.class, "connectionsOpen"),
                 new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
                         return mConnectionsOpen.intValue();
                     }
-                });
-        mMetrics.register(MetricRegistry.name(TalkServer.class, "connectionsTotal"),
+                }
+        );
+        mMetricsRegistry.register(MetricRegistry.name(TalkServer.class, "connectionsTotal"),
                 new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
                         return mConnectionsTotal.intValue();
                     }
-                });
+                }
+        );
+        // For instrumenting JMX via Metrics
+        mMetricsRegistry.register(MetricRegistry.name("jvm", "gc"), new GarbageCollectorMetricSet());
+        mMetricsRegistry.register(MetricRegistry.name("jvm", "memory"), new MemoryUsageGaugeSet());
+        mMetricsRegistry.register(MetricRegistry.name("jvm", "thread-states"), new ThreadStatesGaugeSet());
+        mMetricsRegistry.register(MetricRegistry.name("jvm", "fd", "usage"), new FileDescriptorRatioGauge());
     }
 
+    private void initializeHealthChecks() {
+        mHealthRegistry.register("database", new DatabaseHealthCheck(mDatabase));
+    }
+
+    public HealthCheckRegistry getHealthCheckRegistry() {
+        return mHealthRegistry;
+    }
 }

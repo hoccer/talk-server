@@ -5,6 +5,7 @@ import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.filecache.FilecacheClient;
+import com.hoccer.talk.util.NamedThreadFactory;
 import org.apache.log4j.Logger;
 
 import java.util.Calendar;
@@ -12,7 +13,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Cleaning agent
@@ -41,36 +41,15 @@ public class CleaningAgent {
     static final int KEY_LIFE_TIME = 3; // in months
     static final int RELATIONSHIP_LIFE_TIME = 3; // in months
 
-    static class YourThreadFactory implements ThreadFactory {
-        private static final AtomicInteger poolNumber = new AtomicInteger(1);
-        private final ThreadGroup group;
-        private final AtomicInteger threadNumber = new AtomicInteger(1);
-        private final String namePrefix;
-
-        YourThreadFactory(String name) {
-            SecurityManager s = System.getSecurityManager();
-            group = (s != null) ? s.getThreadGroup() :
-                    Thread.currentThread().getThreadGroup();
-            namePrefix = name + "-pool-" + poolNumber.getAndIncrement() + "-thread-";
-        }
-
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
-
-            if (t.isDaemon())
-                t.setDaemon(false);
-            if (t.getPriority() != Thread.NORM_PRIORITY)
-                t.setPriority(Thread.NORM_PRIORITY);
-            return t;
-        }
-    }
-
     public CleaningAgent(TalkServer server) {
         mServer = server;
         mConfig = server.getConfiguration();
         mDatabase = server.getDatabase();
         mFilecache = server.getFilecacheClient();
-        mExecutor = Executors.newScheduledThreadPool(4, new YourThreadFactory("cleaning-agent"));
+        mExecutor = Executors.newScheduledThreadPool(
+            TalkServerConfiguration.THREADS_CLEANING,
+            new NamedThreadFactory("cleaning-agent")
+        );
         LOG.info("Cleaning clients scheduling will start in '" + mConfig.getCleanupAllClientsDelay() + "' seconds.");
         mExecutor.schedule(new Runnable() {
             @Override
