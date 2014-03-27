@@ -40,6 +40,7 @@ public class UpdateAgent extends NotificationDeferrer {
         String connStatus = isConnected ? TalkPresence.CONN_STATUS_ONLINE
                 : TalkPresence.CONN_STATUS_OFFLINE;
         // update the presence with the connection status
+        // TODO: also save the potentially changed connection status in the database?
         presence.setConnectionStatus(connStatus);
     }
 
@@ -58,7 +59,8 @@ public class UpdateAgent extends NotificationDeferrer {
                     if (member.isInvited() || member.isJoined()) {
                         List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                         for (TalkGroupMember otherMember : members) {
-                            // XXX only if otherMember != member
+                            // TODO: Check if filtering self(clientId) is necessary
+                            // only if otherMember != member
                             if (otherMember.isJoined() || otherMember.isInvited()) {
                                 String clientId = otherMember.getClientId();
                                 LOG.debug("RPUFG: delivering presence of " + clientId);
@@ -129,20 +131,21 @@ public class UpdateAgent extends NotificationDeferrer {
         LOG.debug(tag + "commencing");
 
         // own client id
-        String clientId = presence.getClientId();
-        // set to collect clients into
-        Set<String> clients = new HashSet<String>();
-        // collect clients known through relationships
-        List<TalkRelationship> relationships = mDatabase.findRelationshipsByOtherClient(clientId);
+        String selfClientId = presence.getClientId();
+        // set to collect clientIds into
+        Set<String> clientIds = new HashSet<String>();
+        // collect clientIds known through relationships
+        List<TalkRelationship> relationships = mDatabase.findRelationshipsByOtherClient(selfClientId);
         for (TalkRelationship relationship : relationships) {
             // if the relation is friendly
-            if (relationship.isFriend()) { // XXX what about isBlocked()?
+            if (relationship.isFriend()) {
                 LOG.debug(tag + "including friend " + relationship.getClientId());
-                clients.add(relationship.getClientId());
+                clientIds.add(relationship.getClientId());
             }
+            // XXX what about isBlocked()?
         }
-        // collect clients known through groups
-        List<TalkGroupMember> ownMembers = mDatabase.findGroupMembersForClient(clientId);
+        // collect clientIds known through groups
+        List<TalkGroupMember> ownMembers = mDatabase.findGroupMembersForClient(selfClientId);
         for (TalkGroupMember ownMember : ownMembers) {
             String groupId = ownMember.getGroupId();
             if (ownMember.isJoined() || ownMember.isInvited()) {
@@ -151,7 +154,7 @@ public class UpdateAgent extends NotificationDeferrer {
                 for (TalkGroupMember otherMember : otherMembers) {
                     if (otherMember.isJoined() || ownMember.isInvited()) { // MARK
                         LOG.debug(tag + "including group member " + otherMember.getClientId());
-                        clients.add(otherMember.getClientId());
+                        clientIds.add(otherMember.getClientId());
                     } else {
                         LOG.debug(tag + "not including group member " + otherMember.getClientId() + " in state " + otherMember.getState());
                     }
@@ -159,25 +162,25 @@ public class UpdateAgent extends NotificationDeferrer {
             }
         }
         // remove self
-        LOG.debug(tag + "excluding self " + clientId);
-        clients.remove(clientId);
+        LOG.debug(tag + "excluding self " + selfClientId);
+        clientIds.remove(selfClientId);
         // send presence updates
-        for (String client : clients) {
-            // look for a connection by the other client
-            TalkRpcConnection connection = mServer.getClientConnection(client);
-            // and if the corresponding client is online
+        for (String clientId : clientIds) {
+            // look for a connection by the other clientId
+            TalkRpcConnection connection = mServer.getClientConnection(clientId);
+            // and if the corresponding clientId is online
             if (connection != null && connection.isLoggedIn()) {
-                LOG.debug(tag + "client " + client + " is connected");
+                LOG.debug(tag + "clientId " + clientId + " is connected");
                 try {
 
                     // Calling Client via RPC
-                    // tell the client about the new presence
+                    // tell the clientId about the new presence
                     connection.getClientRpc().presenceUpdated(presence);
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
             } else {
-                LOG.debug(tag + "client " + client + " is disconnected");
+                LOG.debug(tag + "clientId " + clientId + " is disconnected");
             }
         }
         LOG.debug(tag + "complete");
@@ -189,7 +192,6 @@ public class UpdateAgent extends NotificationDeferrer {
             public void run() {
                 TalkRpcConnection clientConnection = mServer.getClientConnection(relationship.getClientId());
                 if (clientConnection != null && clientConnection.isLoggedIn()) {
-
                     // Calling Client via RPC
                     clientConnection.getClientRpc().relationshipUpdated(relationship);
                 }
