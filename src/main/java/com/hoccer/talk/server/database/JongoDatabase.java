@@ -443,10 +443,10 @@ public class JongoDatabase implements ITalkServerDatabase {
         List<TalkGroup> res = new ArrayList<TalkGroup>();
         List<TalkGroupMember> members = findGroupMembersForClient(clientId);
         for (TalkGroupMember member : members) {
-            String memberState = member.getState();
+            // String memberState = member.getState();
             if (member.isMember() || member.isInvited()) {
                 TalkGroup group = findGroupById(member.getGroupId());
-                //if(group.getLastChanged().after(lastKnown)) { // XXX fix this
+                //if(group.getLastChanged().after(lastKnown)) { // TODO: fix this
                 res.add(group);
                 //}
             }
