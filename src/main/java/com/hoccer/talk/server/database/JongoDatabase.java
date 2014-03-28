@@ -19,7 +19,7 @@ import java.util.*;
  * <p/>
  * This is intended as the production backend.
  * <p/>
- * XXX this should use findOne() instead of find() where appropriate
+ * TODO: this should use findOne() instead of find() where appropriate
  */
 public class JongoDatabase implements ITalkServerDatabase {
 

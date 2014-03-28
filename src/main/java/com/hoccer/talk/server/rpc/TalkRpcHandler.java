@@ -554,7 +554,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return token.getSecret();
     }
 
-
+    // TODO: extract as generic TokenGenerator for the server in general?!
+    // TODO: Do not use a command line tool for this! Use a library or so...
     private String genPw() {
         String result = null;
         ProcessBuilder pb = new ProcessBuilder("pwgen", "10", "1");
