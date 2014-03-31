@@ -264,9 +264,8 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
     @Override
     public void onPreHandleRequest(JsonRpcConnection connection, ObjectNode request) {
-        LOG.info("onPreHandleRequest -- connectionId: '" +
-                connection.getConnectionId() + "', clientId: '" +
-                ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
+        LOG.debug("onPreHandleRequest -- connectionId: '" + connection.getConnectionId() +
+                  "', clientId: '" + ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
 
         Timer.Context timerContext = mServer.getStatistics().signalRequestStart(connection, request);
         requestTimers.put(getIdFromRequest(request), timerContext);
@@ -277,9 +276,8 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
     @Override
     public void onPostHandleRequest(JsonRpcConnection connection, ObjectNode request) {
-        LOG.info("onPostHandleRequest -- connectionId: '" +
-                connection.getConnectionId() + "', clientId: '" +
-                ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
+        LOG.debug("onPostHandleRequest -- connectionId: '" + connection.getConnectionId() +
+                  "', clientId: '" + ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
 
         Object jsonRpcId = getIdFromRequest(request);
         mServer.getStatistics().signalRequestStop(connection, request, requestTimers.get(jsonRpcId));

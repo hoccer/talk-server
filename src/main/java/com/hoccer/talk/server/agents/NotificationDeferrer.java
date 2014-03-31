@@ -26,10 +26,10 @@ public class NotificationDeferrer {
 
         if (context.get() != null) {
             ArrayList<Runnable> queue = context.get();
-            LOG.info("context is currently set (" + queue.size() + " items). Queueing notification generator.");
+            LOG.debug("context is currently set (" + queue.size() + " items). Queueing notification generator.");
             queue.add(notificationGenerator);
         } else {
-            LOG.info("context is currently NOT set. Immediately executing notification generators");
+            LOG.debug("context is currently NOT set. Immediately executing notification generators");
             mExecutor.execute(notificationGenerator);
         }
     }
@@ -40,19 +40,19 @@ public class NotificationDeferrer {
             ArrayList<Runnable> queue = context.get();
 
             if (queue.size() > 0) {
-                LOG.info("  * " + queue.size() + " notification generators were queued. flushing them...");
+                LOG.debug("  * " + queue.size() + " notification generators were queued. flushing them...");
                 for (Runnable notification : queue) {
                     mExecutor.execute(notification);
                 }
             } else {
-                LOG.info("  * No notification generators were queued - nothing to do.");
+                LOG.debug("  * No notification generators were queued - nothing to do.");
             }
         }
         context.remove();
     }
 
     protected void setRequestContext(ThreadLocal<ArrayList<Runnable>> context) {
-        LOG.info("Setting context.");
+        LOG.debug("Setting context.");
         if (context.get() != null) {
             LOG.warn("context still contains notification generators! Flushing(executing) them now.");
             flushContext(context);
@@ -61,7 +61,7 @@ public class NotificationDeferrer {
     }
 
     protected void clearRequestContext(ThreadLocal<ArrayList<Runnable>> context) {
-        LOG.info("Clearing context.");
+        LOG.debug("Clearing context.");
         flushContext(context);
     }
 
