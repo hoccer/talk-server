@@ -58,9 +58,9 @@ public class FilecacheClient extends JsonRpcWsClient {
     public ITalkRpcServer.FileHandles createFileForStorage(String accountId, String contentType, int contentLength) {
         ensureConnected();
         ICacheControl.FileHandles cacheHandles = mRpc.createFileForStorage(accountId, contentType, contentLength);
-        LOG.info("created storage file with handles f=" + cacheHandles.fileId
-                 + " u=" + cacheHandles.uploadId
-                 + " d=" + cacheHandles.downloadId);
+        LOG.info("created storage file with handles (fileId: '" + cacheHandles.fileId + "', "
+                 + " uploadId: '" + cacheHandles.uploadId + "', "
+                 + " downloadId: '" + cacheHandles.downloadId + "')");
         ITalkRpcServer.FileHandles serverHandles = new ITalkRpcServer.FileHandles();
         serverHandles.fileId = cacheHandles.fileId;
         serverHandles.uploadUrl = mConfig.getFilecacheUploadBase() + cacheHandles.uploadId;
@@ -71,9 +71,9 @@ public class FilecacheClient extends JsonRpcWsClient {
     public ITalkRpcServer.FileHandles createFileForTransfer(String accountId, String contentType, int contentLength) {
         ensureConnected();
         ICacheControl.FileHandles cacheHandles = mRpc.createFileForTransfer(accountId, contentType, contentLength);
-        LOG.info("created transfer file with handles f=" + cacheHandles.fileId
-                 + " u=" + cacheHandles.uploadId
-                 + " d=" + cacheHandles.downloadId);
+        LOG.info("created transfer file with handles (fileId: '" + cacheHandles.fileId + "', "
+                 + " uploadId: '" + cacheHandles.uploadId + "', "
+                 + " downloadId: '" + cacheHandles.downloadId + "')");
         ITalkRpcServer.FileHandles serverHandles = new ITalkRpcServer.FileHandles();
         serverHandles.fileId = cacheHandles.fileId;
         serverHandles.uploadUrl = mConfig.getFilecacheUploadBase() + cacheHandles.uploadId;
@@ -83,7 +83,7 @@ public class FilecacheClient extends JsonRpcWsClient {
 
     public void deleteFile(String fileId) {
         ensureConnected();
-        LOG.info("deleting file f=" + fileId);
+        LOG.info("deleting file with id: '" + fileId + "'");
         mRpc.deleteFile(fileId);
     }
 
