@@ -86,7 +86,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     private void logCall(String message) {
         if (TalkServerConfiguration.LOG_ALL_CALLS || mConnection.isSupportMode()) {
-            LOG.info("[" + mConnection.getConnectionId() + "] " + message);
+            LOG.info("[connectionId '" + mConnection.getConnectionId() + "'] " + message);
         }
     }
 
@@ -99,7 +99,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
             if (tag.equals(mServer.getConfiguration().getSupportTag())) {
                 mConnection.activateSupportMode();
             } else {
-                LOG.info("[" + mConnection.getConnectionId() + "] sent invalid support tag \"" + tag + "\"");
+                LOG.info("[connectionId: '" + mConnection.getConnectionId() + "'] sent invalid support tag '" + tag + "'.");
+            }
+        } else {
+            if (mConnection.isSupportMode()) {
+                mConnection.deactivateSupportMode();
             }
         }
 
