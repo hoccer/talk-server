@@ -70,6 +70,22 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      */
     private boolean mSupportMode;
 
+    public boolean isAvailableForNotifications() {
+        return availableForNotifications;
+    }
+
+    public void setAvailableForNotifications(boolean availableForNotifications) {
+        this.availableForNotifications = availableForNotifications;
+    }
+
+    /**
+     * Available for notifications
+     * default value is 'false'
+     * The client must explicitely set this to 'true'
+     * via 'setNotificationAvailability(true)'
+     */
+    private boolean availableForNotifications = false;
+
     /**
      * User data associated to requests
      */

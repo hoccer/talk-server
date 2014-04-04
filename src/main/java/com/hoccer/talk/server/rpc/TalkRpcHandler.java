@@ -1243,4 +1243,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 .createFileForTransfer(mConnection.getClientId(), "application/octet-stream", contentLength);
     }
 
+    @Override
+    public void setNotificationAvailability(boolean isAvailable) {
+        requireIdentification();
+        logCall("setNotificationAvailability: '" + isAvailable + "'");
+        mConnection.setAvailableForNotifications(isAvailable);
+    }
 }
