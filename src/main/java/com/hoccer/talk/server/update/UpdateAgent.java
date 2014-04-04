@@ -48,11 +48,16 @@ public class UpdateAgent extends NotificationDeferrer {
             @Override
             public void run() {
                 LOG.debug("RPUFG: update " + clientId + " for group " + clientId);
-                TalkRpcConnection conn = mServer.getClientConnection(clientId);
-                if (conn == null || !conn.isConnected()) {
+                TalkRpcConnection clientConnection = mServer.getClientConnection(clientId);
+                if (clientConnection == null || !clientConnection.isConnected()) {
                     return;
                 }
-                ITalkRpcClient rpc = conn.getClientRpc();
+
+                if (!clientConnection.isAvailableForNotifications()) {
+                    LOG.info("clientId '" + clientConnection.getClientId() + "' is currently unavailable for notifications!");
+                    return;
+                }
+                ITalkRpcClient rpc = clientConnection.getClientRpc();
                 try {
                     TalkGroupMember member = mDatabase.findGroupMemberForClient(groupId, clientId);
                     if (member.isInvited() || member.isJoined()) {
@@ -91,6 +96,11 @@ public class UpdateAgent extends NotificationDeferrer {
                 TalkRpcConnection targetConnection = mServer.getClientConnection(targetClientId);
                 if (targetConnection == null || !targetConnection.isConnected()) {
                     LOG.debug("RPUC: target not connected");
+                    return;
+                }
+
+                if (!targetConnection.isAvailableForNotifications()) {
+                    LOG.info("clientId '" + targetConnection.getClientId() + "' is currently unavailable for notifications!");
                     return;
                 }
                 updateConnectionStatus(presence);
@@ -163,16 +173,20 @@ public class UpdateAgent extends NotificationDeferrer {
         clients.remove(clientId);
         // send presence updates
         for (String client : clients) {
-            // look for a connection by the other client
-            TalkRpcConnection connection = mServer.getClientConnection(client);
+            // look for a clientConnection by the other client
+            TalkRpcConnection clientConnection = mServer.getClientConnection(client);
             // and if the corresponding client is online
-            if (connection != null && connection.isLoggedIn()) {
+            if (clientConnection != null && clientConnection.isLoggedIn()) {
                 LOG.debug(tag + "client " + client + " is connected");
-                try {
+                if (!clientConnection.isAvailableForNotifications()) {
+                    LOG.info("clientId '" + clientConnection.getClientId() + "' is currently unavailable for notifications!");
+                    continue;
+                }
 
+                try {
                     // Calling Client via RPC
                     // tell the client about the new presence
-                    connection.getClientRpc().presenceUpdated(presence);
+                    clientConnection.getClientRpc().presenceUpdated(presence);
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
@@ -189,9 +203,12 @@ public class UpdateAgent extends NotificationDeferrer {
             public void run() {
                 TalkRpcConnection clientConnection = mServer.getClientConnection(relationship.getClientId());
                 if (clientConnection != null && clientConnection.isLoggedIn()) {
-
-                    // Calling Client via RPC
-                    clientConnection.getClientRpc().relationshipUpdated(relationship);
+                    if (clientConnection.isAvailableForNotifications()) {
+                        // Calling Client via RPC
+                        clientConnection.getClientRpc().relationshipUpdated(relationship);
+                    } else {
+                        LOG.info("clientId '" + clientConnection.getClientId() + "' is currently unavailable for notifications!");
+                    }
                 }
             }
         };
@@ -204,13 +221,18 @@ public class UpdateAgent extends NotificationDeferrer {
             public void run() {
                 TalkGroup updatedGroup = mDatabase.findGroupById(groupId);
                 if (updatedGroup != null) {
-                    TalkRpcConnection connection = mServer.getClientConnection(clientId);
-                    if (connection == null || !connection.isConnected()) {
+                    TalkRpcConnection clientConnection = mServer.getClientConnection(clientId);
+                    if (clientConnection == null || !clientConnection.isConnected()) {
+                        return;
+                    }
+
+                    if (!clientConnection.isAvailableForNotifications()) {
+                        LOG.info("clientId '" + clientConnection.getClientId() + "' is currently unavailable for notifications!");
                         return;
                     }
 
                     // Calling Client via RPC
-                    ITalkRpcClient rpc = connection.getClientRpc();
+                    ITalkRpcClient rpc = clientConnection.getClientRpc();
                     try {
                         rpc.groupUpdated(updatedGroup);
                     } catch (Exception e) {
@@ -231,13 +253,18 @@ public class UpdateAgent extends NotificationDeferrer {
                     List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                     for (TalkGroupMember member : members) {
                         if (member.isJoined() || member.isInvited() || member.isGroupRemoved()) {
-                            TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
-                            if (connection == null || !connection.isConnected()) {
+                            TalkRpcConnection clientConnection = mServer.getClientConnection(member.getClientId());
+                            if (clientConnection == null || !clientConnection.isConnected()) {
+                                continue;
+                            }
+
+                            if (!clientConnection.isAvailableForNotifications()) {
+                                LOG.info("clientId '" + clientConnection.getClientId() + "' is currently unavailable for notifications!");
                                 continue;
                             }
 
                             // Calling Client via RPC
-                            ITalkRpcClient rpc = connection.getClientRpc();
+                            ITalkRpcClient rpc = clientConnection.getClientRpc();
                             try {
                                 rpc.groupUpdated(updatedGroup);
                             } catch (Exception e) {
@@ -262,13 +289,18 @@ public class UpdateAgent extends NotificationDeferrer {
                 List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                 for (TalkGroupMember member : members) {
                     if (member.isJoined() || member.isInvited() || member.isGroupRemoved() || member.getClientId().equals(clientId)) {
-                        TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
-                        if (connection == null || !connection.isConnected()) {
+                        TalkRpcConnection clientConnection = mServer.getClientConnection(member.getClientId());
+                        if (clientConnection == null || !clientConnection.isConnected()) {
+                            continue;
+                        }
+
+                        if (!clientConnection.isAvailableForNotifications()) {
+                            LOG.info("clientId '" + clientConnection.getClientId() + "' is currently unavailable for notifications!");
                             continue;
                         }
 
                         // Calling Client via RPC
-                        ITalkRpcClient rpc = connection.getClientRpc();
+                        ITalkRpcClient rpc = clientConnection.getClientRpc();
                         try {
                             rpc.groupMemberUpdated(updatedMember);
                         } catch (Exception e) {
