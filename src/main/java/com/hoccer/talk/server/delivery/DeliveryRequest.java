@@ -42,11 +42,11 @@ public class DeliveryRequest {
         boolean currentlyConnected = false;
 
         // determine if the client is currently connected
-        TalkRpcConnection connection = mServer.getClientConnection(mClientId);
+        TalkRpcConnection clientConnection = mServer.getClientConnection(mClientId);
         ITalkRpcClient rpc = null;
-        if (connection != null && connection.isConnected()) {
+        if (clientConnection != null && clientConnection.isConnected()) {
             currentlyConnected = true;
-            rpc = connection.getClientRpc();
+            rpc = clientConnection.getClientRpc();
         }
 
         // get all outstanding deliveries for the client
@@ -58,7 +58,7 @@ public class DeliveryRequest {
             needToNotify = true;
             // deliver one by one
             for (TalkDelivery delivery : inDeliveries) {
-                // we lost the connection somehow
+                // we lost the clientConnection somehow
                 if (!currentlyConnected) {
                     break;
                 }
@@ -77,6 +77,11 @@ public class DeliveryRequest {
                     continue;
                 }
 
+                /*if (!clientConnection.isAvailableForNotifications()) {
+                    LOG.info("clientId '" + clientConnection.getClientId() + "' is currently unavailable for notifications!");
+                    continue;
+                }*/
+
                 // post the delivery for the client
                 try {
                     rpc.incomingDelivery(delivery, message);
@@ -88,7 +93,7 @@ public class DeliveryRequest {
                 }
 
                 // check for disconnects
-                if (!connection.isConnected()) {
+                if (!clientConnection.isConnected()) {
                     currentlyConnected = false;
                 }
 
@@ -101,7 +106,7 @@ public class DeliveryRequest {
             LOG.info("has " + outDeliveries.size() + " outgoing deliveries");
             // deliver one by one
             for (TalkDelivery delivery : outDeliveries) {
-                // we lost the connection somehow
+                // we lost the clientConnection somehow
                 if (!currentlyConnected) {
                     break;
                 }
@@ -113,6 +118,11 @@ public class DeliveryRequest {
                     continue;
                 }
 
+                /*if (!clientConnection.isAvailableForNotifications()) {
+                    LOG.info("clientId '" + clientConnection.getClientId() + "' is currently unavailable for notifications!");
+                    continue;
+                }*/
+
                 // notify it
                 try {
                     rpc.outgoingDelivery(delivery);
@@ -123,7 +133,7 @@ public class DeliveryRequest {
                 }
 
                 // check for disconnects
-                if (!connection.isConnected()) {
+                if (!clientConnection.isConnected()) {
                     currentlyConnected = false;
                 }
             }
