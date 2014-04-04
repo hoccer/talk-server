@@ -52,6 +52,7 @@ public class TalkServerConfiguration {
     private int mCleanupAllDeliveriesDelay = 3600; // 1 hour //600;
     private int mCleanupAllDeliveriesInterval = 60 * 60 * 6; // every 6 hours //900;
 
+
     private String mFilecacheControlUrl = "http://localhost:8081/control";
     private String mFilecacheUploadBase = "http://localhost:8081/upload/";
     private String mFilecacheDownloadBase = "http://localhost:8081/download/";
@@ -230,6 +231,18 @@ public class TalkServerConfiguration {
 
     public String getFilecacheDownloadBase() {
         return mFilecacheDownloadBase;
+    }
+
+    public void setFilecacheControlUrl(String mFilecacheControlUrl) {
+        this.mFilecacheControlUrl = mFilecacheControlUrl;
+    }
+
+    public void setFilecacheUploadBase(String mFilecacheUploadBase) {
+        this.mFilecacheUploadBase = mFilecacheUploadBase;
+    }
+
+    public void setFilecacheDownloadBase(String mFilecacheDownloadBase) {
+        this.mFilecacheDownloadBase = mFilecacheDownloadBase;
     }
 
     public String getSupportTag() {
