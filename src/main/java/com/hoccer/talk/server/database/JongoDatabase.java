@@ -24,6 +24,7 @@ import java.util.*;
 public class JongoDatabase implements ITalkServerDatabase {
 
     private static final Logger LOG = Logger.getLogger(JongoDatabase.class);
+    private static final long GROUPKEY_LOCK_RETENTION_TIMEOUT = 1000 * 30; // in milliseconds
 
     /**
      * Mongo connection pool
@@ -642,4 +643,32 @@ public class JongoDatabase implements ITalkServerDatabase {
             LOG.error("Database is not online:", e);
         }
     }
+
+    @Override
+    public boolean acquireGroupKeyUpdateLock(String groupId) {
+        TalkGroup group = findGroupById(groupId);
+        Date newLockDate = new Date();
+        Date oldLockDate = group.getGroupKeyUpdateInProgress();
+
+        if (oldLockDate != null) { // is already locked
+            if ((newLockDate.getTime() - oldLockDate.getTime()) > GROUPKEY_LOCK_RETENTION_TIMEOUT) {
+                LOG.info("group key update lock is too old (> " + GROUPKEY_LOCK_RETENTION_TIMEOUT + "ms) - reacquiring lock...");
+            } else {
+                // cannot acquire lock
+                return false;
+            }
+        }
+
+        group.setGroupKeyUpdateInProgress(newLockDate);
+        saveGroup(group);
+        return true;
+    }
+
+    @Override
+    public void releaseGroupKeyUpdateLock(String groupId) {
+        TalkGroup group = findGroupById(groupId);
+        group.setGroupKeyUpdateInProgress(null);
+        saveGroup(group);
+    }
+
 }

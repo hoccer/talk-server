@@ -117,4 +117,8 @@ public interface ITalkServerDatabase {
     public boolean ping();
 
     public void reportPing();
+
+    public boolean acquireGroupKeyUpdateLock(String groupId);
+
+    public void releaseGroupKeyUpdateLock(String groupId);
 }

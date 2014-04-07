@@ -616,4 +616,15 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public void reportPing() {
         LOG.info(ping());
     }
+
+    @Override
+    public boolean acquireGroupKeyUpdateLock(String groupId) {
+        // TODO: implememnt me...
+        return false;
+    }
+
+    @Override
+    public void releaseGroupKeyUpdateLock(String groupId) {
+        // TODO: implement me...
+    }
 }
