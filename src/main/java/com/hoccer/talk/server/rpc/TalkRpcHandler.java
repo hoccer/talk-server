@@ -1194,19 +1194,21 @@ public class TalkRpcHandler implements ITalkRpcServer {
             targetMember.setEncryptedGroupKey(cryptedSharedKeys[i]);
             targetMember.setSharedKeyId(sharedKeyId);
             targetMember.setSharedKeyIdSalt(sharedKeyIdSalt);
+            targetMember.setKeySupplier(mConnection.getClientId());
             changedGroupMember(targetMember);
         }
 
         TalkGroup group = mDatabase.findGroupById(groupId);
         group.setSharedKeyId(sharedKeyId);
         group.setSharedKeyIdSalt(sharedKeyIdSalt);
+        group.setKeySupplier(mConnection.getClientId());
         changedGroup(group);
 
         String[] activeStates = {TalkGroupMember.STATE_INVITED, TalkGroupMember.STATE_JOINED};
         List<TalkGroupMember> members = mDatabase.findGroupMembersByIdWithStates(groupId, activeStates);
         List<String> outOfDateMembers = new ArrayList<String>();
         for (int i = 0; i < members.size(); ++i) {
-            if (!sharedKeyId.equals(members.get(i))) {
+            if (!sharedKeyId.equals(members.get(i).getSharedKeyId())) {
                 outOfDateMembers.add(members.get(i).getClientId());
             }
         }
@@ -1298,7 +1300,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         group.setGroupId(UUID.randomUUID().toString());
         group.setState(TalkGroup.STATE_EXISTS);
         group.setGroupName("Nearby" + "-" + group.getGroupId().substring(group.getGroupId().length() - 8));
-        group.setGroupTag(TalkGroup.GROUP_TYPE_NEARBY);
+        group.setGroupType(TalkGroup.GROUP_TYPE_NEARBY);
         TalkGroupMember groupAdmin = new TalkGroupMember();
         groupAdmin.setClientId(mConnection.getClientId());
         groupAdmin.setGroupId(group.getGroupId());
