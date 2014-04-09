@@ -101,7 +101,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
             if (tag.equals(mServer.getConfiguration().getSupportTag())) {
                 mConnection.activateSupportMode();
             } else {
-                LOG.info("[connectionId: '" + mConnection.getConnectionId() + "'] sent invalid support tag \"" + tag + "\"");
+                LOG.info("[connectionId: '" + mConnection.getConnectionId() + "'] sent invalid support tag '" + tag + "'.");
+            }
+        } else {
+            if (mConnection.isSupportMode()) {
+                mConnection.deactivateSupportMode();
             }
         }
 
