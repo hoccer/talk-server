@@ -861,7 +861,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         final List<String> client1GroupIds = new ArrayList<String>();
         for (TalkGroupMember groupMember : client1Groupmembers) {
             LOG.debug("  * client1 membership state in group: '" + groupMember.getGroupId() + "':" + groupMember.getState());
-            if (groupMember.getState().equals(TalkGroupMember.STATE_JOINED)) {
+            if (groupMember.isJoined()) {
                 client1GroupIds.add(groupMember.getGroupId());
             }
         }
@@ -870,7 +870,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         for (TalkGroupMember groupMember : client2Groupmembers) {
             LOG.debug("  * client2 membership state in group: '" + groupMember.getGroupId() + "':" + groupMember.getState());
             if (client1GroupIds.indexOf(groupMember.getGroupId()) != -1 &&
-                groupMember.getState().equals(TalkGroupMember.STATE_JOINED)) {
+                groupMember.isJoined()) {
                 LOG.info("clients '" + clientId1 + "' and '" + clientId2 + "' are both joined in group! (groupId: '" + groupMember.getGroupId() + "')");
                 return true;
             }
