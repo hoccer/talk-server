@@ -775,12 +775,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // get the current date for stamping
         Date currentDate = new Date();
         // who is doing this again?
-        String clientId = mConnection.getClientId();
+        String senderId = mConnection.getClientId();
         // get the receiver
-        String receiverId = delivery.getReceiverId();
+        String recipientId = delivery.getReceiverId();
 
         // if we don't have a receiver try group delivery
-        if (receiverId == null) {
+        if (recipientId == null) {
             String groupId = delivery.getGroupId();
 
             if (groupId == null) {
@@ -796,7 +796,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 return result;
             }
             // check that sender is member of group
-            TalkGroupMember clientMember = mDatabase.findGroupMemberForClient(groupId, clientId);
+            TalkGroupMember clientMember = mDatabase.findGroupMemberForClient(groupId, senderId);
             if (clientMember == null || !clientMember.isMember()) {
                 LOG.info("delivery rejected: not a member of group");
                 delivery.setState(TalkDelivery.STATE_FAILED);
@@ -805,7 +805,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             // deliver to each group member
             List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
             for (TalkGroupMember member : members) {
-                if (member.getClientId().equals(clientId)) {
+                if (member.getClientId().equals(senderId)) {
                     continue;
                 }
                 if (!member.isJoined()) {
@@ -815,7 +815,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 memberDelivery.setMessageId(message.getMessageId());
                 memberDelivery.setMessageTag(delivery.getMessageTag());
                 memberDelivery.setGroupId(groupId);
-                memberDelivery.setSenderId(clientId);
+                memberDelivery.setSenderId(senderId);
                 memberDelivery.setKeyId(member.getMemberKeyId());
                 memberDelivery.setKeyCiphertext(member.getEncryptedGroupKey());
                 memberDelivery.setReceiverId(member.getClientId());
@@ -833,22 +833,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 }
             }
         } else {
-            // find relationship between clients, if there is one
-            TalkRelationship relationship = mDatabase.findRelationshipBetween(receiverId, clientId);
-
-            // reject if there is no relationship
-            if (relationship == null) {
-                LOG.info("delivery rejected: client '" + receiverId + "' has no relationship with sender");
+            // Check if client is friend via relationship OR they know each other through a shared group in which both are "joined" members.
+            if (!areRelatedViaGroupMembership(senderId, recipientId) &&
+                !areBefriended(senderId, recipientId)) {
+                LOG.info("Message delivery rejected since no relationship via group or friendship exists. (" + senderId + ", " + recipientId + ")");
                 delivery.setState(TalkDelivery.STATE_FAILED);
-                return result;
-            }
-
-            // reject unless befriended
-            if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
-                LOG.info("delivery rejected: client '" + receiverId
-                        + "' is not a friend of sender (relationship is '" + relationship.getState() + "')");
-                delivery.setState(TalkDelivery.STATE_FAILED);
-                return result;
+                return result; // which is still empty
             }
 
             boolean success = performOneDelivery(message, delivery);
@@ -862,6 +852,52 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
         }
         return result;
+    }
+
+    private boolean areRelatedViaGroupMembership(String clientId1, String clientId2) {
+        // TODO: only allow this for joined members?!
+
+        final List<TalkGroupMember> client1Groupmembers = mDatabase.findGroupMembersForClient(clientId1);
+        final List<String> client1GroupIds = new ArrayList<String>();
+        for (TalkGroupMember groupMember : client1Groupmembers) {
+            LOG.debug("  * client1 membership state in group: '" + groupMember.getGroupId() + "':" + groupMember.getState());
+            if (groupMember.getState().equals(TalkGroupMember.STATE_JOINED)) {
+                client1GroupIds.add(groupMember.getGroupId());
+            }
+        }
+
+        final List<TalkGroupMember> client2Groupmembers = mDatabase.findGroupMembersForClient(clientId2);
+        for (TalkGroupMember groupMember : client2Groupmembers) {
+            LOG.debug("  * client2 membership state in group: '" + groupMember.getGroupId() + "':" + groupMember.getState());
+            if (client1GroupIds.indexOf(groupMember.getGroupId()) != -1 &&
+                groupMember.getState().equals(TalkGroupMember.STATE_JOINED)) {
+                LOG.info("clients '" + clientId1 + "' and '" + clientId2 + "' are both joined in group! (groupId: '" + groupMember.getGroupId() + "')");
+                return true;
+            }
+        }
+
+        LOG.info("clients '" + clientId1 + "' and '" + clientId2 + "' are NOT both joined in the same group");
+        return false;
+    }
+
+    private boolean areBefriended(String clientId1, String clientId2) {
+        final TalkRelationship relationship = mDatabase.findRelationshipBetween(clientId1, clientId2);
+
+        // reject if there is no relationship
+        if (relationship == null) {
+            LOG.info("clients '" + clientId1 + "' and '" + clientId2 + "' have no relationship with each other");
+            return false;
+        }
+
+        // reject unless befriended
+        if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
+            LOG.info("clients '" + clientId1 + "' and '" + clientId2 +
+                     "' are not friends (relationship is '" + relationship.getState() + "')");
+            return false;
+        }
+
+        LOG.info("clients '" + clientId1 + "' and '" + clientId2 + "' are friends!");
+        return true;
     }
 
     private boolean performOneDelivery(TalkMessage m, TalkDelivery d) {
