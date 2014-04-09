@@ -769,7 +769,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return deliveries;
     }
 
-    private Vector<TalkDelivery> requestOneDelivery(TalkMessage m, TalkDelivery d) {
+    private Vector<TalkDelivery> requestOneDelivery(TalkMessage message, TalkDelivery delivery) {
         Vector<TalkDelivery> result = new Vector<TalkDelivery>();
 
         // get the current date for stamping
@@ -777,29 +777,29 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // who is doing this again?
         String clientId = mConnection.getClientId();
         // get the receiver
-        String receiverId = d.getReceiverId();
+        String receiverId = delivery.getReceiverId();
 
         // if we don't have a receiver try group delivery
         if (receiverId == null) {
-            String groupId = d.getGroupId();
-            // if
+            String groupId = delivery.getGroupId();
+
             if (groupId == null) {
                 LOG.info("delivery rejected: no receiver");
-                d.setState(TalkDelivery.STATE_FAILED);
+                delivery.setState(TalkDelivery.STATE_FAILED);
                 return result;
             }
             // check that group exists
             TalkGroup group = mDatabase.findGroupById(groupId);
             if (group == null) {
                 LOG.info("delivery rejected: no such group");
-                d.setState(TalkDelivery.STATE_FAILED);
+                delivery.setState(TalkDelivery.STATE_FAILED);
                 return result;
             }
             // check that sender is member of group
             TalkGroupMember clientMember = mDatabase.findGroupMemberForClient(groupId, clientId);
             if (clientMember == null || !clientMember.isMember()) {
                 LOG.info("delivery rejected: not a member of group");
-                d.setState(TalkDelivery.STATE_FAILED);
+                delivery.setState(TalkDelivery.STATE_FAILED);
                 return result;
             }
             // deliver to each group member
@@ -812,8 +812,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     continue;
                 }
                 TalkDelivery memberDelivery = new TalkDelivery();
-                memberDelivery.setMessageId(m.getMessageId());
-                memberDelivery.setMessageTag(d.getMessageTag());
+                memberDelivery.setMessageId(message.getMessageId());
+                memberDelivery.setMessageTag(delivery.getMessageTag());
                 memberDelivery.setGroupId(groupId);
                 memberDelivery.setSenderId(clientId);
                 memberDelivery.setKeyId(member.getMemberKeyId());
@@ -822,17 +822,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 memberDelivery.setState(TalkDelivery.STATE_DELIVERING);
                 memberDelivery.setTimeAccepted(currentDate);
 
-                boolean success = performOneDelivery(m, memberDelivery);
+                boolean success = performOneDelivery(message, memberDelivery);
                 if (success) {
                     result.add(memberDelivery);
                     // group deliveries are confirmed from acceptance
-                    d.setState(TalkDelivery.STATE_CONFIRMED);
+                    delivery.setState(TalkDelivery.STATE_CONFIRMED);
                     // set delivery timestamps
-                    d.setTimeAccepted(currentDate);
-                    d.setTimeChanged(currentDate);
+                    delivery.setTimeAccepted(currentDate);
+                    delivery.setTimeChanged(currentDate);
                 }
             }
-
         } else {
             // find relationship between clients, if there is one
             TalkRelationship relationship = mDatabase.findRelationshipBetween(receiverId, clientId);
@@ -840,7 +839,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             // reject if there is no relationship
             if (relationship == null) {
                 LOG.info("delivery rejected: client '" + receiverId + "' has no relationship with sender");
-                d.setState(TalkDelivery.STATE_FAILED);
+                delivery.setState(TalkDelivery.STATE_FAILED);
                 return result;
             }
 
@@ -848,18 +847,18 @@ public class TalkRpcHandler implements ITalkRpcServer {
             if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
                 LOG.info("delivery rejected: client '" + receiverId
                         + "' is not a friend of sender (relationship is '" + relationship.getState() + "')");
-                d.setState(TalkDelivery.STATE_FAILED);
+                delivery.setState(TalkDelivery.STATE_FAILED);
                 return result;
             }
 
-            boolean success = performOneDelivery(m, d);
+            boolean success = performOneDelivery(message, delivery);
             if (success) {
-                result.add(d);
+                result.add(delivery);
                 // mark delivery as in progress
-                d.setState(TalkDelivery.STATE_DELIVERING);
+                delivery.setState(TalkDelivery.STATE_DELIVERING);
                 // set delivery timestamps
-                d.setTimeAccepted(currentDate);
-                d.setTimeChanged(currentDate);
+                delivery.setTimeAccepted(currentDate);
+                delivery.setTimeChanged(currentDate);
             }
         }
         return result;
