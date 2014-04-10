@@ -834,21 +834,19 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
         } else {
             // Check if client is friend via relationship OR they know each other through a shared group in which both are "joined" members.
-            if (!areRelatedViaGroupMembership(senderId, recipientId) &&
-                !areBefriended(senderId, recipientId)) {
+            if (areBefriended(senderId, recipientId) ||
+                areRelatedViaGroupMembership(senderId, recipientId)) {
+                if (performOneDelivery(message, delivery)) {
+                    result.add(delivery);
+                    // mark delivery as in progress
+                    delivery.setState(TalkDelivery.STATE_DELIVERING);
+                    // set delivery timestamps
+                    delivery.setTimeAccepted(currentDate);
+                    delivery.setTimeChanged(currentDate);
+                }
+            } else {
                 LOG.info("Message delivery rejected since no relationship via group or friendship exists. (" + senderId + ", " + recipientId + ")");
                 delivery.setState(TalkDelivery.STATE_FAILED);
-                return result; // which is still empty
-            }
-
-            boolean success = performOneDelivery(message, delivery);
-            if (success) {
-                result.add(delivery);
-                // mark delivery as in progress
-                delivery.setState(TalkDelivery.STATE_DELIVERING);
-                // set delivery timestamps
-                delivery.setTimeAccepted(currentDate);
-                delivery.setTimeChanged(currentDate);
             }
         }
         return result;
