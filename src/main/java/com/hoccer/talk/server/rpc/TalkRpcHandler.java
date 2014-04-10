@@ -1026,7 +1026,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroupName(String groupId, String name) {
         requireIdentification();
-        requiredGroupAdmin(groupId);
+        requireGroupAdmin(groupId);
+        requireNotNearbyGroupType(groupId);
         logCall("updateGroupName(groupId: '" + groupId + "', name: '" + name + "')");
         TalkGroup targetGroup = mDatabase.findGroupById(groupId);
         targetGroup.setGroupName(name);
@@ -1036,7 +1037,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroupAvatar(String groupId, String avatarUrl) {
         requireIdentification();
-        requiredGroupAdmin(groupId);
+        requireGroupAdmin(groupId);
+        requireNotNearbyGroupType(groupId);
         logCall("updateGroupAvatar(groupId: '" + groupId + "', avatarUrl: '" + avatarUrl + "')");
         TalkGroup targetGroup = mDatabase.findGroupById(groupId);
         targetGroup.setGroupAvatarUrl(avatarUrl);
@@ -1046,7 +1048,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroup(TalkGroup group) {
         requireIdentification();
-        requiredGroupAdmin(group.getGroupId());
+        requireGroupAdmin(group.getGroupId());
         logCall("updateGroup(groupId: '" + group.getGroupId() + "')");
         TalkGroup targetGroup = mDatabase.findGroupById(group.getGroupId());
         targetGroup.setGroupName(group.getGroupName());
@@ -1057,7 +1059,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void deleteGroup(String groupId) {
         requireIdentification();
-        requiredGroupAdmin(groupId);
+        requireGroupAdmin(groupId);
         logCall("deleteGroup(groupId: '" + groupId + "')");
 
         TalkGroup group = mDatabase.findGroupById(groupId);
@@ -1096,8 +1098,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void inviteGroupMember(String groupId, String clientId) {
         requireIdentification();
-        requiredGroupAdmin(groupId);
+        requireGroupAdmin(groupId);
+        requireNotNearbyGroupType(groupId);
         logCall("inviteGroupMember(groupId: '" + groupId + "' / clientId: '" + clientId + "')");
+
         // check that the client exists
         TalkClient client = mDatabase.findClientById(clientId);
         if (client == null) {
@@ -1165,8 +1169,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void removeGroupMember(String groupId, String clientId) {
         requireIdentification();
+        requireGroupAdmin(groupId);
+        requireNotNearbyGroupType(groupId);
         logCall("removeGroupMember(groupId: '" + groupId + "' / clientId: '" + clientId + "')");
-        requiredGroupAdmin(groupId);
+
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
         if (targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
@@ -1181,8 +1187,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroupRole(String groupId, String clientId, String role) {
         requireIdentification();
+        requireGroupAdmin(groupId);
         logCall("updateGroupRole(groupId: '" + groupId + "' / clientId: '" + clientId + "', role: '" + role + "')");
-        requiredGroupAdmin(groupId);
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
         if (targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
@@ -1275,8 +1281,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroupMember(TalkGroupMember member) {
         requireIdentification();
+        requireGroupAdmin(member.getGroupId());
         logCall("updateGroupMember(groupId: '" + member.getGroupId() + "' / clientId: '" + member.getClientId() + "')");
-        requiredGroupAdmin(member.getGroupId());
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
         if (targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
@@ -1289,8 +1295,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public TalkGroupMember[] getGroupMembers(String groupId, Date lastKnown) {
         requireIdentification();
-        logCall("getGroupMembers(groupId: '" + groupId + "' / lastKnown: '" + lastKnown + "')");
         requiredGroupInvitedOrMember(groupId);
+        logCall("getGroupMembers(groupId: '" + groupId + "' / lastKnown: '" + lastKnown + "')");
 
         List<TalkGroupMember> members = mDatabase.findGroupMembersByIdChangedAfter(groupId, lastKnown);
         TalkGroupMember[] res = new TalkGroupMember[members.size()];
@@ -1326,6 +1332,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
             return gm;
         }
         throw new RuntimeException("Client is not an member in group with id: '" + groupId + "'");
+    }
+
+    private void requireNotNearbyGroupType(String groupId) {
+        // perspectively we should evolve a permission model to enable checking of WHO is allowed to do WHAT in which CONTEXT
+        // e.g. client (permission depending on role) inviteGroupMembers to Group (permission depending on type)
+        // for now we just check for nearby groups...
+        TalkGroup group = mDatabase.findGroupById(groupId);
+        if (group.isTypeNearby()) {
+            throw new RuntimeException("Group type is: nearby. not allowed.");
+        }
     }
 
     @Override
