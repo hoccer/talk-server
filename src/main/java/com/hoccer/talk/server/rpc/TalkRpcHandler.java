@@ -1312,10 +1312,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mServer.getUpdateAgent().requestGroupMembershipUpdate(member.getGroupId(), member.getClientId());
     }
 
-    private TalkGroupMember requiredGroupAdmin(String groupId) {
+    private void requireGroupAdmin(String groupId) {
         TalkGroupMember gm = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
         if (gm != null && gm.isAdmin()) {
-            return gm;
+            return;
         }
         throw new RuntimeException("Client is not an admin in group with id: '" + groupId + "'");
     }
