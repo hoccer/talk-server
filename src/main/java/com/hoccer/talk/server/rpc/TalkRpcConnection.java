@@ -264,7 +264,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
     @Override
     public void onPreHandleRequest(JsonRpcConnection connection, ObjectNode request) {
-        LOG.info("onPreHandleRequest -- connectionId: '" +
+        LOG.trace("onPreHandleRequest -- connectionId: '" +
                 connection.getConnectionId() + "', clientId: '" +
                 ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
 
@@ -277,7 +277,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
     @Override
     public void onPostHandleRequest(JsonRpcConnection connection, ObjectNode request) {
-        LOG.info("onPostHandleRequest -- connectionId: '" +
+        LOG.trace("onPostHandleRequest -- connectionId: '" +
                 connection.getConnectionId() + "', clientId: '" +
                 ((mTalkClient == null) ? "null" : mTalkClient.getClientId()) + "'");
 

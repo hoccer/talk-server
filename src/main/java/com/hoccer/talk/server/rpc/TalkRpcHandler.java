@@ -807,6 +807,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 if (!member.isJoined()) {
                     continue;
                 }
+                if (member.getEncryptedGroupKey() == null) {
+                    LOG.warn("have no group key, discarding group message "+m.getMessageId()+" for client "+clientId+" group "+groupId);
+                    continue;
+                }
+                if (member.getSharedKeyId() != null && m.getSharedKeyId() != null && !member.getSharedKeyId().equals(m.getSharedKeyId())) {
+                    LOG.warn("message key id and member shared key id mismatch, discarding group message "+m.getMessageId()+" for client "+clientId+" group "+groupId);
+                    continue;
+                }
+                LOG.info("delivering message " + m.getMessageId() + " for client " + clientId + " group " + groupId + " sharedKeyId=" + m.getSharedKeyId() + ", member sharedKeyId=" + member.getSharedKeyId());
+
                 TalkDelivery memberDelivery = new TalkDelivery();
                 memberDelivery.setMessageId(m.getMessageId());
                 memberDelivery.setMessageTag(d.getMessageTag());
@@ -1174,6 +1184,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         changedGroupMember(targetMember);
     }
 
+
     @Override
     public String[] updateGroupKeys(String groupId, String sharedKeyId, String sharedKeyIdSalt, String[] clientIds, String[] publicKeyIds, String[] cryptedSharedKeys) {
         requireIdentification();
@@ -1190,6 +1201,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         if (mDatabase.acquireGroupKeyUpdateLock(groupId)) { // lock for groupkey update acquired... continuing.
             try {
+                Date now = new Date();
                 for (int i = 0; i < clientIds.length; ++i) {
                     TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientIds[i]);
                     if (targetMember == null) {
@@ -1200,6 +1212,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     targetMember.setSharedKeyId(sharedKeyId);
                     targetMember.setSharedKeyIdSalt(sharedKeyIdSalt);
                     targetMember.setKeySupplier(mConnection.getClientId());
+                    targetMember.setSharedKeyDate(now);
                     changedGroupMember(targetMember);
                 }
 
@@ -1207,6 +1220,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 group.setSharedKeyId(sharedKeyId);
                 group.setSharedKeyIdSalt(sharedKeyIdSalt);
                 group.setKeySupplier(mConnection.getClientId());
+                group.setKeyDate(now);
                 changedGroup(group);
 
                 String[] activeStates = {
@@ -1339,13 +1353,19 @@ public class TalkRpcHandler implements ITalkRpcServer {
         groupAdmin.setGroupId(group.getGroupId());
         groupAdmin.setRole(TalkGroupMember.ROLE_ADMIN);
         groupAdmin.setState(TalkGroupMember.STATE_JOINED);
+        if (!group.getState().equals(TalkGroup.STATE_EXISTS)) {
+            group.setState(TalkGroup.STATE_EXISTS);
+            mDatabase.saveGroup(group);
+        }
         changedGroup(group);
         changedGroupMember(groupAdmin);
 
         environment.setGroupId(group.getGroupId());
         environment.setClientId(mConnection.getClientId());
         mDatabase.saveEnvironment(environment);
+
         touchGroupMemberPresences(group.getGroupId());
+        mServer.getUpdateAgent().requestGroupUpdate(group.getGroupId(), mConnection.getClientId());
         mServer.getUpdateAgent().requestPresenceUpdateForGroup(mConnection.getClientId(), group.getGroupId());
         mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId());
     }
@@ -1375,9 +1395,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
         logCall("updateEnvironment(clientId: '" + mConnection.getClientId() + "')");
         requireIdentification();
         environment.setTimeReceived(new Date());
+        environment.setClientId(mConnection.getClientId());
+
         List<TalkEnvironment> matching = mDatabase.findEnvironmentsMatching(environment);
         TalkEnvironment myEnvironment = mDatabase.findEnvironmentByClientId(mConnection.getClientId());
         ArrayList<Pair<String, Integer>> environmentsPerGroup = findGroupSortedBySize(matching);
+
         for (TalkEnvironment te : matching) {
             if (te.getClientId().equals(mConnection.getClientId())) {
                 // there is already a matching environment for us
@@ -1397,7 +1420,17 @@ public class TalkRpcHandler implements ITalkRpcServer {
                             }
                         }
                         // group membership has not changed, we are still fine
-                        // just update enviroment
+                        // just update environment
+                        if (environment.getGroupId() == null) {
+                            // first environment update without a group known to the client, but group exists on server, probably unclean connection shutdown
+                            environment.setGroupId(myEnvironment.getGroupId());
+                        } else if (!environment.getGroupId().equals(myEnvironment.getGroupId())) {
+                            // matching environment found, but group id differs from old environment, which must not happen - client wants to gain membership to a group it is not entitled to
+                            // lets destroy all environments
+                            destroyEnvironment(te);
+                            destroyEnvironment(myEnvironment);
+                            throw new RuntimeException("illegal group id in environment");
+                        }
                         myEnvironment.updateWith(environment);
                         mDatabase.saveEnvironment(myEnvironment);
                         return myGroup.getGroupId();
@@ -1439,10 +1472,15 @@ public class TalkRpcHandler implements ITalkRpcServer {
             changedGroupMember(member);
             String[] states = {TalkGroupMember.STATE_JOINED};
             List<TalkGroupMember> membersLeft = mDatabase.findGroupMembersByIdWithStates(environment.getGroupId(), states);
+            logCall("destroyEnvironment: membersLeft: " + membersLeft.size());
             if (membersLeft.size() == 0) {
+                logCall("destroyEnvironment: last member left, removing group "+group.getGroupId());
                 // last member removed, remove group
                 group.setState(TalkGroup.STATE_NONE);
                 changedGroup(group);
+                // explicitly request a group updated notification for the last removed client because
+                // calling changedGroup only will not send out "groupUpdated" notifications to members with state "none"
+                mServer.getUpdateAgent().requestGroupUpdate(group.getGroupId(),environment.getClientId());
             }
         }
         mDatabase.deleteEnvironment(environment);
