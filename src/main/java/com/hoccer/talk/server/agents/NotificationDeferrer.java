@@ -53,6 +53,7 @@ public class NotificationDeferrer {
 
     protected void setRequestContext(ThreadLocal<ArrayList<Runnable>> context) {
         LOG.trace("Setting context.");
+
         if (context.get() != null) {
             LOG.warn("context still contains notification generators! Flushing(executing) them now.");
             flushContext(context);

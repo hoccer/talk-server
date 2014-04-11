@@ -52,6 +52,7 @@ public class TalkServerConfiguration {
     private int mCleanupAllDeliveriesDelay = 3600; // 1 hour //600;
     private int mCleanupAllDeliveriesInterval = 60 * 60 * 6; // every 6 hours //900;
 
+
     private String mFilecacheControlUrl = "http://localhost:8081/control";
     private String mFilecacheUploadBase = "http://localhost:8081/upload/";
     private String mFilecacheDownloadBase = "http://localhost:8081/download/";
@@ -65,12 +66,12 @@ public class TalkServerConfiguration {
         LOG.info("Current configuration:" +
                         "\n - WebServer Configuration:" +
                         MessageFormat.format("\n   * listen address:                     ''{0}''", mListenAddress) +
-                        MessageFormat.format("\n   * listen port:                        ''{0}''", mListenPort) +
+                        MessageFormat.format("\n   * listen port:                        ''{0}''", Long.toString(mListenPort)) +
                         "\n - Database Configuration:" +
                         MessageFormat.format("\n   * database backend:                   ''{0}''", mDatabaseBackend) +
                         MessageFormat.format("\n   * jongo database:                     ''{0}''", mJongoDb) +
                         "\n - Push Configuration:" +
-                        MessageFormat.format("\n   * push rate limit:                    ''{0}''", mPushRateLimit) +
+                        MessageFormat.format("\n   * push rate limit:                    ''{0}''", Long.toString(mPushRateLimit)) +
                         "\n   - APNS:" +
                         MessageFormat.format("\n     * apns enabled:                     ''{0}''", mApnsEnabled) +
                         MessageFormat.format("\n     * apns sandbox:                     ''{0}''", mApnsSandbox) +
@@ -82,10 +83,10 @@ public class TalkServerConfiguration {
                         MessageFormat.format("\n     * gcm enabled:                      ''{0}''", mGcmEnabled) +
                         MessageFormat.format("\n     * gcm api key (length):             ''{0}''", mGcmApiKey.length()) +
                         "\n - Cleaning Agent Configuration:" +
-                        MessageFormat.format("\n   * clients cleanup delay (in s):       ''{0}''", mCleanupAllClientsDelay) +
-                        MessageFormat.format("\n   * clients cleanup interval (in s):    ''{0}''", mCleanupAllClientsInterval) +
-                        MessageFormat.format("\n   * deliveries cleanup delay (in s):    ''{0}''", mCleanupAllDeliveriesDelay) +
-                        MessageFormat.format("\n   * deliveries cleanup interval (in s): ''{0}''", mCleanupAllDeliveriesInterval) +
+                        MessageFormat.format("\n   * clients cleanup delay (in s):       ''{0}''", Long.toString(mCleanupAllClientsDelay)) +
+                        MessageFormat.format("\n   * clients cleanup interval (in s):    ''{0}''", Long.toString(mCleanupAllClientsInterval)) +
+                        MessageFormat.format("\n   * deliveries cleanup delay (in s):    ''{0}''", Long.toString(mCleanupAllDeliveriesDelay)) +
+                        MessageFormat.format("\n   * deliveries cleanup interval (in s): ''{0}''", Long.toString(mCleanupAllDeliveriesInterval)) +
                         "\n - Filecache Configuration:" +
                         MessageFormat.format("\n   * filecache control url:              ''{0}''", mFilecacheControlUrl) +
                         MessageFormat.format("\n   * filecache upload base url:          ''{0}''", mFilecacheDownloadBase) +
@@ -230,6 +231,18 @@ public class TalkServerConfiguration {
 
     public String getFilecacheDownloadBase() {
         return mFilecacheDownloadBase;
+    }
+
+    public void setFilecacheControlUrl(String mFilecacheControlUrl) {
+        this.mFilecacheControlUrl = mFilecacheControlUrl;
+    }
+
+    public void setFilecacheUploadBase(String mFilecacheUploadBase) {
+        this.mFilecacheUploadBase = mFilecacheUploadBase;
+    }
+
+    public void setFilecacheDownloadBase(String mFilecacheDownloadBase) {
+        this.mFilecacheDownloadBase = mFilecacheDownloadBase;
     }
 
     public String getSupportTag() {

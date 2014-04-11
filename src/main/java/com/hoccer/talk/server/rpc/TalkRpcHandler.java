@@ -101,7 +101,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
             if (tag.equals(mServer.getConfiguration().getSupportTag())) {
                 mConnection.activateSupportMode();
             } else {
-                LOG.info("[connectionId: '" + mConnection.getConnectionId() + "'] sent invalid support tag \"" + tag + "\"");
+                LOG.info("[connectionId: '" + mConnection.getConnectionId() + "'] sent invalid support tag '" + tag + "'.");
+            }
+        } else {
+            if (mConnection.isSupportMode()) {
+                mConnection.deactivateSupportMode();
             }
         }
 
@@ -765,110 +769,143 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return deliveries;
     }
 
-    private Vector<TalkDelivery> requestOneDelivery(TalkMessage m, TalkDelivery d) {
+    private Vector<TalkDelivery> requestOneDelivery(TalkMessage message, TalkDelivery delivery) {
         Vector<TalkDelivery> result = new Vector<TalkDelivery>();
 
         // get the current date for stamping
         Date currentDate = new Date();
         // who is doing this again?
-        String clientId = mConnection.getClientId();
+        String senderId = mConnection.getClientId();
         // get the receiver
-        String receiverId = d.getReceiverId();
+        String recipientId = delivery.getReceiverId();
 
         // if we don't have a receiver try group delivery
-        if (receiverId == null) {
-            String groupId = d.getGroupId();
-            // if
+        if (recipientId == null) {
+            String groupId = delivery.getGroupId();
+
             if (groupId == null) {
                 LOG.info("delivery rejected: no receiver");
-                d.setState(TalkDelivery.STATE_FAILED);
+                delivery.setState(TalkDelivery.STATE_FAILED);
                 return result;
             }
             // check that group exists
             TalkGroup group = mDatabase.findGroupById(groupId);
             if (group == null) {
                 LOG.info("delivery rejected: no such group");
-                d.setState(TalkDelivery.STATE_FAILED);
+                delivery.setState(TalkDelivery.STATE_FAILED);
                 return result;
             }
             // check that sender is member of group
-            TalkGroupMember clientMember = mDatabase.findGroupMemberForClient(groupId, clientId);
+            TalkGroupMember clientMember = mDatabase.findGroupMemberForClient(groupId, senderId);
             if (clientMember == null || !clientMember.isMember()) {
                 LOG.info("delivery rejected: not a member of group");
-                d.setState(TalkDelivery.STATE_FAILED);
+                delivery.setState(TalkDelivery.STATE_FAILED);
                 return result;
             }
             // deliver to each group member
             List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
             for (TalkGroupMember member : members) {
-                if (member.getClientId().equals(clientId)) {
+                if (member.getClientId().equals(senderId)) {
                     continue;
                 }
                 if (!member.isJoined()) {
                     continue;
                 }
                 if (member.getEncryptedGroupKey() == null) {
-                    LOG.warn("have no group key, discarding group message "+m.getMessageId()+" for client "+clientId+" group "+groupId);
+                    LOG.warn("have no group key, discarding group message "+message.getMessageId()+" for client "+member.getClientId()+" group "+groupId);
                     continue;
                 }
-                if (member.getSharedKeyId() != null && m.getSharedKeyId() != null && !member.getSharedKeyId().equals(m.getSharedKeyId())) {
-                    LOG.warn("message key id and member shared key id mismatch, discarding group message "+m.getMessageId()+" for client "+clientId+" group "+groupId);
+                if (member.getSharedKeyId() != null && message.getSharedKeyId() != null && !member.getSharedKeyId().equals(message.getSharedKeyId())) {
+                    LOG.warn("message key id and member shared key id mismatch, discarding group message "+message.getMessageId()+" for client "+member.getClientId()+" group "+groupId);
                     continue;
                 }
-                LOG.info("delivering message " + m.getMessageId() + " for client " + clientId + " group " + groupId + " sharedKeyId=" + m.getSharedKeyId() + ", member sharedKeyId=" + member.getSharedKeyId());
+                LOG.info("delivering message " + message.getMessageId() + " for client " + member.getClientId() + " group " + groupId + " sharedKeyId=" + message.getSharedKeyId() + ", member sharedKeyId=" + member.getSharedKeyId());
 
                 TalkDelivery memberDelivery = new TalkDelivery();
-                memberDelivery.setMessageId(m.getMessageId());
-                memberDelivery.setMessageTag(d.getMessageTag());
+                memberDelivery.setMessageId(message.getMessageId());
+                memberDelivery.setMessageTag(delivery.getMessageTag());
                 memberDelivery.setGroupId(groupId);
-                memberDelivery.setSenderId(clientId);
+                memberDelivery.setSenderId(senderId);
                 memberDelivery.setKeyId(member.getMemberKeyId());
                 memberDelivery.setKeyCiphertext(member.getEncryptedGroupKey());
                 memberDelivery.setReceiverId(member.getClientId());
                 memberDelivery.setState(TalkDelivery.STATE_DELIVERING);
                 memberDelivery.setTimeAccepted(currentDate);
 
-                boolean success = performOneDelivery(m, memberDelivery);
+                boolean success = performOneDelivery(message, memberDelivery);
                 if (success) {
                     result.add(memberDelivery);
                     // group deliveries are confirmed from acceptance
-                    d.setState(TalkDelivery.STATE_CONFIRMED);
+                    delivery.setState(TalkDelivery.STATE_CONFIRMED);
                     // set delivery timestamps
-                    d.setTimeAccepted(currentDate);
-                    d.setTimeChanged(currentDate);
+                    delivery.setTimeAccepted(currentDate);
+                    delivery.setTimeChanged(currentDate);
                 }
             }
-
         } else {
-            // find relationship between clients, if there is one
-            TalkRelationship relationship = mDatabase.findRelationshipBetween(receiverId, clientId);
-
-            // reject if there is no relationship
-            if (relationship == null) {
-                LOG.info("delivery rejected: client '" + receiverId + "' has no relationship with sender");
-                d.setState(TalkDelivery.STATE_FAILED);
-                return result;
-            }
-
-            // reject unless befriended
-            if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
-                LOG.info("delivery rejected: client '" + receiverId
-                        + "' is not a friend of sender (relationship is '" + relationship.getState() + "')");
-                d.setState(TalkDelivery.STATE_FAILED);
-                return result;
-            }
-
-            boolean success = performOneDelivery(m, d);
-            if (success) {
-                result.add(d);
-                // mark delivery as in progress
-                d.setState(TalkDelivery.STATE_DELIVERING);
-                // set delivery timestamps
-                d.setTimeAccepted(currentDate);
-                d.setTimeChanged(currentDate);
+            // Check if client is friend via relationship OR they know each other through a shared group in which both are "joined" members.
+            if (areBefriended(senderId, recipientId) ||
+                areRelatedViaGroupMembership(senderId, recipientId)) {
+                if (performOneDelivery(message, delivery)) {
+                    result.add(delivery);
+                    // mark delivery as in progress
+                    delivery.setState(TalkDelivery.STATE_DELIVERING);
+                    // set delivery timestamps
+                    delivery.setTimeAccepted(currentDate);
+                    delivery.setTimeChanged(currentDate);
+                }
+            } else {
+                LOG.info("Message delivery rejected since no relationship via group or friendship exists. (" + senderId + ", " + recipientId + ")");
+                delivery.setState(TalkDelivery.STATE_FAILED);
             }
         }
         return result;
+    }
+
+    private boolean areRelatedViaGroupMembership(String clientId1, String clientId2) {
+        // TODO: only allow this for joined members?!
+
+        final List<TalkGroupMember> client1Groupmembers = mDatabase.findGroupMembersForClient(clientId1);
+        final List<String> client1GroupIds = new ArrayList<String>();
+        for (TalkGroupMember groupMember : client1Groupmembers) {
+            LOG.debug("  * client1 membership state in group: '" + groupMember.getGroupId() + "':" + groupMember.getState());
+            if (groupMember.isJoined()) {
+                client1GroupIds.add(groupMember.getGroupId());
+            }
+        }
+
+        final List<TalkGroupMember> client2Groupmembers = mDatabase.findGroupMembersForClient(clientId2);
+        for (TalkGroupMember groupMember : client2Groupmembers) {
+            LOG.debug("  * client2 membership state in group: '" + groupMember.getGroupId() + "':" + groupMember.getState());
+            if (client1GroupIds.indexOf(groupMember.getGroupId()) != -1 &&
+                groupMember.isJoined()) {
+                LOG.info("clients '" + clientId1 + "' and '" + clientId2 + "' are both joined in group! (groupId: '" + groupMember.getGroupId() + "')");
+                return true;
+            }
+        }
+
+        LOG.info("clients '" + clientId1 + "' and '" + clientId2 + "' are NOT both joined in the same group");
+        return false;
+    }
+
+    private boolean areBefriended(String clientId1, String clientId2) {
+        final TalkRelationship relationship = mDatabase.findRelationshipBetween(clientId1, clientId2);
+
+        // reject if there is no relationship
+        if (relationship == null) {
+            LOG.info("clients '" + clientId1 + "' and '" + clientId2 + "' have no relationship with each other");
+            return false;
+        }
+
+        // reject unless befriended
+        if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
+            LOG.info("clients '" + clientId1 + "' and '" + clientId2 +
+                     "' are not friends (relationship is '" + relationship.getState() + "')");
+            return false;
+        }
+
+        LOG.info("clients '" + clientId1 + "' and '" + clientId2 + "' are friends!");
+        return true;
     }
 
     private boolean performOneDelivery(TalkMessage m, TalkDelivery d) {
@@ -999,7 +1036,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroupName(String groupId, String name) {
         requireIdentification();
-        requiredGroupAdmin(groupId);
+        requireGroupAdmin(groupId);
+        requireNotNearbyGroupType(groupId);
         logCall("updateGroupName(groupId: '" + groupId + "', name: '" + name + "')");
         TalkGroup targetGroup = mDatabase.findGroupById(groupId);
         targetGroup.setGroupName(name);
@@ -1009,7 +1047,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroupAvatar(String groupId, String avatarUrl) {
         requireIdentification();
-        requiredGroupAdmin(groupId);
+        requireGroupAdmin(groupId);
+        requireNotNearbyGroupType(groupId);
         logCall("updateGroupAvatar(groupId: '" + groupId + "', avatarUrl: '" + avatarUrl + "')");
         TalkGroup targetGroup = mDatabase.findGroupById(groupId);
         targetGroup.setGroupAvatarUrl(avatarUrl);
@@ -1019,7 +1058,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroup(TalkGroup group) {
         requireIdentification();
-        requiredGroupAdmin(group.getGroupId());
+        requireGroupAdmin(group.getGroupId());
         logCall("updateGroup(groupId: '" + group.getGroupId() + "')");
         TalkGroup targetGroup = mDatabase.findGroupById(group.getGroupId());
         targetGroup.setGroupName(group.getGroupName());
@@ -1030,7 +1069,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void deleteGroup(String groupId) {
         requireIdentification();
-        requiredGroupAdmin(groupId);
+        requireGroupAdmin(groupId);
         logCall("deleteGroup(groupId: '" + groupId + "')");
 
         TalkGroup group = mDatabase.findGroupById(groupId);
@@ -1069,8 +1108,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void inviteGroupMember(String groupId, String clientId) {
         requireIdentification();
-        requiredGroupAdmin(groupId);
+        requireGroupAdmin(groupId);
+        requireNotNearbyGroupType(groupId);
         logCall("inviteGroupMember(groupId: '" + groupId + "' / clientId: '" + clientId + "')");
+
         // check that the client exists
         TalkClient client = mDatabase.findClientById(clientId);
         if (client == null) {
@@ -1138,8 +1179,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void removeGroupMember(String groupId, String clientId) {
         requireIdentification();
+        requireGroupAdmin(groupId);
+        requireNotNearbyGroupType(groupId);
         logCall("removeGroupMember(groupId: '" + groupId + "' / clientId: '" + clientId + "')");
-        requiredGroupAdmin(groupId);
+
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
         if (targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
@@ -1154,8 +1197,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroupRole(String groupId, String clientId, String role) {
         requireIdentification();
+        requireGroupAdmin(groupId);
         logCall("updateGroupRole(groupId: '" + groupId + "' / clientId: '" + clientId + "', role: '" + role + "')");
-        requiredGroupAdmin(groupId);
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
         if (targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
@@ -1252,8 +1295,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void updateGroupMember(TalkGroupMember member) {
         requireIdentification();
+        requireGroupAdmin(member.getGroupId());
         logCall("updateGroupMember(groupId: '" + member.getGroupId() + "' / clientId: '" + member.getClientId() + "')");
-        requiredGroupAdmin(member.getGroupId());
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(member.getGroupId(), member.getClientId());
         if (targetMember == null) {
             throw new RuntimeException("Client is not a member of group");
@@ -1266,8 +1309,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public TalkGroupMember[] getGroupMembers(String groupId, Date lastKnown) {
         requireIdentification();
-        logCall("getGroupMembers(groupId: '" + groupId + "' / lastKnown: '" + lastKnown + "')");
         requiredGroupInvitedOrMember(groupId);
+        logCall("getGroupMembers(groupId: '" + groupId + "' / lastKnown: '" + lastKnown + "')");
 
         List<TalkGroupMember> members = mDatabase.findGroupMembersByIdChangedAfter(groupId, lastKnown);
         TalkGroupMember[] res = new TalkGroupMember[members.size()];
@@ -1289,10 +1332,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mServer.getUpdateAgent().requestGroupMembershipUpdate(member.getGroupId(), member.getClientId());
     }
 
-    private TalkGroupMember requiredGroupAdmin(String groupId) {
+    private void requireGroupAdmin(String groupId) {
         TalkGroupMember gm = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
         if (gm != null && gm.isAdmin()) {
-            return gm;
+            return;
         }
         throw new RuntimeException("Client is not an admin in group with id: '" + groupId + "'");
     }
@@ -1303,6 +1346,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
             return gm;
         }
         throw new RuntimeException("Client is not an member in group with id: '" + groupId + "'");
+    }
+
+    private void requireNotNearbyGroupType(String groupId) {
+        // perspectively we should evolve a permission model to enable checking of WHO is allowed to do WHAT in which CONTEXT
+        // e.g. client (permission depending on role) inviteGroupMembers to Group (permission depending on type)
+        // for now we just check for nearby groups...
+        TalkGroup group = mDatabase.findGroupById(groupId);
+        if (group.isTypeNearby()) {
+            throw new RuntimeException("Group type is: nearby. not allowed.");
+        }
     }
 
     @Override
