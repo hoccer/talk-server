@@ -1136,6 +1136,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             // notify various things
             touchGroupMemberPresences(groupId);
             mServer.getUpdateAgent().requestGroupUpdate(groupId, clientId);
+            mServer.getUpdateAgent().requestGroupMembershipUpdatesForNewMember(groupId, clientId);
             mServer.getUpdateAgent().requestPresenceUpdateForGroup(clientId, groupId);
             mServer.getUpdateAgent().requestPresenceUpdate(clientId);
         } else {
@@ -1330,7 +1331,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private void changedGroupMember(TalkGroupMember member) {
         member.setLastChanged(new Date());
         mDatabase.saveGroupMember(member);
-        mServer.getUpdateAgent().requestGroupMembershipUpdate(member.getGroupId(), member.getClientId(),false);
+        mServer.getUpdateAgent().requestGroupMembershipUpdate(member.getGroupId(), member.getClientId());
     }
 
     private void requireGroupAdmin(String groupId) {
@@ -1420,6 +1421,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         touchGroupMemberPresences(group.getGroupId());
         mServer.getUpdateAgent().requestGroupUpdate(group.getGroupId(), mConnection.getClientId());
+        mServer.getUpdateAgent().requestGroupMembershipUpdatesForNewMember(group.getGroupId(), mConnection.getClientId());
         mServer.getUpdateAgent().requestPresenceUpdateForGroup(mConnection.getClientId(), group.getGroupId());
         mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId());
     }
