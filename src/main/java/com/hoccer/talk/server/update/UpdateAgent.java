@@ -253,7 +253,7 @@ public class UpdateAgent extends NotificationDeferrer {
         queueOrExecute(context, notification);
     }
 
-    public void requestGroupMembershipUpdate(final String groupId, final String clientId, final boolean forceAll) {
+    public void requestGroupMembershipUpdate(final String groupId, final String clientId) {
         LOG.debug("requestGroupMembershipUpdate for group " + groupId + " client " + clientId);
         Runnable notificationGenerator = new Runnable() {
             @Override
@@ -266,7 +266,7 @@ public class UpdateAgent extends NotificationDeferrer {
                 List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                 LOG.debug("requestGroupMembershipUpdate found "+members.size()+" members");
                 for (TalkGroupMember member : members) {
-                    if (forceAll || member.isJoined() || member.isInvited() || member.isGroupRemoved() || member.getClientId().equals(clientId)) {
+                    if (member.isJoined() || member.isInvited() || member.isGroupRemoved() || member.getClientId().equals(clientId)) {
                         TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
                         if (connection == null || !connection.isConnected()) {
                             LOG.debug("requestGroupMembershipUpdate - refrain from updating not connected member client "+ member.getClientId());
@@ -280,13 +280,52 @@ public class UpdateAgent extends NotificationDeferrer {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                    } else {
+                        LOG.debug("requestGroupMembershipUpdate - not updating client "+ member.getClientId()+", state="+member.getState()+", self="+member.getClientId().equals(clientId));
                     }
-                    LOG.debug("requestGroupMembershipUpdate - not updating client "+ member.getClientId()+", state="+member.getState()+", self="+member.getClientId().equals(clientId)+", forceAll="+forceAll);
                 }
             }
         };
         queueOrExecute(context, notificationGenerator);
     }
+
+    // call once for a new group member, will send out groupMemberUpdated-Notifications to new meber with all other group members
+    public void requestGroupMembershipUpdatesForNewMember(final String groupId, final String newMemberClientId) {
+        LOG.debug("requestGroupMembershipUpdateForNewMember for group " + groupId + " newMemberClientId " + newMemberClientId);
+        Runnable notificationGenerator = new Runnable() {
+            @Override
+            public void run() {
+                TalkGroupMember newMember = mDatabase.findGroupMemberForClient(groupId, newMemberClientId);
+                if (newMember == null) {
+                    LOG.debug("requestGroupMembershipUpdateForNewMember can't find newMember, is null");
+                    return;
+                }
+                List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
+                LOG.debug("requestGroupMembershipUpdateForNewMember found "+members.size()+" members");
+                TalkRpcConnection connection = mServer.getClientConnection(newMember.getClientId());
+                if (connection == null || !connection.isConnected()) {
+                    LOG.debug("requestGroupMembershipUpdateForNewMember - new client no longer connected "+ newMember.getClientId());
+                    return;
+                }
+                // Calling Client via RPC
+                ITalkRpcClient rpc = connection.getClientRpc();
+                for (TalkGroupMember member : members) {
+                    // do not send out updates for own membership or dead members
+                    if (!member.getClientId().equals(newMemberClientId) && (member.isJoined() || member.isInvited())) {
+                        try {
+                            rpc.groupMemberUpdated(member);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        LOG.debug("requestGroupMembershipUpdateForNewMember - not updating with member "+ member.getClientId()+", state="+member.getState());
+                    }
+                }
+            }
+        };
+        queueOrExecute(context, notificationGenerator);
+    }
+
 
     public void setRequestContext() {
         setRequestContext(context);
