@@ -253,19 +253,23 @@ public class UpdateAgent extends NotificationDeferrer {
         queueOrExecute(context, notification);
     }
 
-    public void requestGroupMembershipUpdate(final String groupId, final String clientId) {
+    public void requestGroupMembershipUpdate(final String groupId, final String clientId, final boolean forceAll) {
+        LOG.debug("requestGroupMembershipUpdate for group " + groupId + " client " + clientId);
         Runnable notificationGenerator = new Runnable() {
             @Override
             public void run() {
                 TalkGroupMember updatedMember = mDatabase.findGroupMemberForClient(groupId, clientId);
                 if (updatedMember == null) {
+                    LOG.debug("requestGroupMembershipUpdate updatedMember is null");
                     return;
                 }
                 List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
+                LOG.debug("requestGroupMembershipUpdate found "+members.size()+" members");
                 for (TalkGroupMember member : members) {
-                    if (member.isJoined() || member.isInvited() || member.isGroupRemoved() || member.getClientId().equals(clientId)) {
+                    if (forceAll || member.isJoined() || member.isInvited() || member.isGroupRemoved() || member.getClientId().equals(clientId)) {
                         TalkRpcConnection connection = mServer.getClientConnection(member.getClientId());
                         if (connection == null || !connection.isConnected()) {
+                            LOG.debug("requestGroupMembershipUpdate - refrain from updating not connected member client "+ member.getClientId());
                             continue;
                         }
 
@@ -277,6 +281,7 @@ public class UpdateAgent extends NotificationDeferrer {
                             e.printStackTrace();
                         }
                     }
+                    LOG.debug("requestGroupMembershipUpdate - not updating client "+ member.getClientId()+", state="+member.getState()+", self="+member.getClientId().equals(clientId)+", forceAll="+forceAll);
                 }
             }
         };
