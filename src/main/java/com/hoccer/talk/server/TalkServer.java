@@ -22,6 +22,7 @@ import com.hoccer.talk.server.filecache.FilecacheClient;
 import com.hoccer.talk.server.ping.PingAgent;
 import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
+import com.hoccer.talk.server.rpc.TalkRpcHandler;
 import com.hoccer.talk.server.update.UpdateAgent;
 import de.undercouch.bson4jackson.BsonFactory;
 
@@ -302,6 +303,7 @@ public class TalkServer {
             mConnectionsByClientId.remove(clientId);
             // update presence for connection status change
             mUpdateAgent.requestPresenceUpdate(clientId);
+            connection.getServerHandler().destroyEnvironment();
         }
         // disconnect if we still are
         if (connection.isConnected()) {

@@ -7,6 +7,7 @@ import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.rpc.ITalkRpcClient;
+import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServer;
 import org.apache.log4j.Logger;
@@ -150,6 +151,13 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
         return mClientRpc;
     }
 
+    /**
+     *  returns the connections server call handler
+     */
+    public ITalkRpcServer getServerHandler() {
+        return (ITalkRpcServer)mConnection.getServerHandler();
+
+    }
     /**
      * Returns the remote network address of the client
      */
