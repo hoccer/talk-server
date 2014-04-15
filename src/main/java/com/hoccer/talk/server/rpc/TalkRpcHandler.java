@@ -1543,12 +1543,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
-    // TODO: possibly remove parameters or do something with them
-    public void destroyEnvironment(String clientId, String groupId) {
+    public void destroyEnvironment() {
         logCall("destroyEnvironment(clientId: '" + mConnection.getClientId() + "')");
         requireIdentification();
-        TalkEnvironment myEnvironment = mDatabase.findEnvironmentByClientId(mConnection.getClientId());
-        if (myEnvironment != null) {
+        TalkEnvironment myEnvironment;
+        while ((myEnvironment = mDatabase.findEnvironmentByClientId(mConnection.getClientId())) != null) {
             destroyEnvironment(myEnvironment);
         }
     }
