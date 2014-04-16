@@ -1347,7 +1347,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         if (gm != null && (gm.isInvited() || gm.isMember())) {
             return gm;
         }
-        throw new RuntimeException("Client is not an member in group with id: '" + groupId + "'");
+        throw new RuntimeException("Client is not a member in group with id: '" + groupId + "'");
     }
 
     private void requireNotNearbyGroupType(String groupId) {
