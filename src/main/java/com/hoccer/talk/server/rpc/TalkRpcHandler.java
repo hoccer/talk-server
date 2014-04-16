@@ -1087,6 +1087,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
         for (TalkGroupMember member : members) {
             if (member.isInvited() || member.isJoined()) {
                 member.setState(TalkGroupMember.STATE_GROUP_REMOVED);
+
+                // TODO: check if degrade role of admins is advisable
+                /*if (member.isAdmin()) {
+                    member.setRole(TalkGroupMember.ROLE_MEMBER);
+                }*/
                 changedGroupMember(member);
             }
         }
