@@ -96,9 +96,11 @@ public interface ITalkServerDatabase {
 
     public List<TalkGroupMember> findGroupMembersByIdWithStates(String groupId, String[] states);
 
+    public List<TalkGroupMember> findGroupMembersByIdChangedAfter(String groupId, Date lastKnown);
+
     public List<TalkGroupMember> findGroupMembersForClient(String clientId);
 
-    public List<TalkGroupMember> findGroupMembersByIdChangedAfter(String groupId, Date lastKnown);
+    public List<TalkGroupMember> findGroupMembersForClientWithStates(String clientId, String[] states);
 
     public TalkGroupMember findGroupMemberForClient(String groupId, String clientId);
 

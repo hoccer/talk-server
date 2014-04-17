@@ -440,17 +440,20 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public List<TalkGroup> findGroupsByClientIdChangedAfter(String clientId, Date lastKnown) {
-        // XXX dirty hack / indirect query
+        // indirect query
         List<TalkGroup> res = new ArrayList<TalkGroup>();
-        List<TalkGroupMember> members = findGroupMembersForClient(clientId);
+        //List<TalkGroupMember> members = findGroupMembersForClient(clientId);
+        List<TalkGroupMember> members = findGroupMembersByIdWithStates(clientId, new String[]{TalkGroupMember.STATE_JOINED, TalkGroupMember.STATE_INVITED});
         for (TalkGroupMember member : members) {
-            // String memberState = member.getState();
-            if (member.isMember() || member.isInvited()) {
+            // if (member.isMember() || member.isInvited()) {
                 TalkGroup group = findGroupById(member.getGroupId());
-                //if(group.getLastChanged().after(lastKnown)) { // TODO: fix this
-                res.add(group);
-                //}
-            }
+                if (group == null) {
+                    throw new RuntimeException("Internal inconsistency, could not find group "+member.getGroupId()+ "for member client "+clientId);
+                }
+                if(group.getLastChanged() == null || lastKnown == null || lastKnown.getTime() == 0 || group.getLastChanged().after(lastKnown)) {
+                    res.add(group);
+                }
+            // }
         }
         return res;
     }
@@ -472,6 +475,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         return res;
     }
 
+    @Override
     public List<TalkGroupMember> findGroupMembersByIdWithStates(String groupId, String[] states) {
         List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
         Iterator<TalkGroupMember> it =
@@ -483,6 +487,17 @@ public class JongoDatabase implements ITalkServerDatabase {
         return res;
     }
 
+    @Override
+    public List<TalkGroupMember> findGroupMembersByIdChangedAfter(String groupId, Date lastKnown) {
+        List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
+        Iterator<TalkGroupMember> it =
+                mGroupMembers.find("{groupId:#,lastChanged: {$gt:#}}", groupId, lastKnown)
+                        .as(TalkGroupMember.class).iterator();
+        while (it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
 
     @Override
     public List<TalkGroupMember> findGroupMembersForClient(String clientId) {
@@ -497,10 +512,10 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
-    public List<TalkGroupMember> findGroupMembersByIdChangedAfter(String groupId, Date lastKnown) {
+    public List<TalkGroupMember> findGroupMembersForClientWithStates(String clientId, String[] states) {
         List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
         Iterator<TalkGroupMember> it =
-                mGroupMembers.find("{groupId:#,lastChanged: {$gt:#}}", groupId, lastKnown)
+                mGroupMembers.find("{clientId:#, state: { $in: # }}", clientId, states)
                         .as(TalkGroupMember.class).iterator();
         while (it.hasNext()) {
             res.add(it.next());

@@ -98,7 +98,7 @@ public class TalkServerConfiguration {
                         MessageFormat.format("\n   * CleanupAgent  Threads Poolsize:     ''{0}''", THREADS_CLEANING) +
                         MessageFormat.format("\n   * PushAgent     Threads Poolsize:     ''{0}''", THREADS_PUSH) +
                         MessageFormat.format("\n   * PingAgent     Threads Poolsize:     ''{0}''", THREADS_PING) +
-                        MessageFormat.format("\n   * UpdateAgebt   Threads Poolsize:     ''{0}''", THREADS_UPDATE)
+                        MessageFormat.format("\n   * UpdateAgent   Threads Poolsize:     ''{0}''", THREADS_UPDATE)
         );
     }
 

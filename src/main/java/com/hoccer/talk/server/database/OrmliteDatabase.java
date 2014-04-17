@@ -607,6 +607,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkGroupMember> findGroupMembersForClientWithStates(String clientId, String[] states) {
+        return null;
+    }
+
+    @Override
     public boolean ping() {
         // TODO: implement me properly!
         return false;
