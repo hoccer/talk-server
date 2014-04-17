@@ -124,6 +124,13 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     }
 
     /**
+     * Indicate if the client was logged in before the connection was closed
+     */
+    public boolean wasLoggedIn() {
+        return mTalkClient != null;
+    }
+
+    /**
      * Returns the logged-in client or null
      *
      * @return TalkClient client

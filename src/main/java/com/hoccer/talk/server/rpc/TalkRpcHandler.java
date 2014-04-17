@@ -86,6 +86,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
     }
 
+    private void requirePastIdentification() {
+        if (!mConnection.wasLoggedIn()) {
+            throw new RuntimeException("Was not logged in");
+        }
+    }
+
     private void logCall(String message) {
         if (TalkServerConfiguration.LOG_ALL_CALLS || mConnection.isSupportMode()) {
             LOG.info("[connectionId: '" + mConnection.getConnectionId() + "'] " + message);
@@ -1561,7 +1567,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void destroyEnvironment(String type) {
         logCall("destroyEnvironment(clientId: '" + mConnection.getClientId() + "')");
-        requireIdentification();
+        requirePastIdentification();
 
         if (type == null) {
             LOG.warn("destroyEnvironment: no environment type, defaulting to nearby. Please fix client");
