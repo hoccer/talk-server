@@ -108,7 +108,7 @@ public interface ITalkServerDatabase {
 
     public void saveEnvironment(TalkEnvironment environment);
 
-    public TalkEnvironment findEnvironmentByClientId(String clientId);
+    public TalkEnvironment findEnvironmentByClientId(String type, String clientId);
 
     public List<TalkEnvironment> findEnvironmentsForGroup(String groupId);
 

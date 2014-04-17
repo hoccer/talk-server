@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.model.TalkEnvironment;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.cleaning.CleaningAgent;
 import com.hoccer.talk.server.database.DatabaseHealthCheck;
@@ -303,7 +304,7 @@ public class TalkServer {
             mConnectionsByClientId.remove(clientId);
             // update presence for connection status change
             mUpdateAgent.requestPresenceUpdate(clientId);
-            connection.getServerHandler().destroyEnvironment();
+            connection.getServerHandler().destroyEnvironment(TalkEnvironment.TYPE_NEARBY);
         }
         // disconnect if we still are
         if (connection.isConnected()) {

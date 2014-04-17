@@ -588,7 +588,7 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     }
 
     @Override
-    public TalkEnvironment findEnvironmentByClientId(String clientId) {
+    public TalkEnvironment findEnvironmentByClientId(String type, String clientId) {
         return null;
     }
 

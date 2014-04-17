@@ -540,8 +540,8 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
-    public TalkEnvironment findEnvironmentByClientId(String clientId) {
-        return mEnvironments.findOne("{clientId:#}", clientId)
+    public TalkEnvironment findEnvironmentByClientId(String type, String clientId) {
+        return mEnvironments.findOne("{type:#, clientId:#}", type, clientId)
                 .as(TalkEnvironment.class);
     }
 
@@ -575,7 +575,7 @@ public class JongoDatabase implements ITalkServerDatabase {
             }
             Double EARTH_RADIUS = 1000.0 * 6371.0;
             Double searchRadiusRad = searchRadius / EARTH_RADIUS;
-            Iterator<TalkEnvironment> it = mEnvironments.find("{ geoLocation : { $geoWithin : { $centerSphere : [ [# , #] , # ] } } }", searchCenter[0], searchCenter[1], searchRadiusRad)
+            Iterator<TalkEnvironment> it = mEnvironments.find("{type:#, geoLocation : { $geoWithin : { $centerSphere : [ [# , #] , # ] } } }", environment.getType(), searchCenter[0], searchCenter[1], searchRadiusRad)
                     .as(TalkEnvironment.class).iterator();
             while (it.hasNext()) {
                 res.add(it.next());
@@ -587,7 +587,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         if (environment.getBssids() != null) {
             List<String> bssids = Arrays.asList(environment.getBssids());
             Iterator<TalkEnvironment> it =
-                    mEnvironments.find("{ bssids :{ $in: # } }", bssids)
+                    mEnvironments.find("{type:#, bssids :{ $in: # } }", environment.getType(), bssids)
                             .as(TalkEnvironment.class).iterator();
             int totalFound = 0;
             int newFound = 0;
@@ -641,7 +641,7 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public void deleteEnvironment(TalkEnvironment environment) {
-        mEnvironments.remove("{clientId:#}", environment.getClientId());
+        mEnvironments.remove("{type:#, clientId:#}", environment.getType(), environment.getClientId());
     }
 
     @Override
