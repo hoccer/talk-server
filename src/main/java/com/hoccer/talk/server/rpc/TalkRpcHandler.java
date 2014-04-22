@@ -9,9 +9,10 @@ import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.srp.SRP6Parameters;
 import com.hoccer.talk.srp.SRP6VerifyingServer;
 import com.hoccer.talk.util.MapUtil;
-import com.sun.tools.javac.util.Pair;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.log4j.Logger;
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.Digest;
@@ -1457,7 +1458,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         ArrayList<Pair<String, Integer>> result = new ArrayList<Pair<String, Integer>>();
         for (Map.Entry<String, Integer> entry : environmentsPerGroup.entrySet()) {
-            result.add(new Pair<String, Integer>(entry.getKey(), entry.getValue()));
+            result.add(new ImmutablePair<String, Integer>(entry.getKey(), entry.getValue()));
         }
         return result;
     }
@@ -1488,11 +1489,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     if (myMemberShip.isAdmin() && myMemberShip.isJoined() && myGroup.getState().equals(TalkGroup.STATE_EXISTS)) {
                         // everything seems fine, but are we in the largest group?
                         if (environmentsPerGroup.size() > 1) {
-                            if (!environmentsPerGroup.get(0).fst.equals(te.getGroupId())) {
+                            if (!environmentsPerGroup.get(0).getLeft().equals(te.getGroupId())) {
                                 // we are not in the largest group, lets move over
                                 destroyEnvironment(myEnvironment);
                                 // join the largest group
-                                TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).fst);
+                                TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).getLeft());
                                 joinGroupWithEnvironment(largestGroup, environment);
                                 return largestGroup.getGroupId();
                             }
@@ -1515,7 +1516,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     }
                     // there is a group and a membership, but they seem to be tombstones, so lets ignore them, just get rid of the bad environment
                     mDatabase.deleteEnvironment(te);
-                    TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).fst);
+                    TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).getLeft());
                     joinGroupWithEnvironment(largestGroup, environment);
                     return largestGroup.getGroupId();
                 }
@@ -1528,7 +1529,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         if (matching.size() > 0) {
             // join the largest group
-            TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).fst);
+            TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).getLeft());
             joinGroupWithEnvironment(largestGroup, environment);
             return largestGroup.getGroupId();
         }
