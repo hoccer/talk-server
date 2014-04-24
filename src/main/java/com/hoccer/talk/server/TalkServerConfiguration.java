@@ -19,8 +19,6 @@ public class TalkServerConfiguration {
 
     private static final Logger LOG = Logger.getLogger(TalkServerConfiguration.class);
 
-    public static final boolean LOG_ALL_CALLS = false;
-
     public static final int THREADS_DELIVERY = 1;
     public static final int THREADS_UPDATE = 1;
     public static final int THREADS_PUSH = 1;
@@ -58,6 +56,8 @@ public class TalkServerConfiguration {
     private String mFilecacheDownloadBase = "http://localhost:8081/download/";
 
     private String mSupportTag = "Oos8guceich2yoox";
+
+    private boolean mLogAllCalls = false;
 
     public TalkServerConfiguration() {
     }
@@ -98,7 +98,9 @@ public class TalkServerConfiguration {
                         MessageFormat.format("\n   * CleanupAgent  Threads Poolsize:     ''{0}''", THREADS_CLEANING) +
                         MessageFormat.format("\n   * PushAgent     Threads Poolsize:     ''{0}''", THREADS_PUSH) +
                         MessageFormat.format("\n   * PingAgent     Threads Poolsize:     ''{0}''", THREADS_PING) +
-                        MessageFormat.format("\n   * UpdateAgent   Threads Poolsize:     ''{0}''", THREADS_UPDATE)
+                        MessageFormat.format("\n   * UpdateAgent   Threads Poolsize:     ''{0}''", THREADS_UPDATE) +
+                        "\n - Debugging:" +
+                        MessageFormat.format("\n   * LogAllCalls:     ''{0}''", mLogAllCalls)
         );
     }
 
@@ -141,6 +143,9 @@ public class TalkServerConfiguration {
 
         // Support
         mSupportTag = properties.getProperty(PROPERTY_PREFIX + ".support.tag", mSupportTag);
+
+        // Debugging
+        mLogAllCalls = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".debug.logallcalls", Boolean.toString(mLogAllCalls)));
     }
 
     public String getListenAddress() {
@@ -249,4 +254,11 @@ public class TalkServerConfiguration {
         return mSupportTag;
     }
 
+    public void setLogAllCalls(boolean flag) {
+        mLogAllCalls = flag;
+    }
+
+    public boolean getLogAllCalls() {
+        return mLogAllCalls;
+    }
 }

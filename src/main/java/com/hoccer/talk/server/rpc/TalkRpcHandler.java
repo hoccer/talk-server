@@ -100,7 +100,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     private void logCall(String message) {
-        if (TalkServerConfiguration.LOG_ALL_CALLS || mConnection.isSupportMode()) {
+        if (mServer.getConfiguration().getLogAllCalls() || mConnection.isSupportMode()) {
             LOG.info("[connectionId: '" + mConnection.getConnectionId() + "'] " + message);
         }
     }

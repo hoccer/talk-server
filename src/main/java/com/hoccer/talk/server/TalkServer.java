@@ -23,7 +23,6 @@ import com.hoccer.talk.server.filecache.FilecacheClient;
 import com.hoccer.talk.server.ping.PingAgent;
 import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
-import com.hoccer.talk.server.rpc.TalkRpcHandler;
 import com.hoccer.talk.server.update.UpdateAgent;
 import de.undercouch.bson4jackson.BsonFactory;
 
@@ -271,6 +270,7 @@ public class TalkServer {
         String clientId = client.getClientId();
         TalkRpcConnection oldConnection = mConnectionsByClientId.get(clientId);
         if (oldConnection != null) {
+            // TODO: LOG this - maybe even on warn level!
             oldConnection.disconnect();
         }
         mConnectionsByClientId.put(clientId, connection);

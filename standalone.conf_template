@@ -34,3 +34,6 @@ log4j.logger.better.jsonrpc.core.JsonRpcConnection = DEBUG
 #support tags
 talk.support.tag = log
 
+#debugging
+talk.debug.logallcalls = true
+
