@@ -43,6 +43,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private final Digest SRP_DIGEST = new SHA256Digest();
     private static final SecureRandom SRP_RANDOM = new SecureRandom();
     private static final SRP6Parameters SRP_PARAMETERS = SRP6Parameters.CONSTANTS_1024;
+    private static final int TOKEN_LIFETIME_MIN = 60; // (seconds) at least 1 minute
+    private static final int TOKEN_LIFETIME_MAX = 7 * 24 * 3600; // (seconds) at most 1 week
+    private static final int TOKEN_MAX_USAGE = 1;
+    private static final int PAIRING_TOKEN_MAX_USAGE_RANGE_MIN = 1;
+    private static final int PAIRING_TOKEN_MAX_USAGE_RANGE_MAX = 50;
+
 
     /**
      * Reference to server
@@ -471,9 +477,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
             throw new RuntimeException("Invalid token purpose");
         }
 
-        // constrain validity period (XXX constants)
-        secondsValid = Math.max(60, secondsValid);            // at least 1 minute
-        secondsValid = Math.min(7 * 24 * 3600, secondsValid); // at most 1 week
+        // constrain validity period
+        secondsValid = Math.max(TOKEN_LIFETIME_MIN, secondsValid);
+        secondsValid = Math.min(TOKEN_LIFETIME_MAX, secondsValid);
 
         // get the current time
         Date time = new Date();
@@ -504,7 +510,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         token.setGenerationTime(time);
         token.setExpiryTime(calendar.getTime());
         token.setUseCount(0);
-        token.setMaxUseCount(1);
+        token.setMaxUseCount(TOKEN_MAX_USAGE);
 
         // save the token
         mDatabase.saveToken(token);
@@ -519,13 +525,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         logCall("generatePairingToken(maxUseCount: '" + maxUseCount + "', secondsValid: '" + secondsValid + "')");
 
-        // constrain validity period (XXX constants)
-        secondsValid = Math.max(60, secondsValid);            // at least 1 minute
-        secondsValid = Math.min(7 * 24 * 3600, secondsValid); // at most 1 week
+        // constrain validity period
+        secondsValid = Math.max(TOKEN_LIFETIME_MIN, secondsValid);
+        secondsValid = Math.min(TOKEN_LIFETIME_MAX, secondsValid);
 
         // constrain use count
-        maxUseCount = Math.max(1, maxUseCount);
-        maxUseCount = Math.min(50, maxUseCount);
+        maxUseCount = Math.max(PAIRING_TOKEN_MAX_USAGE_RANGE_MIN, maxUseCount);
+        maxUseCount = Math.min(PAIRING_TOKEN_MAX_USAGE_RANGE_MAX, maxUseCount);
 
         // get the current time
         Date time = new Date();
