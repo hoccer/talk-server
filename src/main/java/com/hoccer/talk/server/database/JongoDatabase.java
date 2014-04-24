@@ -676,6 +676,8 @@ public class JongoDatabase implements ITalkServerDatabase {
                 if (keySupplierPresence != null &&
                     keySupplierPresence.getConnectionStatus().equals(TalkPresence.CONN_STATUS_OFFLINE)) {
                     LOG.info("group key update lock is active for keymaster '" + group.getKeySupplier() + "' but he is offline - acquiring lock");
+                } else {
+                    return false;
                 }
             } else {
                 // cannot acquire lock
