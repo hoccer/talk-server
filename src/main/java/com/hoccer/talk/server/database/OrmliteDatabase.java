@@ -623,7 +623,7 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     }
 
     @Override
-    public boolean acquireGroupKeyUpdateLock(String groupId) {
+    public boolean acquireGroupKeyUpdateLock(String groupId, String locker) {
         // TODO: implememnt me...
         return false;
     }

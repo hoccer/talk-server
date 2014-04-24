@@ -39,9 +39,12 @@ public class UpdateAgent extends NotificationDeferrer {
         boolean isConnected = mServer.isClientConnected(presence.getClientId());
         String connStatus = isConnected ? TalkPresence.CONN_STATUS_ONLINE
                 : TalkPresence.CONN_STATUS_OFFLINE;
-        // update the presence with the connection status
-        // TODO: also save the potentially changed connection status in the database?
-        presence.setConnectionStatus(connStatus);
+        if (presence.getConnectionStatus() == null ||
+            !presence.getConnectionStatus().equals(connStatus)) {
+            LOG.info("Persisting connection status '" + connStatus + "' for client's presence. ClientId: '" + presence.getClientId() + "'");
+            presence.setConnectionStatus(connStatus);
+            mDatabase.savePresence(presence);
+        }
     }
 
     public void requestPresenceUpdateForGroup(final String clientId, final String groupId) {

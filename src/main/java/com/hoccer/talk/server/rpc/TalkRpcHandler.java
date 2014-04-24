@@ -1279,8 +1279,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         List<String> result = new ArrayList<String>();
 
-        if (mDatabase.acquireGroupKeyUpdateLock(groupId)) { // lock for groupkey update acquired... continuing.
-            try {
+        if (mDatabase.acquireGroupKeyUpdateLock(groupId, mConnection.getClientId())) { // lock for groupkey update acquired... continuing.
+            //try {
                 Date now = new Date();
                 for (int i = 0; i < clientIds.length; ++i) {
                     TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientIds[i]);
@@ -1322,9 +1322,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     result.add(outOfDateMembers.get(i));
                 }
 
-            } finally {
+            /*} finally {
                 mDatabase.releaseGroupKeyUpdateLock(groupId);
-            }
+            }*/
         } else { // No lock for groupkey updating was acquired.
             result.add(selfMember.getClientId());
         }

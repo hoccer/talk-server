@@ -120,7 +120,7 @@ public interface ITalkServerDatabase {
 
     public void reportPing();
 
-    public boolean acquireGroupKeyUpdateLock(String groupId);
+    public boolean acquireGroupKeyUpdateLock(String groupId, String lockingClientId);
 
     public void releaseGroupKeyUpdateLock(String groupId);
 }

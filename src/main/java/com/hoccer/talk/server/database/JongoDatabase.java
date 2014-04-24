@@ -660,7 +660,7 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
-    public boolean acquireGroupKeyUpdateLock(String groupId) {
+    public boolean acquireGroupKeyUpdateLock(String groupId, String lockingClientId) {
         TalkGroup group = findGroupById(groupId);
         Date newLockDate = new Date();
         Date oldLockDate = group.getGroupKeyUpdateInProgress();
@@ -668,6 +668,15 @@ public class JongoDatabase implements ITalkServerDatabase {
         if (oldLockDate != null) { // is already locked
             if ((newLockDate.getTime() - oldLockDate.getTime()) > GROUPKEY_LOCK_RETENTION_TIMEOUT) {
                 LOG.info("group key update lock is too old (> " + GROUPKEY_LOCK_RETENTION_TIMEOUT + "ms) - reacquiring lock...");
+            } else if (group.getKeySupplier() != null &&
+                       group.getKeySupplier().equals(lockingClientId)) {
+                LOG.info("group key update lock is active and set by the same client (keymaster) :'" + lockingClientId + "' - reacquiring lock...");
+            } else if (group.getKeySupplier() != null) {
+                TalkPresence keySupplierPresence = findPresenceForClient(group.getKeySupplier());
+                if (keySupplierPresence != null &&
+                    keySupplierPresence.getConnectionStatus().equals(TalkPresence.CONN_STATUS_OFFLINE)) {
+                    LOG.info("group key update lock is active for keymaster '" + group.getKeySupplier() + "' but he is offline - acquiring lock");
+                }
             } else {
                 // cannot acquire lock
                 return false;
