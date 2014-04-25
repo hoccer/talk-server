@@ -1048,6 +1048,22 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public TalkGroup getGroup(String groupId) {
+        requireIdentification();
+        logCall("getGroup(id: '" + groupId + "')");
+        TalkGroup group = mDatabase.findGroupById(groupId);
+        return group;
+    }
+
+    @Override
+    public TalkGroupMember getGroupMember(String groupId, String clientId) {
+        requireIdentification();
+        logCall("getGroupMember(groupId: '" + groupId + ", clientId:"+clientId+"')");
+        TalkGroupMember groupMember = mDatabase.findGroupMemberForClient(groupId,clientId);
+        return groupMember;
+    }
+
+    @Override
     public void updateGroupName(String groupId, String name) {
         requireIdentification();
         requireGroupAdmin(groupId);
@@ -1229,7 +1245,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         targetMember.setRole(role);
         changedGroupMember(targetMember, new Date());
     }
-
+    /*
     @Override
     public void updateGroupKey(String groupId, String clientId, String keyId, String key) {
         requireIdentification();
@@ -1246,6 +1262,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         targetMember.setEncryptedGroupKey(key);
         changedGroupMember(targetMember, new Date());
     }
+    */
 
     @Override
     public void updateMyGroupKey(String groupId,String sharedKeyId, String sharedKeyIdSalt, String publicKeyId, String cryptedSharedKey) {
@@ -1337,7 +1354,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         return result.toArray(new String[result.size()]);
     }
-
+    /*
     @Override
     public void updateGroupMember(TalkGroupMember member) {
         requireIdentification();
@@ -1351,6 +1368,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         targetMember.setEncryptedGroupKey(member.getEncryptedGroupKey());
         changedGroupMember(targetMember, new Date());
     }
+    */
 
     @Override
     public TalkGroupMember[] getGroupMembers(String groupId, Date lastKnown) {
@@ -1361,7 +1379,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
         List<TalkGroupMember> members = mDatabase.findGroupMembersByIdChangedAfter(groupId, lastKnown);
         TalkGroupMember[] res = new TalkGroupMember[members.size()];
         for (int i = 0; i < res.length; i++) {
-            res[i] = members.get(i);
+            TalkGroupMember m = members.get(i);
+            if (!m.getClientId().equals(mConnection.getClientId())) {
+                m.setEncryptedGroupKey(null);
+            }
+            res[i] = m;
         }
         return res;
     }

@@ -266,6 +266,7 @@ public class UpdateAgent extends NotificationDeferrer {
                     LOG.debug("requestGroupMembershipUpdate updatedMember is null");
                     return;
                 }
+                String key = updatedMember.getEncryptedGroupKey();
                 List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                 LOG.debug("requestGroupMembershipUpdate found "+members.size()+" members");
                 for (TalkGroupMember member : members) {
@@ -274,6 +275,12 @@ public class UpdateAgent extends NotificationDeferrer {
                         if (connection == null || !connection.isConnected()) {
                             LOG.debug("requestGroupMembershipUpdate - refrain from updating not connected member client "+ member.getClientId());
                             continue;
+                        }
+                        if (member.getClientId().equals(clientId)) {
+                            // is own membership
+                            updatedMember.setEncryptedGroupKey(key);
+                        } else {
+                            updatedMember.setEncryptedGroupKey(null);
                         }
 
                         // Calling Client via RPC
@@ -292,7 +299,7 @@ public class UpdateAgent extends NotificationDeferrer {
         queueOrExecute(context, notificationGenerator);
     }
 
-    // call once for a new group member, will send out groupMemberUpdated-Notifications to new meber with all other group members
+    // call once for a new group member, will send out groupMemberUpdated-Notifications to new member with all other group members
     public void requestGroupMembershipUpdatesForNewMember(final String groupId, final String newMemberClientId) {
         LOG.debug("requestGroupMembershipUpdateForNewMember for group " + groupId + " newMemberClientId " + newMemberClientId);
         Runnable notificationGenerator = new Runnable() {
@@ -316,6 +323,7 @@ public class UpdateAgent extends NotificationDeferrer {
                     // do not send out updates for own membership or dead members
                     if (!member.getClientId().equals(newMemberClientId) && (member.isJoined() || member.isInvited())) {
                         try {
+                            member.setEncryptedGroupKey(null);
                             rpc.groupMemberUpdated(member);
                         } catch (Exception e) {
                             e.printStackTrace();

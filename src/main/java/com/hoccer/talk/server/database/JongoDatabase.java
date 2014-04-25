@@ -438,14 +438,19 @@ public class JongoDatabase implements ITalkServerDatabase {
         return mGroups.findOne("{groupId:#}", groupId).as(TalkGroup.class);
     }
 
+
     @Override
     public List<TalkGroup> findGroupsByClientIdChangedAfter(String clientId, Date lastKnown) {
+        return findGroupsByClientIdChangedAfterV1(clientId,lastKnown);
+    }
+
+
+    private List<TalkGroup> findGroupsByClientIdChangedAfterV1(String clientId, Date lastKnown) {
         // indirect query
         List<TalkGroup> res = new ArrayList<TalkGroup>();
-        //List<TalkGroupMember> members = findGroupMembersForClient(clientId);
-        List<TalkGroupMember> members = findGroupMembersByIdWithStates(clientId, new String[]{TalkGroupMember.STATE_JOINED, TalkGroupMember.STATE_INVITED});
+        List<TalkGroupMember> members = findGroupMembersForClient(clientId);
         for (TalkGroupMember member : members) {
-            // if (member.isMember() || member.isInvited()) {
+            if (member.isMember() || member.isInvited()) {
                 TalkGroup group = findGroupById(member.getGroupId());
                 if (group == null) {
                     throw new RuntimeException("Internal inconsistency, could not find group "+member.getGroupId()+ "for member client "+clientId);
@@ -453,7 +458,23 @@ public class JongoDatabase implements ITalkServerDatabase {
                 if(group.getLastChanged() == null || lastKnown == null || lastKnown.getTime() == 0 || group.getLastChanged().after(lastKnown)) {
                     res.add(group);
                 }
-            // }
+             }
+        }
+        return res;
+    }
+
+    private List<TalkGroup> findGroupsByClientIdChangedAfterV2(String clientId, Date lastKnown) {
+        // indirect query
+        List<TalkGroup> res = new ArrayList<TalkGroup>();
+        List<TalkGroupMember> members = findGroupMembersByIdWithStates(clientId, new String[]{TalkGroupMember.STATE_JOINED, TalkGroupMember.STATE_INVITED});
+        for (TalkGroupMember member : members) {
+                TalkGroup group = findGroupById(member.getGroupId());
+                if (group == null) {
+                    throw new RuntimeException("Internal inconsistency, could not find group "+member.getGroupId()+ "for member client "+clientId);
+                }
+                if(group.getLastChanged() == null || lastKnown == null || lastKnown.getTime() == 0 || group.getLastChanged().after(lastKnown)) {
+                    res.add(group);
+                }
         }
         return res;
     }
@@ -477,9 +498,10 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public List<TalkGroupMember> findGroupMembersByIdWithStates(String groupId, String[] states) {
+
         List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
         Iterator<TalkGroupMember> it =
-                mGroupMembers.find("{groupId:#, state: { $in: # }}", groupId, states)
+                mGroupMembers.find("{groupId:#, state: { $in: # }}", groupId, Arrays.asList(states))
                         .as(TalkGroupMember.class).iterator();
         while (it.hasNext()) {
             res.add(it.next());
@@ -492,6 +514,18 @@ public class JongoDatabase implements ITalkServerDatabase {
         List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
         Iterator<TalkGroupMember> it =
                 mGroupMembers.find("{groupId:#,lastChanged: {$gt:#}}", groupId, lastKnown)
+                        .as(TalkGroupMember.class).iterator();
+        while (it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
+    public List<TalkGroupMember> findGroupMembersByIdWithStatesChangedAfter(String groupId, String[] states, Date lastKnown) {
+        List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
+        Iterator<TalkGroupMember> it =
+                mGroupMembers.find("{groupId:#, state: { $in: # }, lastChanged: { $gt:# } }", groupId, Arrays.asList(states), lastKnown)
                         .as(TalkGroupMember.class).iterator();
         while (it.hasNext()) {
             res.add(it.next());
@@ -515,7 +549,7 @@ public class JongoDatabase implements ITalkServerDatabase {
     public List<TalkGroupMember> findGroupMembersForClientWithStates(String clientId, String[] states) {
         List<TalkGroupMember> res = new ArrayList<TalkGroupMember>();
         Iterator<TalkGroupMember> it =
-                mGroupMembers.find("{clientId:#, state: { $in: # }}", clientId, states)
+                mGroupMembers.find("{clientId:#, state: { $in: # }}", clientId, Arrays.asList(states))
                         .as(TalkGroupMember.class).iterator();
         while (it.hasNext()) {
             res.add(it.next());
@@ -659,35 +693,51 @@ public class JongoDatabase implements ITalkServerDatabase {
         }
     }
 
+    private boolean canAcquireGroupKeyUpdateLock(TalkGroup group, Date newLockDate, String lockingClientId) {
+        Date oldLockDate = group.getGroupKeyUpdateInProgress();
+        if (oldLockDate == null) { // is not locked
+            return true;
+        }
+        if ((newLockDate.getTime() - oldLockDate.getTime()) > GROUPKEY_LOCK_RETENTION_TIMEOUT) {
+            LOG.info("group key update lock is too old (> " + GROUPKEY_LOCK_RETENTION_TIMEOUT + "ms) - reacquiring lock...");
+            return true;
+        }
+        if (group.getKeySupplier() != null) {
+            if (group.getKeySupplier().equals(lockingClientId)) {
+                LOG.info("group key update lock is active and set by the same client (keymaster) :'" + lockingClientId + "' - reacquiring lock...");
+                return true;
+            }
+            TalkPresence keySupplierPresence = findPresenceForClient(group.getKeySupplier());
+            if (keySupplierPresence != null &&
+                    keySupplierPresence.getConnectionStatus().equals(TalkPresence.CONN_STATUS_OFFLINE)) {
+                LOG.info("group key update lock is active for keymaster '" + group.getKeySupplier() + "' but he is offline - acquiring lock");
+                return true;
+            }
+            TalkGroupMember supplier = findGroupMemberForClient(group.getGroupId(),group.getKeySupplier());
+            if (supplier == null || !supplier.isMember()) {
+                LOG.info("old keymaster not found as group member :'" + group.getKeySupplier() + "' - reacquiring lock...");
+                return true;
+            }
+            if (!supplier.isAdmin()) {
+                LOG.info("old keymaster no admin :'" + group.getKeySupplier() + "' - reacquiring lock...");
+                return true;
+            }
+        }
+        LOG.info("group key update lock is locked for group '" + group.getGroupId() + "' - not acquirung...");
+        return false;
+    }
+
     @Override
     public boolean acquireGroupKeyUpdateLock(String groupId, String lockingClientId) {
         TalkGroup group = findGroupById(groupId);
         Date newLockDate = new Date();
-        Date oldLockDate = group.getGroupKeyUpdateInProgress();
 
-        if (oldLockDate != null) { // is already locked
-            if ((newLockDate.getTime() - oldLockDate.getTime()) > GROUPKEY_LOCK_RETENTION_TIMEOUT) {
-                LOG.info("group key update lock is too old (> " + GROUPKEY_LOCK_RETENTION_TIMEOUT + "ms) - reacquiring lock...");
-            } else if (group.getKeySupplier() != null &&
-                       group.getKeySupplier().equals(lockingClientId)) {
-                LOG.info("group key update lock is active and set by the same client (keymaster) :'" + lockingClientId + "' - reacquiring lock...");
-            } else if (group.getKeySupplier() != null) {
-                TalkPresence keySupplierPresence = findPresenceForClient(group.getKeySupplier());
-                if (keySupplierPresence != null &&
-                    keySupplierPresence.getConnectionStatus().equals(TalkPresence.CONN_STATUS_OFFLINE)) {
-                    LOG.info("group key update lock is active for keymaster '" + group.getKeySupplier() + "' but he is offline - acquiring lock");
-                } else {
-                    return false;
-                }
-            } else {
-                // cannot acquire lock
-                return false;
-            }
+        if (canAcquireGroupKeyUpdateLock(group,newLockDate,lockingClientId)) {
+            group.setGroupKeyUpdateInProgress(newLockDate);
+            saveGroup(group);
+            return true;
         }
-
-        group.setGroupKeyUpdateInProgress(newLockDate);
-        saveGroup(group);
-        return true;
+        return false;
     }
 
     @Override

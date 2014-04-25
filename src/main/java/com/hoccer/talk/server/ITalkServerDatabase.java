@@ -90,6 +90,8 @@ public interface ITalkServerDatabase {
 
     public List<TalkGroup> findGroupsByClientIdChangedAfter(String clientId, Date lastKnown);
 
+    public List<TalkGroupMember> findGroupMembersByIdWithStatesChangedAfter(String groupId, String[] states, Date lastKnown);
+
     public void saveGroup(TalkGroup group);
 
     public List<TalkGroupMember> findGroupMembersById(String groupId);
