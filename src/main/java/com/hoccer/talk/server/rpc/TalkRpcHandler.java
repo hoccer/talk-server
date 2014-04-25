@@ -5,7 +5,6 @@ import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.ITalkServerStatistics;
 import com.hoccer.talk.server.TalkServer;
-import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.srp.SRP6Parameters;
 import com.hoccer.talk.srp.SRP6VerifyingServer;
 import com.hoccer.talk.util.MapUtil;
