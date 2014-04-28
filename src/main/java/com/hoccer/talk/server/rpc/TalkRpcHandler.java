@@ -38,7 +38,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private static final Logger LOG =
             Logger.getLogger(TalkRpcHandler.class);
 
-    private static Hex HEX = new Hex();
+    private static final Hex HEX = new Hex();
     private final Digest SRP_DIGEST = new SHA256Digest();
     private static final SecureRandom SRP_RANDOM = new SecureRandom();
     private static final SRP6Parameters SRP_PARAMETERS = SRP6Parameters.CONSTANTS_1024;
@@ -52,22 +52,22 @@ public class TalkRpcHandler implements ITalkRpcServer {
     /**
      * Reference to server
      */
-    private TalkServer mServer;
+    final private TalkServer mServer;
 
     /**
      * Reference to database accessor
      */
-    private ITalkServerDatabase mDatabase;
+    final private ITalkServerDatabase mDatabase;
 
     /**
      * Reference to stats collector
      */
-    private ITalkServerStatistics mStatistics;
+    final private ITalkServerStatistics mStatistics;
 
     /**
      * Reference to connection object
      */
-    private TalkRpcConnection mConnection;
+    final private TalkRpcConnection mConnection;
 
     /**
      * SRP authentication state
@@ -318,7 +318,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
         logCall("registerApns(registrationToken: '" + registrationToken + "')");
         // APNS occasionally returns these for no good reason
-        if (registrationToken.length() == 0) {
+        if (registrationToken.isEmpty()) {
             return;
         }
         // set and save the token
@@ -1050,16 +1050,14 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public TalkGroup getGroup(String groupId) {
         requireIdentification();
         logCall("getGroup(id: '" + groupId + "')");
-        TalkGroup group = mDatabase.findGroupById(groupId);
-        return group;
+        return mDatabase.findGroupById(groupId);
     }
 
     @Override
     public TalkGroupMember getGroupMember(String groupId, String clientId) {
         requireIdentification();
         logCall("getGroupMember(groupId: '" + groupId + ", clientId:"+clientId+"')");
-        TalkGroupMember groupMember = mDatabase.findGroupMemberForClient(groupId,clientId);
-        return groupMember;
+        return mDatabase.findGroupMemberForClient(groupId,clientId);
     }
 
     @Override
@@ -1580,7 +1578,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             // we have an environment for another location that does not match, lets get rid of it
             destroyEnvironment(myEnvironment);
         }
-        if (matching.size() > 0) {
+        if (!matching.isEmpty()) {
             // join the largest group
             TalkGroup largestGroup = mDatabase.findGroupById(environmentsPerGroup.get(0).getLeft());
             joinGroupWithEnvironment(largestGroup, environment);
@@ -1606,7 +1604,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             String[] states = {TalkGroupMember.STATE_JOINED};
             List<TalkGroupMember> membersLeft = mDatabase.findGroupMembersByIdWithStates(environment.getGroupId(), states);
             logCall("destroyEnvironment: membersLeft: " + membersLeft.size());
-            if (membersLeft.size() == 0) {
+            if (membersLeft.isEmpty()) {
                 logCall("destroyEnvironment: last member left, removing group "+group.getGroupId());
                 // last member removed, remove group
                 group.setState(TalkGroup.STATE_NONE);
