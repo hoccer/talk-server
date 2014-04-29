@@ -19,8 +19,11 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class TalkRpcConnectionHandler extends WebSocketHandler {
 
-    private static final Logger log = Logger.getLogger(TalkRpcConnectionHandler.class);
+    private static final Logger LOG = Logger.getLogger(TalkRpcConnectionHandler.class);
     private static final int MAX_IDLE_TIME = 1800 * 1000; // in ms
+
+    private static final String TALK_TEXT_PROTOCOL_NAME = "com.hoccer.talk.v1";
+    private static final String TALK_BINARY_PROTOCOL_NAME = "com.hoccer.talk.v1.bson";
 
     /**
      * Talk server instance
@@ -52,16 +55,17 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
     @Override
     public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
         if (protocol == null) {
-            log.info("protocol is null - aborting connection attempt");
+            LOG.info("protocol is null - aborting connection attempt");
             return null;
         }
-        if (protocol.equals("com.hoccer.talk.v1")) {
+
+        if (protocol.equals(TALK_TEXT_PROTOCOL_NAME)) {
             return createTalkV1Connection(request, mTalkServer.getJsonMapper(), false);
-        }
-        if (protocol.equals("com.hoccer.talk.v1.bson")) {
+        } else if (protocol.equals(TALK_BINARY_PROTOCOL_NAME)) {
             return createTalkV1Connection(request, mTalkServer.getBsonMapper(), true);
         }
-        log.info("new connection with unknown protocol " + protocol);
+
+        LOG.info("new connection with unknown protocol '" + protocol + "'");
         return null;
     }
 
