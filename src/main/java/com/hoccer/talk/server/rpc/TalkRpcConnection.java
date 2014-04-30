@@ -30,6 +30,9 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      */
     private static final Logger LOG = Logger.getLogger(TalkRpcConnection.class);
 
+    // TODO find a better place for this message...
+    private static final String UPDATE_NAGGING_MESSAGE = "Please update your Hoccer XO client!";
+
     /**
      * Server this connection belongs to
      */
@@ -209,7 +212,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     }
 
     private void nagUserUpdate() {
-        mClientRpc.alertUser("foo");
+        mClientRpc.alertUser(UPDATE_NAGGING_MESSAGE);
     }
 
     /**

@@ -127,6 +127,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 mConnection.deactivateSupportMode();
             }
         }
+        
+        // TODO: Persist the TalkClientInfo and associate it to the connected clientId
 
         TalkServerInfo serverInfo = new TalkServerInfo();
         serverInfo.setServerTime(new Date());
