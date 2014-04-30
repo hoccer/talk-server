@@ -48,10 +48,10 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
             log.info("protocol is null - aborting connection attempt");
             return null;
         }
-        if(protocol.equals("com.hoccer.talk.v1")) {
+        if(protocol.equals("com.hoccer.talk.v1") || protocol.equals("com.hoccer.talk.v2")) {
             return createTalkV1Connection(request, mTalkServer.getJsonMapper(), false);
         }
-        if(protocol.equals("com.hoccer.talk.v1.bson")) {
+        if(protocol.equals("com.hoccer.talk.v1.bson") || protocol.equals("com.hoccer.talk.v2.bson")) {
             return createTalkV1Connection(request, mTalkServer.getBsonMapper(), true);
         }
         log.info("new connection with unknown protocol " + protocol);
