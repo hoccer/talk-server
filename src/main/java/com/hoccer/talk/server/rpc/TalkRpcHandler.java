@@ -86,7 +86,14 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mStatistics = mServer.getStatistics();
     }
 
+    private void requireIsNotOutdated() {
+        if(mConnection.isLegacyMode()) {
+            throw new RuntimeException("Client too old");
+        }
+    }
+
     private void requireIdentification() {
+        requireIsNotOutdated();
         if (!mConnection.isLoggedIn()) {
             throw new RuntimeException("Not logged in");
         }

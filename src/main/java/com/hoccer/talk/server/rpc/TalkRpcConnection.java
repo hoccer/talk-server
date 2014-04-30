@@ -75,6 +75,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      * User data associated to requests
      */
     private final HashMap<Object, Timer.Context> requestTimers= new HashMap<Object, Timer.Context>();
+    private boolean mLegacyMode;
 
     /**
      * Construct a connection for the given server using the given connection
@@ -207,6 +208,10 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
         mServer.connectionOpened(this);
     }
 
+    private void nagUserUpdate() {
+        mClientRpc.alertUser("foo");
+    }
+
     /**
      * Callback: underlying connection is now closed
      *
@@ -252,6 +257,13 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
         // tell the client if it doesn't have push
         if (!mTalkClient.isPushCapable()) {
             mClientRpc.pushNotRegistered();
+        }
+
+        // Tell the client that he is outdated and should upgrade
+        if (isLegacyMode()) {
+            LOG.info("Legacy mode active -> Issuing upgrade nagging to client");
+            nagUserUpdate();
+            return;
         }
 
         // attempt to deliver anything we might have
@@ -334,5 +346,13 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
     private static Object getIdFromRequest(ObjectNode request) {
         return ProtocolUtils.parseId(request.get("id"));
+    }
+
+    public void setLegacyMode(boolean mLegacyMode) {
+        this.mLegacyMode = mLegacyMode;
+    }
+
+    public boolean isLegacyMode() {
+        return mLegacyMode;
     }
 }
