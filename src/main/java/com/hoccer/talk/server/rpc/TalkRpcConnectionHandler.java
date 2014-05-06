@@ -27,8 +27,8 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
     private static final String TALK_BINARY_PROTOCOL_NAME_V1 = "com.hoccer.talk.v1.bson";
 
     // Version 2
-    private static final String TALK_TEXT_PROTOCOL_NAME_V2 = "com.hoccer.talk.v2";
-    private static final String TALK_BINARY_PROTOCOL_NAME_V2 = "com.hoccer.talk.v2.bson";
+    public static final String TALK_TEXT_PROTOCOL_NAME_V2 = "com.hoccer.talk.v2";
+    public static final String TALK_BINARY_PROTOCOL_NAME_V2 = "com.hoccer.talk.v2.bson";
 
     /**
      * Talk server instance
