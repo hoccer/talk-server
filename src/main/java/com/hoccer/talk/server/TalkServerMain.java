@@ -6,6 +6,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;
+import com.hoccer.scm.GitInfo;
 import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.OrmliteDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
@@ -113,6 +114,18 @@ public class TalkServerMain {
             InputStream bundledConfigIs = TalkServerConfiguration.class.getResourceAsStream("/server.properties");
             bundled_properties.load(bundledConfigIs);
             configuration.setVersion(bundled_properties.getProperty("version"));
+        } catch (IOException e) {
+            LOG.error("Unable to load bundled configuration", e);
+        }
+
+        LOG.info("Loading GIT properties...");
+        Properties git_properties = new Properties();
+        try {
+            InputStream gitConfigIs = TalkServerConfiguration.class.getResourceAsStream("/git.properties");
+            if (gitConfigIs != null) {
+                git_properties.load(gitConfigIs);
+                configuration.setGitInfo(GitInfo.initializeFromProperties(git_properties));
+            }
         } catch (IOException e) {
             LOG.error("Unable to load bundled configuration", e);
         }

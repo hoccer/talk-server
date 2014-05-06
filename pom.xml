@@ -150,7 +150,6 @@
     </dependency>
 
   </dependencies>
-  
   <repositories>
   </repositories>
   
@@ -194,6 +193,41 @@
               </execution>
             </executions>
       </plugin>
+
+      <!-- Git commit id -->
+      <plugin>
+          <groupId>pl.project13.maven</groupId>
+          <artifactId>git-commit-id-plugin</artifactId>
+          <version>${git-commit-id.version}</version>
+          <executions>
+              <execution>
+                  <!--<phase>initialize</phase>-->
+                  <goals>
+                      <goal>revision</goal>
+                  </goals>
+              </execution>
+          </executions>
+          <configuration>
+              <prefix>git</prefix>
+              <dateFormat>yyyy-MM-dd HH:mm:ss z</dateFormat>
+              <verbose>true</verbose>
+              <!-- skip projects with <packaging>pom</packaging> -->
+              <skipPoms>true</skipPoms>
+              <generateGitPropertiesFile>true</generateGitPropertiesFile>
+              <generateGitPropertiesFilename>${project.basedir}/src/main/resources/git.properties</generateGitPropertiesFilename>
+              <failOnNoGitDirectory>true</failOnNoGitDirectory>
+              <gitDescribe>
+                  <skip>false</skip>
+                  <always>true</always>
+                  <abbrev>7</abbrev>
+                  <dirty>-dirty</dirty>
+                  <forceLongFormat>true</forceLongFormat>
+              </gitDescribe>
+          </configuration>
+      </plugin>
+
+
+
     </plugins>
   </build>
 

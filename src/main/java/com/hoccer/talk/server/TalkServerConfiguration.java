@@ -1,5 +1,6 @@
 package com.hoccer.talk.server;
 
+import com.hoccer.scm.GitInfo;
 import org.apache.log4j.Logger;
 
 import java.net.URI;
@@ -60,6 +61,8 @@ public class TalkServerConfiguration {
     private boolean mLogAllCalls = false;
 
     private String mVersion = "<unknown>";
+    private String mBuildNumber;
+    private GitInfo gitInfo = new GitInfo();
 
     public TalkServerConfiguration() {
     }
@@ -68,6 +71,11 @@ public class TalkServerConfiguration {
         LOG.info("Current configuration:" +
                         "\n - General:" +
                         MessageFormat.format("\n   * version:                            ''{0}''", mVersion) +
+                        MessageFormat.format("\n   * git.commit.id:                      ''{0}''", gitInfo.commitId) +
+                        MessageFormat.format("\n   * git.commit.id.abbrev:               ''{0}''", gitInfo.commitIdAbbrev) +
+                        MessageFormat.format("\n   * git.branch:                         ''{0}''", gitInfo.branch) +
+                        MessageFormat.format("\n   * git.commit.time:                    ''{0}''", gitInfo.commitTime) +
+                        MessageFormat.format("\n   * git.build.time:                     ''{0}''", gitInfo.buildTime) +
                         "\n - WebServer Configuration:" +
                         MessageFormat.format("\n   * listen address:                     ''{0}''", mListenAddress) +
                         MessageFormat.format("\n   * listen port:                        ''{0}''", Long.toString(mListenPort)) +
@@ -272,5 +280,21 @@ public class TalkServerConfiguration {
 
     public void setVersion(String version) {
         this.mVersion = version;
+    }
+
+    public void setBuildNumber(String buildNumber) {
+        this.mBuildNumber = buildNumber;
+    }
+
+    public String getBuildNumber() {
+        return mBuildNumber;
+    }
+
+    public void setGitInfo(GitInfo gitInfo) {
+        this.gitInfo = gitInfo;
+    }
+
+    public GitInfo getGitInfo() {
+        return gitInfo;
     }
 }
