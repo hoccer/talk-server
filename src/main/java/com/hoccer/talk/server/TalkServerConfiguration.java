@@ -59,11 +59,15 @@ public class TalkServerConfiguration {
 
     private boolean mLogAllCalls = false;
 
+    private String mVersion = "<unknown>";
+
     public TalkServerConfiguration() {
     }
 
     public void report() {
         LOG.info("Current configuration:" +
+                        "\n - General:" +
+                        MessageFormat.format("\n   * version:                            ''{0}''", mVersion) +
                         "\n - WebServer Configuration:" +
                         MessageFormat.format("\n   * listen address:                     ''{0}''", mListenAddress) +
                         MessageFormat.format("\n   * listen port:                        ''{0}''", Long.toString(mListenPort)) +
@@ -260,5 +264,13 @@ public class TalkServerConfiguration {
 
     public boolean getLogAllCalls() {
         return mLogAllCalls;
+    }
+
+    public String getVersion() {
+        return mVersion;
+    }
+
+    public void setVersion(String version) {
+        this.mVersion = version;
     }
 }

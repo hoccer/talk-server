@@ -19,6 +19,7 @@ import org.eclipse.jetty.websocket.WebSocketHandler;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 
@@ -104,6 +105,18 @@ public class TalkServerMain {
                 configuration.configureFromProperties(properties);
             }
         }
+
+        // also read additional bundled property files
+        LOG.info("Loading bundled properties...");
+        Properties bundled_properties = new Properties();
+        try {
+            InputStream bundledConfigIs = TalkServerConfiguration.class.getResourceAsStream("/server.properties");
+            bundled_properties.load(bundledConfigIs);
+            configuration.setVersion(bundled_properties.getProperty("version"));
+        } catch (IOException e) {
+            LOG.error("Unable to load bundled configuration", e);
+        }
+
         return configuration;
     }
 
