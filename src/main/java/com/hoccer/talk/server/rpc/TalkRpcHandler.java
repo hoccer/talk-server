@@ -1589,22 +1589,45 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return environment.getGroupId();
     }
 
+    private void removeGroupMember(TalkGroupMember member, Date now) {
+        // remove my membership
+        // set membership state to NONE
+        member.setState(TalkGroupMember.STATE_NONE);
+        // degrade removed users to member
+        member.setRole(TalkGroupMember.ROLE_MEMBER);
+        changedGroupMember(member, now);
+    }
+
     private void destroyEnvironment(TalkEnvironment environment) {
         logCall("destroyEnvironment(" + environment + ")");
         TalkGroup group = mDatabase.findGroupById(environment.getGroupId());
         TalkGroupMember member = mDatabase.findGroupMemberForClient(environment.getGroupId(), environment.getClientId());
         if (member != null && member.getState().equals(TalkGroupMember.STATE_JOINED)) {
-            // remove my membership
-            // set membership state to NONE
-            member.setState(TalkGroupMember.STATE_NONE);
-            // degrade removed users to member
-            member.setRole(TalkGroupMember.ROLE_MEMBER);
             Date now = new Date();
-            changedGroupMember(member, now);
+            removeGroupMember(member,now);
             String[] states = {TalkGroupMember.STATE_JOINED};
             List<TalkGroupMember> membersLeft = mDatabase.findGroupMembersByIdWithStates(environment.getGroupId(), states);
             logCall("destroyEnvironment: membersLeft: " + membersLeft.size());
-            if (membersLeft.isEmpty()) {
+
+            // clean up other offline members that somehow might be stuck in the group
+            // although this should never happen except on crash or server restart
+            // The canonical place would be to check this on group join, but here
+            // we already have a list of all remaining members, so it will be faster
+            // and should cause less trouble than doing it on joining
+            int removedCount = 0;
+            for (int i = 0; i < membersLeft.size();++i) {
+                // cleanup other offline members
+                TalkGroupMember otherMember = membersLeft.get(i);
+                boolean isConnected = mServer.isClientConnected(otherMember.getClientId());
+                if (!isConnected) {
+                    // remove offline member from group
+                    removeGroupMember(otherMember, now);
+                    ++removedCount;
+                }
+            }
+            logCall("destroyEnvironment: offline members removed: " + removedCount);
+
+            if (membersLeft.size() - removedCount <= 0) {
                 logCall("destroyEnvironment: last member left, removing group "+group.getGroupId());
                 // last member removed, remove group
                 group.setState(TalkGroup.STATE_NONE);

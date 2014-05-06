@@ -273,6 +273,7 @@ public class TalkServer {
             // TODO: LOG this - maybe even on warn level!
             oldConnection.disconnect();
         }
+        connection.getServerHandler().destroyEnvironment(TalkEnvironment.TYPE_NEARBY);  // after logon, destroy possibly left over environments
         mConnectionsByClientId.put(clientId, connection);
         mUpdateAgent.requestPresenceUpdate(clientId);
     }
