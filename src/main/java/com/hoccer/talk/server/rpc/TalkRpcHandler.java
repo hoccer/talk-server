@@ -133,6 +133,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         TalkServerInfo serverInfo = new TalkServerInfo();
         serverInfo.setServerTime(new Date());
         serverInfo.setSupportMode(mConnection.isSupportMode());
+        serverInfo.setVersion(mServer.getConfiguration().getVersion());
 
         return serverInfo;
     }
