@@ -10,6 +10,7 @@ import com.hoccer.scm.GitInfo;
 import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.OrmliteDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
+import com.hoccer.talk.servlets.ServerInfoServlet;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -67,9 +68,15 @@ public class TalkServerMain {
         metricsContextHandler.addEventListener(new MyHealtchecksServletContextListener(talkServer.getHealthCheckRegistry()));
         metricsContextHandler.addServlet(HealthCheckServlet.class, "/health");
 
+        ServletContextHandler serverInfoContextHandler = new ServletContextHandler();
+        serverInfoContextHandler.setContextPath("/server");
+        serverInfoContextHandler.setAttribute("server", talkServer);
+        serverInfoContextHandler.addServlet(ServerInfoServlet.class, "/info");
+
         // handler for talk websocket connections
         WebSocketHandler clientHandler = new TalkRpcConnectionHandler(talkServer);
         clientHandler.setHandler(metricsContextHandler);
+        clientHandler.setHandler(serverInfoContextHandler);
         // set root handler of the server
         s.setHandler(clientHandler);
 
@@ -178,5 +185,4 @@ public class TalkServerMain {
             return _healthCheckRegistry;
         }
     }
-
 }

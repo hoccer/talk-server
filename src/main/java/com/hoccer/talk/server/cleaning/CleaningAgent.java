@@ -67,6 +67,9 @@ public class CleaningAgent {
 
     }
 
+    // TODO: Also clean groups (normal and nearby)
+
+
     public void cleanClientData(final String clientId) {
         LOG.debug("cleaning client " + clientId);
         doCleanKeysForClient(clientId);
