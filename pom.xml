@@ -149,6 +149,14 @@
       <version>${bson4jackson.version}</version>
     </dependency>
 
+    <!-- apache commons exec -->
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-exec</artifactId>
+        <version>1.2</version>
+    </dependency>
+
+
   </dependencies>
   <repositories>
   </repositories>

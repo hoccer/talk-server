@@ -10,6 +10,7 @@ import com.hoccer.scm.GitInfo;
 import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.OrmliteDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
+import com.hoccer.talk.server.cryptoutils.*;
 import com.hoccer.talk.servlets.ServerInfoServlet;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -41,6 +42,17 @@ public class TalkServerMain {
         TalkServerConfiguration config = initializeConfiguration();
 
         config.report();
+
+        // report APNS expiry
+        if (config.isApnsEnabled()) {
+            final P12CertificateChecker p12Verifier = new P12CertificateChecker(config.getApnsCertPath(), config.getApnsCertPassword());
+            try {
+                LOG.info("APNS expiryDate is: " + p12Verifier.getCertificateExpiryDate());
+                LOG.info("APNS expiration status: " + p12Verifier.isExpired());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         // select and instantiate database backend
         ITalkServerDatabase db = initializeDatabase(config);
