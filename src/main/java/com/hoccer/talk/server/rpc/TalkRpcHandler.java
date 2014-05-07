@@ -667,10 +667,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
 
         logCall("blockClient(id '" + clientId + "')");
-
-        TalkRelationship rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
+        TalkRelationship rel;
+        rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
         if (rel == null) {
-            throw new RuntimeException("You are not paired with client with id '" + clientId + "'");
+            rel = new TalkRelationship();
+            rel.setClientId(mConnection.getClientId());
+            rel.setOtherClientId(clientId);
+            mDatabase.saveRelationship(rel);
         }
 
         String oldState = rel.getState();
@@ -869,8 +872,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 }
             }
         } else {
+            // TODO: actually the check is wrong!
+            /*
+            1) if a client is blocked we are done - message delivery is disallowed.
+            2) Otherwise check if the sender has a valid relationship to the recipient that allows message delivery
+
+            (!isBlocked(recipientId, senderId) && // recipient blocks the sender !
+             (areFriends(...) || areRelatedViaGroupMembership(senderId, recipientId)))
+             */
             // Check if client is friend via relationship OR they know each other through a shared group in which both are "joined" members.
-            if (areBefriended(senderId, recipientId) ||
+            if (areBefriended(recipientId, senderId) ||
                 areRelatedViaGroupMembership(senderId, recipientId)) {
                 if (performOneDelivery(message, delivery)) {
                     result.add(delivery);
