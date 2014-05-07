@@ -6,6 +6,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;
+import com.hoccer.scm.GitInfo;
 import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.OrmliteDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
@@ -19,6 +20,7 @@ import org.eclipse.jetty.websocket.WebSocketHandler;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 
@@ -104,6 +106,30 @@ public class TalkServerMain {
                 configuration.configureFromProperties(properties);
             }
         }
+
+        // also read additional bundled property files
+        LOG.info("Loading bundled properties...");
+        Properties bundled_properties = new Properties();
+        try {
+            InputStream bundledConfigIs = TalkServerConfiguration.class.getResourceAsStream("/server.properties");
+            bundled_properties.load(bundledConfigIs);
+            configuration.setVersion(bundled_properties.getProperty("version"));
+        } catch (IOException e) {
+            LOG.error("Unable to load bundled configuration", e);
+        }
+
+        LOG.info("Loading GIT properties...");
+        Properties git_properties = new Properties();
+        try {
+            InputStream gitConfigIs = TalkServerConfiguration.class.getResourceAsStream("/git.properties");
+            if (gitConfigIs != null) {
+                git_properties.load(gitConfigIs);
+                configuration.setGitInfo(GitInfo.initializeFromProperties(git_properties));
+            }
+        } catch (IOException e) {
+            LOG.error("Unable to load bundled configuration", e);
+        }
+
         return configuration;
     }
 

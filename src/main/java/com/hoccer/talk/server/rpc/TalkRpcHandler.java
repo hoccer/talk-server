@@ -86,7 +86,14 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mStatistics = mServer.getStatistics();
     }
 
+    private void requireIsNotOutdated() {
+        if(mConnection.isLegacyMode()) {
+            throw new RuntimeException("Client too old");
+        }
+    }
+
     private void requireIdentification() {
+        requireIsNotOutdated();
         if (!mConnection.isLoggedIn()) {
             throw new RuntimeException("Not logged in");
         }
@@ -120,10 +127,16 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 mConnection.deactivateSupportMode();
             }
         }
+        
+        // TODO: Persist the TalkClientInfo and associate it to the connected clientId
 
         TalkServerInfo serverInfo = new TalkServerInfo();
         serverInfo.setServerTime(new Date());
         serverInfo.setSupportMode(mConnection.isSupportMode());
+        serverInfo.setVersion(mServer.getConfiguration().getVersion());
+        serverInfo.setCommitId(mServer.getConfiguration().getGitInfo().commitId);
+        serverInfo.addProtocolVersion(TalkRpcConnectionHandler.TALK_TEXT_PROTOCOL_NAME_V2);
+        serverInfo.addProtocolVersion(TalkRpcConnectionHandler.TALK_BINARY_PROTOCOL_NAME_V2);
 
         return serverInfo;
     }
