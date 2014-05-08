@@ -57,14 +57,9 @@ public class P12CertificateChecker {
 
     private String executeCommand(String command) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-        CommandLine commandLine = CommandLine.parse(command);
         DefaultExecutor executor = new DefaultExecutor();
-        //executor.setExitValue(1);
-        PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
-        executor.setStreamHandler(streamHandler);
-        executor.execute(commandLine);
-
+        executor.setStreamHandler(new PumpStreamHandler(outputStream));
+        executor.execute(CommandLine.parse(command));
         return outputStream.toString();
     }
 }
