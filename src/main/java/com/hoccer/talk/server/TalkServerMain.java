@@ -11,11 +11,13 @@ import com.hoccer.talk.server.database.JongoDatabase;
 import com.hoccer.talk.server.database.OrmliteDatabase;
 import com.hoccer.talk.server.rpc.TalkRpcConnectionHandler;
 import com.hoccer.talk.server.cryptoutils.*;
+import com.hoccer.talk.servlets.CertificateInfoServlet;
 import com.hoccer.talk.servlets.ServerInfoServlet;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.websocket.WebSocketHandler;
 
@@ -70,6 +72,7 @@ public class TalkServerMain {
         // create jetty instance
         Server s = new Server(new InetSocketAddress(config.getListenAddress(), config.getListenPort()));
 
+        // all metrics servlets are handled here
         ServletContextHandler metricsContextHandler = new ServletContextHandler();
         metricsContextHandler.setContextPath("/metrics");
         metricsContextHandler.setInitParameter("show-jvm-metrics", "true");
@@ -80,17 +83,22 @@ public class TalkServerMain {
         metricsContextHandler.addEventListener(new MyHealtchecksServletContextListener(talkServer.getHealthCheckRegistry()));
         metricsContextHandler.addServlet(HealthCheckServlet.class, "/health");
 
+        // handler for additional status information about the server
         ServletContextHandler serverInfoContextHandler = new ServletContextHandler();
         serverInfoContextHandler.setContextPath("/server");
         serverInfoContextHandler.setAttribute("server", talkServer);
         serverInfoContextHandler.addServlet(ServerInfoServlet.class, "/info");
+        serverInfoContextHandler.addServlet(CertificateInfoServlet.class, "/certificates");
 
         // handler for talk websocket connections
         WebSocketHandler clientHandler = new TalkRpcConnectionHandler(talkServer);
-        clientHandler.setHandler(metricsContextHandler);
-        clientHandler.setHandler(serverInfoContextHandler);
-        // set root handler of the server
-        s.setHandler(clientHandler);
+
+        // set server handlers
+        HandlerCollection handlerCollection = new HandlerCollection();
+        handlerCollection.addHandler(clientHandler);
+        handlerCollection.addHandler(serverInfoContextHandler);
+        handlerCollection.addHandler(metricsContextHandler);
+        s.setHandler(handlerCollection);
 
         // run and stop when interrupted
         try {
