@@ -1360,7 +1360,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                         outOfDateMembers.add(members.get(i).getClientId());
                     }
                 }
-                logCall("updateGroupKeys - found " + members.size() + " out of date group members");
+                logCall("updateGroupKeys - found " + outOfDateMembers.size() + " out of date group members");
 
                 for (int i = 0; i < outOfDateMembers.size(); ++i) {
                     result.add(outOfDateMembers.get(i));
