@@ -498,6 +498,15 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public void deleteGroup(TalkGroup group) {
+        try {
+            mGroups.delete(group);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public List<TalkGroup> findGroupsByClientIdChangedAfter(String clientId, Date lastKnown) {
         List<TalkGroup> result = new ArrayList<TalkGroup>();
         List<TalkGroupMember> memberships = findGroupMembersForClient(clientId);

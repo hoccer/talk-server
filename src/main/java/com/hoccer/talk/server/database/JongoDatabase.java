@@ -438,6 +438,11 @@ public class JongoDatabase implements ITalkServerDatabase {
         return mGroups.findOne("{groupId:#}", groupId).as(TalkGroup.class);
     }
 
+    @Override
+    public void deleteGroup(TalkGroup group) {
+        mGroups.remove("{groupId:#", group.getGroupId());
+    }
+
 
     @Override
     public List<TalkGroup> findGroupsByClientIdChangedAfter(String clientId, Date lastKnown) {

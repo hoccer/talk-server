@@ -1487,6 +1487,17 @@ public class TalkRpcHandler implements ITalkRpcServer {
         environment.setGroupId(group.getGroupId());
         environment.setClientId(mConnection.getClientId());
         mDatabase.saveEnvironment(environment);
+
+        String currentGroupId = environment.getGroupId();
+        String potentiallyOtherGroupId = updateEnvironment(environment);
+        if (!currentGroupId.equals(potentiallyOtherGroupId)) {
+            LOG.info("createGroupWithEnvironment Collision detected: determined there is actually another group we were merged with...");
+            LOG.info("  * original groupId: '" + currentGroupId + "' - new groupId: '" + potentiallyOtherGroupId + "'");
+            environment.setGroupId(potentiallyOtherGroupId);
+
+            // Now perform a hard-delete of old group - notifications have not yet been sent out, so this is ok
+            mDatabase.deleteGroup(group);
+        }
     }
 
     private void joinGroupWithEnvironment(TalkGroup group, TalkEnvironment environment) {
