@@ -1266,24 +1266,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         targetMember.setRole(role);
         changedGroupMember(targetMember, new Date());
     }
-    /*
-    @Override
-    public void updateGroupKey(String groupId, String clientId, String keyId, String key) {
-        requireIdentification();
-        logCall("updateGroupKey(groupId: '" + groupId + "' / clientId: '" + clientId + "', keyId: '" + keyId + "')");
-        TalkGroupMember selfMember = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
-        if (selfMember == null || !(selfMember.isAdmin() || (selfMember.isMember() && clientId.equals(mConnection.getClientId())))) {
-            throw new RuntimeException("updateGroupKeys: insufficient permissions");
-        }
-        TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
-        if (targetMember == null) {
-            throw new RuntimeException("Client is not a member of group");
-        }
-        targetMember.setMemberKeyId(keyId);
-        targetMember.setEncryptedGroupKey(key);
-        changedGroupMember(targetMember, new Date());
-    }
-    */
 
     @Override
     public void updateMyGroupKey(String groupId,String sharedKeyId, String sharedKeyIdSalt, String publicKeyId, String cryptedSharedKey) {
@@ -1370,7 +1352,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 mDatabase.releaseGroupKeyUpdateLock(groupId);
             }*/
         } else { // No lock for groupkey updating was acquired.
-            result.add(selfMember.getClientId());
+            result.add("LOCKED");
         }
 
         return result.toArray(new String[result.size()]);
