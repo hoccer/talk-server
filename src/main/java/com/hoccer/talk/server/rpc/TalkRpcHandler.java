@@ -112,6 +112,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public void bing() {
+        logCall("bing()");
+        requireIdentification();
+    }
+
+    @Override
     public TalkServerInfo hello(TalkClientInfo clientInfo) {
         logCall("hello()");
 
