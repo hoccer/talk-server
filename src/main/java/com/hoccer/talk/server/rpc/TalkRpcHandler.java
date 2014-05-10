@@ -197,7 +197,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         // check if we aren't logged in already
         if (mConnection.isLoggedIn()) {
-            throw new RuntimeException("Can't authenticate while logged in");
+            throw new RuntimeException("Can not authenticate while logged in");
         }
         try {
 
@@ -211,12 +211,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
             // get client object
             mSrpClient = mDatabase.findClientById(clientId);
             if (mSrpClient == null) {
-                throw new RuntimeException("No such client");
+                throw new RuntimeException("No such client");  // must not change this string, is checked on client side
             }
 
             // verify SRP registration
             if (mSrpClient.getSrpVerifier() == null || mSrpClient.getSrpSalt() == null) {
-                throw new RuntimeException("No such client");
+                throw new RuntimeException("Not registered");   // must not change this string, is checked on client side
             }
 
             // parse the salt from DB
