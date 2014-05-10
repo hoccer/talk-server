@@ -275,7 +275,16 @@ public class TalkServer {
         }
         connection.getServerHandler().destroyEnvironment(TalkEnvironment.TYPE_NEARBY);  // after logon, destroy possibly left over environments
         mConnectionsByClientId.put(clientId, connection);
-        mUpdateAgent.requestPresenceUpdate(clientId);
+    }
+
+    /**
+     * Notify the server of a ready call
+     *
+     * @param client     that called ready
+     * @param connection the client is on
+     */
+    public void readyClient(TalkClient client, TalkRpcConnection connection) {
+        mUpdateAgent.requestPresenceUpdate(client.getClientId());
     }
 
     /**

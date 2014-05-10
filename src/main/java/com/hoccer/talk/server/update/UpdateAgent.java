@@ -40,7 +40,7 @@ public class UpdateAgent extends NotificationDeferrer {
          if (presence.getConnectionStatus() == null || isConnected != presence.isConnected()) {
              String connStatus = isConnected ? TalkPresence.CONN_STATUS_ONLINE
                      : TalkPresence.CONN_STATUS_OFFLINE;
-             LOG.info("Persisting connection status '" + connStatus + "' for client's presence. ClientId: '" + presence.getClientId() + "'");
+            LOG.info("Persisting connection status '" + connStatus + "' for client's presence. ClientId: '" + presence.getClientId() + "'");
             presence.setConnectionStatus(connStatus);
             mDatabase.savePresence(presence);
         }
@@ -174,7 +174,7 @@ public class UpdateAgent extends NotificationDeferrer {
             TalkRpcConnection connection = mServer.getClientConnection(clientId);
             // and if the corresponding clientId is online
             if (connection != null && connection.isLoggedIn()) {
-                LOG.debug(tag + "clientId " + clientId + " is connected");
+                LOG.info(tag + "clientId " + clientId + " is connected");
                 try {
 
                     // Calling Client via RPC
@@ -184,7 +184,7 @@ public class UpdateAgent extends NotificationDeferrer {
                     t.printStackTrace();
                 }
             } else {
-                LOG.debug(tag + "clientId " + clientId + " is disconnected");
+                LOG.info(tag + "clientId " + clientId + " is disconnected");
             }
         }
         LOG.debug(tag + "complete");

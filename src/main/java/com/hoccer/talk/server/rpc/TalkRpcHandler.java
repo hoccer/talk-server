@@ -118,6 +118,21 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public void ready() {
+        logCall("ready()");
+        requireIdentification();
+        mConnection.readyClient();
+    }
+
+    @Override
+    public Date getTime() {
+        logCall("getTime()");
+        // requireIdentification();
+        return new Date();
+    }
+
+
+    @Override
     public TalkServerInfo hello(TalkClientInfo clientInfo) {
         logCall("hello()");
 
@@ -404,7 +419,15 @@ public class TalkRpcHandler implements ITalkRpcServer {
         existing.setTimestamp(new Date());
         existing.setAvatarUrl(presence.getAvatarUrl());
         existing.setKeyId(presence.getKeyId());
-
+        if (presence.isOffline()) {
+            // client os lying about it's presence
+            existing.setConnectionStatus(TalkPresence.CONN_STATUS_ONLINE);
+        } else if (presence.isConnected()) {
+            existing.setConnectionStatus(presence.getConnectionStatus());
+        } else {
+            LOG.error("undefined connectionStatus in presence:"+presence.getConnectionStatus());
+            existing.setConnectionStatus(TalkPresence.CONN_STATUS_ONLINE);
+        }
         // save the thing
         mDatabase.savePresence(existing);
 
@@ -454,6 +477,25 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         mDatabase.saveKey(key);
     }
+
+    @Override
+    public boolean verifyKey(String keyId) {
+        requireIdentification();
+
+        logCall("verifyKey( keyId: '" + keyId + "')");
+        TalkKey key = mDatabase.findKey(mConnection.getClientId(), keyId);
+        if (key != null) {
+            String storedKeyId = key.getKeyId();
+            String realKeyId = key.calcKeyId();
+            if (storedKeyId != null && storedKeyId.equals(keyId)) {
+                if (storedKeyId.equals(realKeyId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
     @Override
     public TalkKey getKey(String clientId, String keyId) {
