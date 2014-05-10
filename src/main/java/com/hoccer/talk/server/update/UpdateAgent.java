@@ -37,11 +37,10 @@ public class UpdateAgent extends NotificationDeferrer {
     private void updateConnectionStatus(TalkPresence presence) {
         // determine the connection status of the client
         boolean isConnected = mServer.isClientConnected(presence.getClientId());
-        String connStatus = isConnected ? TalkPresence.CONN_STATUS_ONLINE
-                : TalkPresence.CONN_STATUS_OFFLINE;
-        if (presence.getConnectionStatus() == null ||
-            !presence.getConnectionStatus().equals(connStatus)) {
-            LOG.info("Persisting connection status '" + connStatus + "' for client's presence. ClientId: '" + presence.getClientId() + "'");
+         if (presence.getConnectionStatus() == null || isConnected != presence.isConnected()) {
+             String connStatus = isConnected ? TalkPresence.CONN_STATUS_ONLINE
+                     : TalkPresence.CONN_STATUS_OFFLINE;
+             LOG.info("Persisting connection status '" + connStatus + "' for client's presence. ClientId: '" + presence.getClientId() + "'");
             presence.setConnectionStatus(connStatus);
             mDatabase.savePresence(presence);
         }
@@ -68,7 +67,9 @@ public class UpdateAgent extends NotificationDeferrer {
                                 String clientId = otherMember.getClientId();
                                 LOG.debug("RPUFG: delivering presence of " + clientId);
                                 TalkPresence presence = mDatabase.findPresenceForClient(clientId);
-                                updateConnectionStatus(presence);
+                                if (presence.getConnectionStatus() == null) {
+                                    updateConnectionStatus(presence);
+                                }
 
                                 // Calling Client via RPC
                                 rpc.presenceUpdated(presence);

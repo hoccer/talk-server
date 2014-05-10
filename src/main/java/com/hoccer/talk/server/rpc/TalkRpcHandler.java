@@ -419,8 +419,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         TalkPresence[] res = new TalkPresence[pres.size()];
         for (int i = 0; i < res.length; i++) {
             TalkPresence p = pres.get(i);
-            p.setConnectionStatus(mServer.isClientConnected(p.getClientId())
-                    ? TalkPresence.CONN_STATUS_ONLINE : TalkPresence.CONN_STATUS_OFFLINE);
+            if (p.getConnectionStatus() == null) {
+                p.setConnectionStatus(mServer.isClientConnected(p.getClientId())
+                        ? TalkPresence.CONN_STATUS_ONLINE : TalkPresence.CONN_STATUS_OFFLINE);
+            }
             res[i] = pres.get(i);
         }
 
