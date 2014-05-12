@@ -3,7 +3,6 @@ package com.hoccer.talk.server.rpc;
 import better.jsonrpc.core.JsonRpcConnection;
 import better.jsonrpc.util.ProtocolUtils;
 import better.jsonrpc.websocket.JsonRpcWsConnection;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.hoccer.talk.model.TalkClient;
@@ -82,6 +81,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     private boolean mLegacyMode;
 
     private Long mLastPingLatency;
+    private Date mLastPingOccured;
 
     /**
      * Construct a connection for the given server using the given connection
@@ -407,5 +407,13 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
     public void setLastPingLatency(long mLastPingLatency) {
         this.mLastPingLatency = mLastPingLatency;
+    }
+
+    public void setLastPingOccured(Date lastPingOccured) {
+        this.mLastPingOccured = lastPingOccured;
+    }
+
+    public Date getLastPingOccured() {
+        return mLastPingOccured;
     }
 }
