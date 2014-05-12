@@ -81,7 +81,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     private final HashMap<Object, Timer.Context> requestTimers= new HashMap<Object, Timer.Context>();
     private boolean mLegacyMode;
 
-    private long mLastPingLatency;
+    private Long mLastPingLatency;
 
     /**
      * Construct a connection for the given server using the given connection
