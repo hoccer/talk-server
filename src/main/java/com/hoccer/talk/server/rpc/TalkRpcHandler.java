@@ -127,14 +127,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public Date getTime() {
         logCall("getTime()");
-        // requireIdentification();
         return new Date();
     }
-
 
     @Override
     public TalkServerInfo hello(TalkClientInfo clientInfo) {
         logCall("hello()");
+        requireIdentification();
 
         String tag = clientInfo.getSupportTag();
         if (tag != null && !tag.isEmpty()) {
