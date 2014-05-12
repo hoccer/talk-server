@@ -12,6 +12,7 @@ import com.hoccer.talk.server.rpc.TalkRpcConnection;
 import com.hoccer.talk.util.NamedThreadFactory;
 import org.apache.log4j.Logger;
 
+import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +49,23 @@ public class PingAgent {
             new NamedThreadFactory("ping-agent")
         );
         initializeMetrics(mServer.getMetrics());
+
+        if (TalkServerConfiguration.PERFORM_PING_AT_INTERVALS) {
+            schedulePingAllReadyClients();
+        } else {
+            LOG.info("Not scheduling regular ping since it is deactivated by configuration.");
+        }
+    }
+
+    private void schedulePingAllReadyClients () {
+        LOG.info("Scheduling pinging of all ready clients to occur in '" + TalkServerConfiguration.PING_INTERVAL + "' seconds.");
+        mExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                pingReadyClients();
+                schedulePingAllReadyClients();
+            }
+        }, TalkServerConfiguration.PING_INTERVAL, TimeUnit.SECONDS);
     }
 
     private void initializeMetrics(MetricRegistry metrics) {
@@ -87,29 +105,42 @@ public class PingAgent {
         mExecutor.schedule(new Runnable() {
             @Override
             public void run() {
-                TalkRpcConnection conn = mServer.getClientConnection(clientId);
-                if (conn != null) {
-                    ITalkRpcClient rpc = conn.getClientRpc();
-                    mPingAttempts.incrementAndGet();
-                    Timer.Context timer = mPingLatency.time();
-                    try {
-                        rpc.ping();
-                        long elapsed = (timer.stop() / 1000000);
-                        LOG.debug("ping on " + clientId + " took " + elapsed + " msecs");
-                        mPingSuccesses.incrementAndGet();
-                    } catch (JsonRpcClientDisconnect e) {
-                        LOG.debug("ping on " + clientId + " disconnect");
-                        mPingFailures.incrementAndGet();
-                    } catch (JsonRpcClientTimeout e) {
-                        LOG.debug("ping on " + clientId + " timeout");
-                        mPingFailures.incrementAndGet();
-                    } catch (Throwable t) {
-                        LOG.error("exception in ping on " + clientId, t);
-                        mPingFailures.incrementAndGet();
-                    }
-                }
+                performPing(clientId);
             }
         }, 3, TimeUnit.SECONDS);
+    }
+
+    private void performPing(String clientId) {
+        TalkRpcConnection conn = mServer.getClientConnection(clientId);
+        if (conn != null) {
+            ITalkRpcClient rpc = conn.getClientRpc();
+            mPingAttempts.incrementAndGet();
+            Timer.Context timer = mPingLatency.time();
+            try {
+                rpc.ping();
+                long elapsed = (timer.stop() / 1000000);
+                conn.setLastPingOccured(new Date());
+                conn.setLastPingLatency(elapsed);
+                LOG.debug("ping on " + clientId + " took " + elapsed + " msecs");
+                mPingSuccesses.incrementAndGet();
+            } catch (JsonRpcClientDisconnect e) {
+                LOG.debug("ping on " + clientId + " disconnect");
+                mPingFailures.incrementAndGet();
+            } catch (JsonRpcClientTimeout e) {
+                LOG.debug("ping on " + clientId + " timeout");
+                mPingFailures.incrementAndGet();
+            } catch (Throwable t) {
+                LOG.error("exception in ping on " + clientId, t);
+                mPingFailures.incrementAndGet();
+            }
+        }
+    }
+
+    private void pingReadyClients() {
+        for (TalkRpcConnection connection : mServer.getReadyConnections()) {
+            // LOG.info("pinging ready client: " + connection.getConnectionId() + " (clientId: " + connection.getClientId() + ")");
+            performPing(connection.getClientId());
+        }
     }
 
 }

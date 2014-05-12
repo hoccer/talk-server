@@ -80,6 +80,9 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     private final HashMap<Object, Timer.Context> requestTimers= new HashMap<Object, Timer.Context>();
     private boolean mLegacyMode;
 
+    private Long mLastPingLatency;
+    private Date mLastPingOccured;
+
     /**
      * Construct a connection for the given server using the given connection
      *
@@ -402,5 +405,22 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
     public boolean isLegacyMode() {
         return mLegacyMode;
+    }
+
+
+    public long getLastPingLatency() {
+        return mLastPingLatency;
+    }
+
+    public void setLastPingLatency(long mLastPingLatency) {
+        this.mLastPingLatency = mLastPingLatency;
+    }
+
+    public void setLastPingOccured(Date lastPingOccured) {
+        this.mLastPingOccured = lastPingOccured;
+    }
+
+    public Date getLastPingOccured() {
+        return mLastPingOccured;
     }
 }
