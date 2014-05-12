@@ -370,4 +370,16 @@ public class TalkServer {
     public HealthCheckRegistry getHealthCheckRegistry() {
         return mHealthRegistry;
     }
+
+    public Vector<TalkRpcConnection> getReadyConnections() {
+        Vector<TalkRpcConnection> readyClientConnections = new Vector<TalkRpcConnection>();
+        Iterator<TalkRpcConnection> iterator = mConnections.iterator();
+        while (iterator.hasNext()) {
+            TalkRpcConnection connection = iterator.next();
+            if (connection.getClient() != null && connection.getClient().isReady()) {
+                readyClientConnections.add(connection);
+            }
+        }
+        return readyClientConnections;
+    }
 }
