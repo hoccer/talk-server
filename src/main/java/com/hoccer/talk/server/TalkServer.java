@@ -251,6 +251,20 @@ public class TalkServer {
     }
 
     /**
+     * Check if the given client is connected
+     *
+     * @param clientId of the client to check for
+     * @return true if the client is connected
+     */
+    public boolean isClientReady(String clientId) {
+        TalkRpcConnection c = getClientConnection(clientId);
+        if (c != 0) {
+            return c.isReady();
+        }
+        return false;
+    }
+
+    /**
      * Retrieve the connection of the given client
      *
      * @param clientId of the client to check for

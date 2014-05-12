@@ -10,11 +10,11 @@ import com.hoccer.talk.server.TalkServer;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.hoccer.talk.server.agents.NotificationDeferrer;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
+import com.hoccer.talk.util.MapUtil;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Agent for simple updates (presence, group presence, relationship)
@@ -349,6 +349,124 @@ public class UpdateAgent extends NotificationDeferrer {
         };
         queueOrExecute(context, notificationGenerator);
     }
+
+    public ArrayList<Pair<TalkGroupMember, Long>> membersSortedByLatency(List<TalkGroupMember> members) {
+
+        Map<TalkGroupMember, Long> membersByLatency = new HashMap<TalkGroupMember, Long>();
+        for (TalkGroupMember m : members) {
+            TalkRpcConnection c = mServer.getClientConnection(m.getClientId());
+            if (c) {
+                // if we dont have a latency, assume the worst
+                Long latency = c.getLastPingLatency();
+                if (latency != null) {
+                    membersByLatency.put(m, latency);
+                } else {
+                    membersByLatency.put(m, Long.MAX_VALUE);
+                }
+            }
+        }
+        membersByLatency = MapUtil.sortByValue(membersByLatency);
+
+        ArrayList<Pair<TalkGroupMember, Long>> result = new ArrayList<Pair<TalkGroupMember, Long>>();
+        for (Map.Entry<TalkGroupMember, Long> entry : membersByLatency.entrySet()) {
+            result.add(new ImmutablePair<TalkGroupMember, Long>(entry.getKey(), entry.getValue()));
+        }
+        return result;
+    }
+
+    public void checkAndRequestGroupMemberKeys(final String groupId)  {
+        LOG.debug("checkAndRequestGroupMemberKeys for group " + groupId);
+        Runnable checker = new Runnable() {
+            @Override
+            public void run() {
+                performCheckAndRequestGroupMemberKeys(groupId);
+            }
+        }
+        queueOrExecute(context, checker);
+    }
+
+    private void performCheckAndRequestGroupMemberKeys(String groupId)  {
+        TalkGroup group = mDatabase.findGroupById(groupId);
+        if (group != null && group.exists()) {
+
+            List<TalkGroupMember> members = mDatabase.findGroupMembersByIdWithStates(group.getGroupId(), TalkGroupMember.ACTIVE_STATES);
+            if (members.size() > 0) {
+                List<TalkGroupMember> outOfDateMembers = new ArrayList<TalkGroupMember>();
+                List<TalkGroupMember> keyMasterCandidatesWithCurrentKey = new ArrayList<TalkGroupMember>();
+                List<TalkGroupMember> keyMasterCandidatesWithoutCurrentKey = new ArrayList<TalkGroupMember>();
+
+                String sharedKeyId = group.getSharedKeyId();
+                if (sharedKeyId == null) {
+                    // nobody has supplied a group key yet
+                    for (TalkGroupMember m : members) {
+                        if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
+                            keyMasterCandidatesWithoutCurrentKey.add(m);
+                        }
+                    }
+                } else {
+                    // there is a group key
+                    for (TalkGroupMember m : members) {
+                        if (!sharedKeyId.equals(m.getSharedKeyId())) {
+                            // member has not the current key
+                            outOfDateMembers.add(m);
+                            if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
+                                keyMasterCandidatesWithoutCurrentKey.add(m);
+                            }
+                        } else {
+                            // member has the current key
+                            if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
+                                keyMasterCandidatesWithCurrentKey.add(m);
+                            }
+                        }
+                    }
+                }
+                if (outOfDateMembers.size() > 0) {
+                    // we need request some keys
+                    if (keyMasterCandidatesWithCurrentKey.size() > 0) {
+                        // prefer candidates that already have a key
+                        ArrayList<Pair<TalkGroupMember, Long>> candidatesByLatency = membersSortedByLatency(keyMasterCandidatesWithCurrentKey);
+                        TalkGroupMember newKeymaster = candidatesByLatency.get(0).getLeft(); // get the lowest latency candidate
+                        requestGroupKeys(newKeymaster.getClientId(), group.getGroupId(), sharedKeyId, outOfDateMembers);
+                    } else if (keyMasterCandidatesWithoutCurrentKey.size() > 0) {
+                        // nobody with a current key is online, but we have other admins online
+                    }
+                }
+            }
+        }
+    } 
+    private void requestGroupKeys(String fromClientId, String forGroupId, String forSharedKeyId, String withSharedKeyIdSalt, List<TalkGroupMember> forOutOfDateMembers) {
+        ArrayList<String> forClientIdsList = new ArrayList<String>();
+        ArrayList<String> withPublicKeyIdsList = new ArrayList<String>();
+        for (TalkGroupMember m : forOutOfDateMembers) {
+            TalkPresence p = mDatabase.findPresenceForClient(m.getClientId());
+            if (p != null && p.getKeyId() != null) {
+                withPublicKeyIdsList.add(p.getKeyId());
+                forClientIdsList.add(m.getClientId());
+            }
+        }
+        String [] forClientIds = forClientIdsList.toArray(new String[0]);
+        String [] withPublicKeyIds = withPublicKeyIdsList.toArray(new String[0]);
+        TalkRpcConnection connection = mServer.getClientConnection(fromClientId);
+        String [] newKeyBoxes = connection.getClientRpc().getEncryptedGroupKeys(forGroupId,forSharedKeyId,withSharedKeyIdSalt,forClientIds, withPublicKeyIds);
+        if (newKeyBoxes != null) {
+            if (newKeyBoxes.length == forClientIds.length) {
+                for (int i = 0; i < newKeyBoxes.length;++i) {
+                    TalkGroupMember m = mDatabase.findGroupMemberForClient(forGroupId, forClientIds[i]);
+                    m.setSharedKeyId(forSharedKeyId);
+                    m.setSharedKeyIdSalt(withSharedKeyIdSalt);
+                    m.setMemberKeyId(withPublicKeyIds[i]);
+                    m.setEncryptedGroupKey(newKeyBoxes[i]);
+                    m.setKeySupplier(fromClientId);
+                    m.setSharedKeyDate(new Date()); // TODO: remove this and other fields no longer required
+                }
+            } else {
+                LOG.error("requestGroupKeys, bad number of keys returned for group " + forGroupId);
+            }
+        }  else {
+            LOG.error("requestGroupKeys, no keys returned for group " + forGroupId);
+        }
+    }
+
 
 
     public void setRequestContext() {

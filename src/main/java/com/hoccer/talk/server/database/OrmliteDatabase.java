@@ -554,6 +554,10 @@ public class OrmliteDatabase implements ITalkServerDatabase {
         return null;
     }
 
+    @Override
+    public List<TalkGroupMember> findGroupMembersByIdWithStatesAndRoles(String groupId, String[] states, String [] roles) {
+        return null;
+    }
 
     @Override
     public List<TalkGroupMember> findGroupMembersByIdChangedAfter(String groupId, Date lastKnown) {

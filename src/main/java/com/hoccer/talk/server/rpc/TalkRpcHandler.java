@@ -1364,7 +1364,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void updateMyGroupKey(String groupId,String sharedKeyId, String sharedKeyIdSalt, String publicKeyId, String cryptedSharedKey) {
         requireIdentification();
         String clientId = mConnection.getClientId();
-        logCall("updateMyGroupKey(groupId: '" + groupId + "' / clientId: '" + clientId + "', sharedKeyId: '" + sharedKeyId + "', sharedKeyIdSalt: '" + sharedKeyIdSalt  + "', publicKeyId: '" + publicKeyId + "')");
+        logCall("updateMyGroupKey(groupId: '" + groupId + "' / clientId: '" + clientId + "', sharedKeyId: '" + sharedKeyId + "', sharedKeyIdSalt: '" + sharedKeyIdSalt + "', publicKeyId: '" + publicKeyId + "')");
         TalkGroupMember selfMember = mDatabase.findGroupMemberForClient(groupId, clientId);
         if (selfMember == null || !(selfMember.isAdmin() || (selfMember.isMember()))) {
             throw new RuntimeException("updateMyGroupKey: not a member of the group");
@@ -1383,6 +1383,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         selfMember.setSharedKeyIdSalt(sharedKeyIdSalt);
         changedGroupMember(selfMember, new Date());
     }
+
 
     @Override
     public String[] updateGroupKeys(String groupId, String sharedKeyId, String sharedKeyIdSalt, String[] clientIds, String[] publicKeyIds, String[] cryptedSharedKeys) {
@@ -1422,11 +1423,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 group.setKeyDate(now);
                 changedGroup(group,now);
 
-                String[] activeStates = {
-                        TalkGroupMember.STATE_INVITED,
-                        TalkGroupMember.STATE_JOINED
-                };
-                List<TalkGroupMember> members = mDatabase.findGroupMembersByIdWithStates(groupId, activeStates);
+                List<TalkGroupMember> members = mDatabase.findGroupMembersByIdWithStates(groupId, TalkGroupMember.ACTIVE_STATES);
                 logCall("updateGroupKeys - found " + members.size() + " active group members");
 
                 List<String> outOfDateMembers = new ArrayList<String>();

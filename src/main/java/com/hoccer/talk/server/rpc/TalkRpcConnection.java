@@ -128,6 +128,13 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     }
 
     /**
+     * Indicate if the connection has called ready
+     */
+    public boolean isReady() {
+        return isConnected() && mTalkClient != null && mTalkClient.isReady();
+    }
+
+    /**
      * Indicate if the client was logged in before the connection was closed
      */
     public boolean wasLoggedIn() {
