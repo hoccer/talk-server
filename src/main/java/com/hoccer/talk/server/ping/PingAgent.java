@@ -95,6 +95,7 @@ public class PingAgent {
                     try {
                         rpc.ping();
                         long elapsed = (timer.stop() / 1000000);
+                        conn.setLastPingLatency(elapsed);
                         LOG.debug("ping on " + clientId + " took " + elapsed + " msecs");
                         mPingSuccesses.incrementAndGet();
                     } catch (JsonRpcClientDisconnect e) {
