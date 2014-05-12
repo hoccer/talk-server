@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoccer.talk.model.TalkClient;
 import com.hoccer.talk.model.TalkEnvironment;
+import com.hoccer.talk.model.TalkPresence;
 import com.hoccer.talk.rpc.ITalkRpcServer;
 import com.hoccer.talk.server.cleaning.CleaningAgent;
 import com.hoccer.talk.server.database.DatabaseHealthCheck;
@@ -26,8 +27,7 @@ import com.hoccer.talk.server.rpc.TalkRpcConnection;
 import com.hoccer.talk.server.update.UpdateAgent;
 import de.undercouch.bson4jackson.BsonFactory;
 
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -284,7 +284,7 @@ public class TalkServer {
      * @param connection the client is on
      */
     public void readyClient(TalkClient client, TalkRpcConnection connection) {
-        mUpdateAgent.requestPresenceUpdate(client.getClientId());
+        mUpdateAgent.requestPresenceUpdate(client.getClientId(), null);
     }
 
     /**
@@ -297,6 +297,9 @@ public class TalkServer {
         mConnectionsOpen.incrementAndGet();
         mConnections.add(connection);
     }
+
+    public static final String[] CONNECTION_STATUS_UPDATE_FIELDS_ARRAY = new String[] { TalkPresence.FIELD_CLIENT_ID, TalkPresence.FIELD_CONNECTION_STATUS };
+    public static final Set<String> CONNECTION_STATUS_UPDATE_FIELDS = new HashSet<String>(Arrays.asList(CONNECTION_STATUS_UPDATE_FIELDS_ARRAY));
 
     /**
      * Unregister a connection from the server
@@ -315,7 +318,7 @@ public class TalkServer {
             // remove connection from table
             mConnectionsByClientId.remove(clientId);
             // update presence for connection status change
-            mUpdateAgent.requestPresenceUpdate(clientId);
+            mUpdateAgent.requestPresenceUpdate(clientId, CONNECTION_STATUS_UPDATE_FIELDS);
         }
         // disconnect if we still are
         if (connection.isConnected()) {

@@ -111,7 +111,7 @@ public class UpdateAgent extends NotificationDeferrer {
         queueOrExecute(context, notificationGenerator);
     }
 
-    public void requestPresenceUpdate(final String clientId) {
+    public void requestPresenceUpdate(final String clientId, final Set<String> fields) {
         Runnable notificationGenerator = new Runnable() {
             @Override
             public void run() {
@@ -119,17 +119,19 @@ public class UpdateAgent extends NotificationDeferrer {
                 TalkPresence presence = mDatabase.findPresenceForClient(clientId);
                 // if we actually have a presence
                 if (presence != null) {
-                    // update connection status
-                    updateConnectionStatus(presence);
+                    if (fields == null || fields.contains(TalkPresence.FIELD_CONNECTION_STATUS)) {
+                        // update connection status
+                        updateConnectionStatus(presence);
+                    }
                     // propagate the presence to all friends
-                    performPresenceUpdate(presence);
+                    performPresenceUpdate(presence, fields);
                 }
             }
         };
         queueOrExecute(context, notificationGenerator);
     }
 
-    private void performPresenceUpdate(TalkPresence presence) {
+    private void performPresenceUpdate(TalkPresence presence, final Set<String> fields) {
         String tag = "RPU-" + presence.getClientId() + ": ";
 
         LOG.debug(tag + "commencing");
@@ -168,6 +170,13 @@ public class UpdateAgent extends NotificationDeferrer {
         // remove self
         LOG.debug(tag + "excluding self " + selfClientId);
         clientIds.remove(selfClientId);
+
+        TalkPresence modifiedPresence = null;
+        if (fields != null) {
+            modifiedPresence = new TalkPresence();
+            modifiedPresence.updateWith(presence, fields);
+        }
+
         // send presence updates
         for (String clientId : clientIds) {
             // look for a connection by the other clientId
@@ -176,10 +185,13 @@ public class UpdateAgent extends NotificationDeferrer {
             if (connection != null && connection.isLoggedIn()) {
                 LOG.info(tag + "clientId " + clientId + " is connected");
                 try {
-
                     // Calling Client via RPC
                     // tell the clientId about the new presence
-                    connection.getClientRpc().presenceUpdated(presence);
+                    if (fields == null) {
+                        connection.getClientRpc().presenceUpdated(presence);
+                    } else {
+                        connection.getClientRpc().presenceModified(modifiedPresence);
+                    }
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }

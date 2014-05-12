@@ -405,7 +405,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
 
         logCall("updatePresence()");
-
+        updatePresence(presence, null);
+/*
         // find existing presence or create one
         TalkPresence existing = mDatabase.findPresenceForClient(mConnection.getClientId());
         if (existing == null) {
@@ -433,6 +434,48 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         // start updating other clients
         mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId());
+        */
+    }
+    @Override
+    public void modifyPresence(TalkPresence presence) {
+        requireIdentification();
+        Set<String> fields = presence.nonNullFields();
+        updatePresence(presence, fields);
+    }
+
+    private void updatePresence(TalkPresence presence, Set<String> fields) {
+
+        // find existing presence or create one
+        TalkPresence existing = mDatabase.findPresenceForClient(mConnection.getClientId());
+        if (existing == null) {
+            existing = new TalkPresence();
+        }
+        // update the presence with what we got
+        existing.updateWith(presence, fields);
+        existing.setClientId(mConnection.getClientId());
+        existing.setTimestamp(new Date());
+        if (fields != null) {
+            fields.add(TalkPresence.FIELD_CLIENT_ID);
+            // if we do not send time stamp updates on presenceModified, we are more conservative and cause a full presence sync after login
+            // fields.add(TalkPresence.FIELD_TIMESTAMP);
+        }
+        if (fields == null || fields.contains(TalkPresence.FIELD_CONNECTION_STATUS)) {
+            if (presence.isOffline()) {
+                // client os lying about it's presence
+                existing.setConnectionStatus(TalkPresence.CONN_STATUS_ONLINE);
+            } else if (presence.isConnected()) {
+                existing.setConnectionStatus(presence.getConnectionStatus());
+            } else {
+                LOG.error("undefined connectionStatus in presence:"+presence.getConnectionStatus());
+                existing.setConnectionStatus(TalkPresence.CONN_STATUS_ONLINE);
+            }
+        }
+
+        // save the thing
+        mDatabase.savePresence(existing);
+
+        // start updating other clients
+        mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId(), fields);
     }
 
     @Override
@@ -1243,7 +1286,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             mServer.getUpdateAgent().requestGroupUpdate(groupId, clientId);
             mServer.getUpdateAgent().requestGroupMembershipUpdatesForNewMember(groupId, clientId);
             mServer.getUpdateAgent().requestPresenceUpdateForGroup(clientId, groupId);
-            mServer.getUpdateAgent().requestPresenceUpdate(clientId);
+            mServer.getUpdateAgent().requestPresenceUpdate(clientId, null);
         } else {
             throw new RuntimeException("Already invited or member to group");
         }
@@ -1558,7 +1601,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mServer.getUpdateAgent().requestGroupUpdate(group.getGroupId(), mConnection.getClientId());
         mServer.getUpdateAgent().requestGroupMembershipUpdatesForNewMember(group.getGroupId(), mConnection.getClientId());
         mServer.getUpdateAgent().requestPresenceUpdateForGroup(mConnection.getClientId(), group.getGroupId());
-        mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId());
+        mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId(), null);
     }
 
     public ArrayList<Pair<String, Integer>> findGroupSortedBySize(List<TalkEnvironment> matchingEnvironments) {
