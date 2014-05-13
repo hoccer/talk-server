@@ -1321,6 +1321,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
         member.setState(TalkGroupMember.STATE_NONE);
         // degrade anyone who leaves to member
         member.setRole(TalkGroupMember.ROLE_MEMBER);
+        // trash keys
+        member.trashPrivate();
         // save the whole thing
         changedGroupMember(member, new Date());
     }
@@ -1340,6 +1342,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         targetMember.setState(TalkGroupMember.STATE_NONE);
         // degrade removed users to member
         targetMember.setRole(TalkGroupMember.ROLE_MEMBER);
+        targetMember.trashPrivate();
         changedGroupMember(targetMember, new Date());
     }
 
@@ -1701,6 +1704,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         member.setState(TalkGroupMember.STATE_NONE);
         // degrade removed users to member
         member.setRole(TalkGroupMember.ROLE_MEMBER);
+        member.trashPrivate();
         changedGroupMember(member, now);
     }
 

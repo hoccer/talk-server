@@ -258,7 +258,7 @@ public class TalkServer {
      */
     public boolean isClientReady(String clientId) {
         TalkRpcConnection c = getClientConnection(clientId);
-        if (c != 0) {
+        if (c != null) {
             return c.isReady();
         }
         return false;

@@ -408,7 +408,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     }
 
 
-    public long getLastPingLatency() {
+    public Long getLastPingLatency() {
         return mLastPingLatency;
     }
 
