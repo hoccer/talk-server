@@ -104,7 +104,7 @@ public class TalkServerConfiguration {
                         MessageFormat.format("\n   * deliveries cleanup interval (in s): ''{0}''", Long.toString(mCleanupAllDeliveriesInterval)) +
                         "\n - Filecache Configuration:" +
                         MessageFormat.format("\n   * filecache control url:              ''{0}''", mFilecacheControlUrl) +
-                        MessageFormat.format("\n   * filecache upload base url:          ''{0}''", mFilecacheDownloadBase) +
+                        MessageFormat.format("\n   * filecache upload base url:          ''{0}''", mFilecacheUploadBase) +
                         MessageFormat.format("\n   * filecache download base url:        ''{0}''", mFilecacheDownloadBase) +
                         "\n - Other:" +
                         MessageFormat.format("\n   * support tag: ''{0}''", mSupportTag) +
