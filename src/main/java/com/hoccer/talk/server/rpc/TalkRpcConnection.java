@@ -83,6 +83,10 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     private Long mLastPingLatency;
     private Date mLastPingOccured;
 
+    // Penalty is measured in milliseconds for the purpose of selecting suitable connections for a task.
+    // If a client fails at this task the connection is penalized so it less likely to be considered for this task.
+    private long mCurrentPriorityPenalty = 0L;
+
     /**
      * Construct a connection for the given server using the given connection
      *
@@ -422,5 +426,17 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
     public Date getLastPingOccured() {
         return mLastPingOccured;
+    }
+
+    public long getCurrentPriorityPenalty() {
+        return mCurrentPriorityPenalty;
+    }
+
+    public void penalizePriorization(long penalty) {
+        mCurrentPriorityPenalty += penalty;
+    }
+
+    public void resetPriorityPenalty() {
+        mCurrentPriorityPenalty = 0L;
     }
 }

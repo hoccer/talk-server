@@ -269,7 +269,8 @@ public class UpdateAgent extends NotificationDeferrer {
         queueOrExecute(context, notification);
     }
 
-    public void requestGroupMembershipUpdate(final String groupId, final String clientId) {
+    // TODO: optimze update calls based in isNew
+    public void requestGroupMembershipUpdate(final String groupId, final String clientId, final boolean isNew) {
         LOG.debug("requestGroupMembershipUpdate for group " + groupId + " client " + clientId);
         Runnable notificationGenerator = new Runnable() {
             @Override
@@ -365,9 +366,9 @@ public class UpdateAgent extends NotificationDeferrer {
                 // if we dont have a latency, assume something bad
                 Long latency = connection.getLastPingLatency();
                 if (latency != null) {
-                    membersByLatency.put(m, latency);
+                    membersByLatency.put(m, latency + connection.getCurrentPriorityPenalty());
                 } else {
-                    membersByLatency.put(m, new Long(5000));
+                    membersByLatency.put(m, new Long(5000) + connection.getCurrentPriorityPenalty());
                 }
             }
         }
@@ -483,9 +484,7 @@ public class UpdateAgent extends NotificationDeferrer {
             }
             ITalkRpcClient rpc = connection.getClientRpc();
             LOG.error("requestGroupKeys, calling getEncryptedGroupKeys("+forGroupId+") on client for " + forClientIds.length+" client(s)");
-            Date start = new Date();
             String [] newKeyBoxes = rpc.getEncryptedGroupKeys(forGroupId,forSharedKeyId,withSharedKeyIdSalt,forClientIds, withPublicKeyIds);
-            Date stop = new Date();
             LOG.error("requestGroupKeys, call of getEncryptedGroupKeys("+forGroupId+") returned " + newKeyBoxes.length+" items)");
             if (newKeyBoxes != null) {
                 boolean responseLengthOk = false;
@@ -500,7 +499,7 @@ public class UpdateAgent extends NotificationDeferrer {
                     responseLengthOk = newKeyBoxes.length == forClientIds.length;
                 }
                 if (responseLengthOk) {
-                    connection.setLastPingLatency(stop.getTime()-start.getTime()); // TODO: find a better way than this to avoid cumulation of penalties
+                    connection.resetPriorityPenalty();
                     Date now = new Date();
 
                     TalkGroup group = mDatabase.findGroupById(forGroupId);
@@ -540,13 +539,13 @@ public class UpdateAgent extends NotificationDeferrer {
                     }
                 } else {
                     LOG.error("requestGroupKeys, bad number of keys returned for group " + forGroupId);
-                    connection.setLastPingLatency(connection.getLastPingLatency()+100); // penalize this client in selection
+                    connection.penalizePriorization(100L); // penalize this client in selection
                     sleepForMillis(1000); // TODO: schedule with delay instead of sleep
                     checkAndRequestGroupMemberKeys(forGroupId); // try again
                 }
             }  else {
                 LOG.error("requestGroupKeys, no keys returned for group " + forGroupId);
-                connection.setLastPingLatency(connection.getLastPingLatency()+100); // penalize this client in selection
+                connection.penalizePriorization(100L); // penalize this client in selection
                 sleepForMillis(1000);  // TODO: schedule with delay instead of sleep
                 checkAndRequestGroupMemberKeys(forGroupId); // try again
             }
