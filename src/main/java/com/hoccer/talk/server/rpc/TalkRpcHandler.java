@@ -1146,7 +1146,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         groupAdmin.setRole(TalkGroupMember.ROLE_ADMIN);
         groupAdmin.setState(TalkGroupMember.STATE_JOINED);
         changedGroup(group,new Date());
-        changedGroupMember(groupAdmin, group.getLastChanged());
+        changedGroupMember(groupAdmin, group.getLastChanged(), true);
         return group.getGroupId();
     }
 
@@ -1234,7 +1234,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 /*if (member.isAdmin()) {
                     member.setRole(TalkGroupMember.ROLE_MEMBER);
                 }*/
-                changedGroupMember(member, group.getLastChanged());
+                changedGroupMember(member, group.getLastChanged(), false);
             }
         }
     }
@@ -1277,7 +1277,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
             member.setGroupId(groupId);
             member.setClientId(clientId);
             member.setState(TalkGroupMember.STATE_INVITED);
-            changedGroupMember(member, new Date());
+            member.trashPrivate();
+            changedGroupMember(member, new Date(), true);
             //  NOTE if this gets removed then the invited users presence might
             //       need touching depending on what the solution to the update problem is
             // notify various things
@@ -1309,7 +1310,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         member.setState(TalkGroupMember.STATE_JOINED);
 
-        changedGroupMember(member, new Date());
+        changedGroupMember(member, new Date(), false);
     }
 
     @Override
@@ -1324,7 +1325,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // trash keys
         member.trashPrivate();
         // save the whole thing
-        changedGroupMember(member, new Date());
+        changedGroupMember(member, new Date(), false);
     }
 
     @Override
@@ -1343,7 +1344,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // degrade removed users to member
         targetMember.setRole(TalkGroupMember.ROLE_MEMBER);
         targetMember.trashPrivate();
-        changedGroupMember(targetMember, new Date());
+        changedGroupMember(targetMember, new Date(), false);
     }
 
     @Override
@@ -1359,7 +1360,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             throw new RuntimeException("Invalid role");
         }
         targetMember.setRole(role);
-        changedGroupMember(targetMember, new Date());
+        changedGroupMember(targetMember, new Date(), false);
     }
 
     @Override
@@ -1383,7 +1384,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         selfMember.setSharedKeyDate(group.getKeyDate());
         selfMember.setSharedKeyId(sharedKeyId);
         selfMember.setSharedKeyIdSalt(sharedKeyIdSalt);
-        changedGroupMember(selfMember, new Date());
+        changedGroupMember(selfMember, new Date(), false);
     }
 
 
@@ -1415,7 +1416,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     targetMember.setSharedKeyIdSalt(sharedKeyIdSalt);
                     targetMember.setKeySupplier(mConnection.getClientId());
                     targetMember.setSharedKeyDate(now);
-                    changedGroupMember(targetMember, now);
+                    changedGroupMember(targetMember, now, false);
                 }
 
                 TalkGroup group = mDatabase.findGroupById(groupId);
@@ -1489,10 +1490,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mServer.getUpdateAgent().requestGroupUpdate(group.getGroupId());
     }
 
-    private void changedGroupMember(TalkGroupMember member, Date changed) {
+    private void changedGroupMember(TalkGroupMember member, Date changed, boolean isNewMember) {
         member.setLastChanged(changed);
         mDatabase.saveGroupMember(member);
-        mServer.getUpdateAgent().requestGroupMembershipUpdate(member.getGroupId(), member.getClientId());
+        mServer.getUpdateAgent().requestGroupMembershipUpdate(member.getGroupId(), member.getClientId(), isNewMember);
     }
 
     private void requireGroupAdmin(String groupId) {
@@ -1556,7 +1557,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         groupAdmin.setRole(TalkGroupMember.ROLE_ADMIN);
         groupAdmin.setState(TalkGroupMember.STATE_JOINED);
         changedGroup(group,new Date());
-        changedGroupMember(groupAdmin, group.getLastChanged());
+        changedGroupMember(groupAdmin, group.getLastChanged(), true);
 
         environment.setGroupId(group.getGroupId());
         environment.setClientId(mConnection.getClientId());
@@ -1578,8 +1579,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         LOG.info("joinGroupWithEnvironment: joining group with client id '" + mConnection.getClientId() + "'");
 
         TalkGroupMember groupAdmin = mDatabase.findGroupMemberForClient(group.getGroupId(), mConnection.getClientId());
+        boolean isNew = false;
         if (groupAdmin == null) {
             groupAdmin = new TalkGroupMember();
+            isNew = true;
         }
         groupAdmin.setClientId(mConnection.getClientId());
         groupAdmin.setGroupId(group.getGroupId());
@@ -1590,7 +1593,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             mDatabase.saveGroup(group);
         }
         changedGroup(group,new Date());
-        changedGroupMember(groupAdmin, group.getLastChanged());
+        changedGroupMember(groupAdmin, group.getLastChanged(), isNew);
 
         environment.setGroupId(group.getGroupId());
         environment.setClientId(mConnection.getClientId());
@@ -1705,7 +1708,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // degrade removed users to member
         member.setRole(TalkGroupMember.ROLE_MEMBER);
         member.trashPrivate();
-        changedGroupMember(member, now);
+        changedGroupMember(member, now, false);
     }
 
     private void destroyEnvironment(TalkEnvironment environment) {
