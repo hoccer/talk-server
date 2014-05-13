@@ -409,25 +409,35 @@ public class UpdateAgent extends NotificationDeferrer {
                 if (sharedKeyId == null) {
                     // nobody has supplied a group key yet
                     for (TalkGroupMember m : members) {
-                        if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
-                            keyMasterCandidatesWithoutCurrentKey.add(m);
+                        TalkPresence presence = mDatabase.findPresenceForClient(m.getClientId());
+                        if (presence != null && presence.getKeyId() != null) {
+                            if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
+                                keyMasterCandidatesWithoutCurrentKey.add(m);
+                            }
+                            outOfDateMembers.add(m);
+                        } else {
+                            LOG.error("checkAndRequestGroupMemberKeys: no presence for client " + m.getClientId()+", member of group "+groupId);
                         }
-                        outOfDateMembers.add(m);
                     }
                 } else {
                     // there is a group key
                     for (TalkGroupMember m : members) {
-                        if (!sharedKeyId.equals(m.getSharedKeyId())) {
-                            // member has not the current key
-                            outOfDateMembers.add(m);
-                            if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
-                                keyMasterCandidatesWithoutCurrentKey.add(m);
+                        TalkPresence presence = mDatabase.findPresenceForClient(m.getClientId());
+                        if (presence != null && presence.getKeyId() != null) {
+                            if (!sharedKeyId.equals(m.getSharedKeyId()) || !sharedKeyId.equals(presence.getKeyId())) {
+                                // member has not the current key
+                                outOfDateMembers.add(m);
+                                if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
+                                    keyMasterCandidatesWithoutCurrentKey.add(m);
+                                }
+                            } else {
+                                // member has the current key
+                                if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
+                                    keyMasterCandidatesWithCurrentKey.add(m);
+                                }
                             }
-                        } else {
-                            // member has the current key
-                            if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
-                                keyMasterCandidatesWithCurrentKey.add(m);
-                            }
+                        }  else {
+                            LOG.error("checkAndRequestGroupMemberKeys:(2) no presence for client " + m.getClientId()+", member of group "+groupId);
                         }
                     }
                 }
