@@ -1363,7 +1363,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         changedGroupMember(targetMember, new Date(), false);
     }
 
-    @Override
+    /*@Override
     public void updateMyGroupKey(String groupId,String sharedKeyId, String sharedKeyIdSalt, String publicKeyId, String cryptedSharedKey) {
         requireIdentification();
         String clientId = mConnection.getClientId();
@@ -1385,71 +1385,71 @@ public class TalkRpcHandler implements ITalkRpcServer {
         selfMember.setSharedKeyId(sharedKeyId);
         selfMember.setSharedKeyIdSalt(sharedKeyIdSalt);
         changedGroupMember(selfMember, new Date(), false);
-    }
+    }*/
 
 
-    @Override
-    public String[] updateGroupKeys(String groupId, String sharedKeyId, String sharedKeyIdSalt, String[] clientIds, String[] publicKeyIds, String[] cryptedSharedKeys) {
-        requireIdentification();
-        logCall("updateGroupKeys(" + groupId + "/" + sharedKeyId + "," + sharedKeyIdSalt + clientIds.length + " " + publicKeyIds.length + " " + cryptedSharedKeys.length + ")");
-        if (!(clientIds.length == publicKeyIds.length && clientIds.length == cryptedSharedKeys.length)) {
-            throw new RuntimeException("array length mismatches");
-        }
-        final TalkGroupMember selfMember = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
-        if (selfMember == null || !(selfMember.isAdmin())) {
-            throw new RuntimeException("updateGroupKeys: insufficient permissions");
-        }
-
-        List<String> result = new ArrayList<String>();
-
-        if (mDatabase.acquireGroupKeyUpdateLock(groupId, mConnection.getClientId())) { // lock for groupkey update acquired... continuing.
-            //try {
-                Date now = new Date();
-                for (int i = 0; i < clientIds.length; ++i) {
-                    TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientIds[i]);
-                    if (targetMember == null) {
-                        throw new RuntimeException("Client is not a member of group");
-                    }
-                    targetMember.setMemberKeyId(publicKeyIds[i]);
-                    targetMember.setEncryptedGroupKey(cryptedSharedKeys[i]);
-                    targetMember.setSharedKeyId(sharedKeyId);
-                    targetMember.setSharedKeyIdSalt(sharedKeyIdSalt);
-                    targetMember.setKeySupplier(mConnection.getClientId());
-                    targetMember.setSharedKeyDate(now);
-                    changedGroupMember(targetMember, now, false);
-                }
-
-                TalkGroup group = mDatabase.findGroupById(groupId);
-                group.setSharedKeyId(sharedKeyId);
-                group.setSharedKeyIdSalt(sharedKeyIdSalt);
-                group.setKeySupplier(mConnection.getClientId());
-                group.setKeyDate(now);
-                changedGroup(group,now);
-
-                List<TalkGroupMember> members = mDatabase.findGroupMembersByIdWithStates(groupId, TalkGroupMember.ACTIVE_STATES);
-                logCall("updateGroupKeys - found " + members.size() + " active group members");
-
-                List<String> outOfDateMembers = new ArrayList<String>();
-                for (int i = 0; i < members.size(); ++i) {
-                    if (!sharedKeyId.equals(members.get(i).getSharedKeyId())) {
-                        outOfDateMembers.add(members.get(i).getClientId());
-                    }
-                }
-                logCall("updateGroupKeys - found " + outOfDateMembers.size() + " out of date group members");
-
-                for (int i = 0; i < outOfDateMembers.size(); ++i) {
-                    result.add(outOfDateMembers.get(i));
-                }
-
-            /*} finally {
-                mDatabase.releaseGroupKeyUpdateLock(groupId);
-            }*/
-        } else { // No lock for groupkey updating was acquired.
-            result.add("LOCKED");
-        }
-
-        return result.toArray(new String[result.size()]);
-    }
+    //@Override
+    //public String[] updateGroupKeys(String groupId, String sharedKeyId, String sharedKeyIdSalt, String[] clientIds, String[] publicKeyIds, String[] cryptedSharedKeys) {
+    //    requireIdentification();
+    //    logCall("updateGroupKeys(" + groupId + "/" + sharedKeyId + "," + sharedKeyIdSalt + clientIds.length + " " + publicKeyIds.length + " " + cryptedSharedKeys.length + ")");
+    //    if (!(clientIds.length == publicKeyIds.length && clientIds.length == cryptedSharedKeys.length)) {
+    //        throw new RuntimeException("array length mismatches");
+    //    }
+    //    final TalkGroupMember selfMember = mDatabase.findGroupMemberForClient(groupId, mConnection.getClientId());
+    //    if (selfMember == null || !(selfMember.isAdmin())) {
+    //        throw new RuntimeException("updateGroupKeys: insufficient permissions");
+    //    }
+//
+    //    List<String> result = new ArrayList<String>();
+//
+    //    if (mDatabase.acquireGroupKeyUpdateLock(groupId, mConnection.getClientId())) { // lock for groupkey update acquired... continuing.
+    //        //try {
+    //            Date now = new Date();
+    //            for (int i = 0; i < clientIds.length; ++i) {
+    //                TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientIds[i]);
+    //                if (targetMember == null) {
+    //                    throw new RuntimeException("Client is not a member of group");
+    //                }
+    //                targetMember.setMemberKeyId(publicKeyIds[i]);
+    //                targetMember.setEncryptedGroupKey(cryptedSharedKeys[i]);
+    //                targetMember.setSharedKeyId(sharedKeyId);
+    //                targetMember.setSharedKeyIdSalt(sharedKeyIdSalt);
+    //                targetMember.setKeySupplier(mConnection.getClientId());
+    //                targetMember.setSharedKeyDate(now);
+    //                changedGroupMember(targetMember, now, false);
+    //            }
+//
+    //            TalkGroup group = mDatabase.findGroupById(groupId);
+    //            group.setSharedKeyId(sharedKeyId);
+    //            group.setSharedKeyIdSalt(sharedKeyIdSalt);
+    //            group.setKeySupplier(mConnection.getClientId());
+    //            group.setKeyDate(now);
+    //            changedGroup(group,now);
+//
+    //            List<TalkGroupMember> members = mDatabase.findGroupMembersByIdWithStates(groupId, TalkGroupMember.ACTIVE_STATES);
+    //            logCall("updateGroupKeys - found " + members.size() + " active group members");
+//
+    //            List<String> outOfDateMembers = new ArrayList<String>();
+    //            for (int i = 0; i < members.size(); ++i) {
+    //                if (!sharedKeyId.equals(members.get(i).getSharedKeyId())) {
+    //                    outOfDateMembers.add(members.get(i).getClientId());
+    //                }
+    //            }
+    //            logCall("updateGroupKeys - found " + outOfDateMembers.size() + " out of date group members");
+//
+    //            for (int i = 0; i < outOfDateMembers.size(); ++i) {
+    //                result.add(outOfDateMembers.get(i));
+    //            }
+//
+    //        /*} finally {
+    //            mDatabase.releaseGroupKeyUpdateLock(groupId);
+    //        }*/
+    //    } else { // No lock for groupkey updating was acquired.
+    //        result.add("LOCKED");
+    //    }
+//
+    //    return result.toArray(new String[result.size()]);
+    //}
     /*
     @Override
     public void updateGroupMember(TalkGroupMember member) {
