@@ -52,7 +52,7 @@ public class DeliveryRequest {
         // get all outstanding deliveries for the client
         List<TalkDelivery> inDeliveries =
                 mDatabase.findDeliveriesForClientInState(mClientId, TalkDelivery.STATE_DELIVERING);
-        if (inDeliveries.size() > 0) {
+        if (!inDeliveries.isEmpty()) {
             LOG.info("has " + inDeliveries.size() + " incoming deliveries");
             // we will need to push if we don't succeed
             needToNotify = true;
@@ -97,7 +97,7 @@ public class DeliveryRequest {
 
         List<TalkDelivery> outDeliveries =
                 mDatabase.findDeliveriesFromClientInState(mClientId, TalkDelivery.STATE_DELIVERED);
-        if (currentlyConnected && outDeliveries.size() > 0) {
+        if (currentlyConnected && !outDeliveries.isEmpty()) {
             LOG.info("has " + outDeliveries.size() + " outgoing deliveries");
             // deliver one by one
             for (TalkDelivery delivery : outDeliveries) {

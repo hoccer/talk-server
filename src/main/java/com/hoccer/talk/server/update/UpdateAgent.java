@@ -20,8 +20,6 @@ import java.util.*;
  * Agent for simple updates (presence, group presence, relationship)
  */
 public class UpdateAgent extends NotificationDeferrer {
-
-
     private final TalkServer mServer;
 
     private final ITalkServerDatabase mDatabase;
@@ -368,7 +366,7 @@ public class UpdateAgent extends NotificationDeferrer {
                 if (latency != null) {
                     membersByLatency.put(m, latency + connection.getCurrentPriorityPenalty());
                 } else {
-                    membersByLatency.put(m, new Long(5000) + connection.getCurrentPriorityPenalty());
+                    membersByLatency.put(m, 5000L + connection.getCurrentPriorityPenalty());
                 }
             }
         }
@@ -392,14 +390,14 @@ public class UpdateAgent extends NotificationDeferrer {
         queueOrExecute(context, checker);
     }
 
-    private final static Long MAX_ALLOWED_KEY_REQUEST_LATENCY = new Long(10000);
+    private final static Long MAX_ALLOWED_KEY_REQUEST_LATENCY = 10000L;
 
     private void performCheckAndRequestGroupMemberKeys(String groupId)  {
         TalkGroup group = mDatabase.findGroupById(groupId);
         if (group != null && group.exists()) {
 
             List<TalkGroupMember> members = mDatabase.findGroupMembersByIdWithStates(group.getGroupId(), TalkGroupMember.ACTIVE_STATES);
-            if (members.size() > 0) {
+            if (!members.isEmpty()) {
                 List<TalkGroupMember> outOfDateMembers = new ArrayList<TalkGroupMember>();
                 List<TalkGroupMember> keyMasterCandidatesWithCurrentKey = new ArrayList<TalkGroupMember>();
                 List<TalkGroupMember> keyMasterCandidatesWithoutCurrentKey = new ArrayList<TalkGroupMember>();
@@ -441,7 +439,7 @@ public class UpdateAgent extends NotificationDeferrer {
                         }
                     }
                 }
-                if (outOfDateMembers.size() > 0) {
+                if (!outOfDateMembers.isEmpty()) {
                     // we need request some keys
                     if (keyMasterCandidatesWithCurrentKey.size() > 0) {
                         // prefer candidates that already have a key
@@ -498,7 +496,7 @@ public class UpdateAgent extends NotificationDeferrer {
             LOG.error("requestGroupKeys, call of getEncryptedGroupKeys("+forGroupId+") returned " + newKeyBoxes.length+" items)");
             if (newKeyBoxes != null) {
                 boolean responseLengthOk = false;
-                if (forSharedKeyId.equals("RENEW")) {
+                if ("RENEW".equals(forSharedKeyId)) {
                     // call return array with two additional
                     responseLengthOk = newKeyBoxes.length == forClientIds.length + 2;
                     if (responseLengthOk) {

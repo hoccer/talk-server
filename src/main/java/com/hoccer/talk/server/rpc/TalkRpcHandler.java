@@ -382,7 +382,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public TalkRelationship[] getRelationships(Date lastKnown) {
         requireIdentification();
 
-        logCall("getRelationships(lastKnown: '" + lastKnown.toString() + "')");
+        logCall("getRelationships(lastKnown: '" + lastKnown + "')");
 
         // query the db
         List<TalkRelationship> relationships =
