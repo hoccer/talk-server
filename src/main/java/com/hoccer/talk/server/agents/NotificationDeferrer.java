@@ -39,7 +39,7 @@ public class NotificationDeferrer {
         if (context.get() != null) {
             ArrayList<Runnable> queue = context.get();
 
-            if (queue.size() > 0) {
+            if (!queue.isEmpty()) {
                 LOG.trace("  * " + queue.size() + " notification generators were queued. flushing them...");
                 for (Runnable notificationGenerator : queue) {
                     mExecutor.execute(notificationGenerator);

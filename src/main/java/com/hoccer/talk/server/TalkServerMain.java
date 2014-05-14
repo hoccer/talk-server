@@ -163,10 +163,9 @@ public class TalkServerMain {
     private ITalkServerDatabase initializeDatabase(TalkServerConfiguration config) {
         LOG.info("Determining database");
         String backend = config.getDatabaseBackend();
-        if (backend.equals("jongo")) {
+        if ("jongo".equals(backend)) {
             return new JongoDatabase(config);
-        }
-        if (backend.equals("ormlite")) {
+        } else if ("ormlite".equals(backend)) {
             return new OrmliteDatabase();
         }
         throw new RuntimeException("Unknown database backend: " + backend);
