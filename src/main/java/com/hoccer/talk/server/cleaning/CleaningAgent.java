@@ -211,7 +211,6 @@ public class CleaningAgent {
         LOG.debug("cleaning tokens for client " + clientId);
 
         Date now = new Date();
-        int numKept = 0;
         int numSpent = 0;
         int numExpired = 0;
         List<TalkToken> tokens = mDatabase.findTokensByClient(clientId);
@@ -224,7 +223,6 @@ public class CleaningAgent {
             if (token.getExpiryTime().before(now)) {
                 numExpired++;
                 mDatabase.deleteToken(token);
-                continue;
             }
         }
         if (numSpent > 0) {
@@ -232,9 +230,6 @@ public class CleaningAgent {
         }
         if (numExpired > 0) {
             LOG.debug("deleted " + numExpired + " expired tokens");
-        }
-        if (numKept > 0) {
-            LOG.debug("kept " + numKept + " tokens");
         }
     }
 
