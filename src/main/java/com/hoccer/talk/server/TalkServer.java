@@ -26,6 +26,7 @@ import com.hoccer.talk.server.push.PushAgent;
 import com.hoccer.talk.server.rpc.TalkRpcConnection;
 import com.hoccer.talk.server.update.UpdateAgent;
 import de.undercouch.bson4jackson.BsonFactory;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -270,6 +271,7 @@ public class TalkServer {
      * @param clientId of the client to check for
      * @return connection of the client or null
      */
+    @Nullable
     public TalkRpcConnection getClientConnection(String clientId) {
         return mConnectionsByClientId.get(clientId);
     }
