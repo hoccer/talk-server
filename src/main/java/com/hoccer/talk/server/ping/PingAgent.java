@@ -30,23 +30,23 @@ public class PingAgent {
 
     private static final Logger LOG = Logger.getLogger(PingAgent.class);
 
-    TalkServer mServer;
+    private final TalkServer mServer;
 
-    ScheduledExecutorService mExecutor;
+    private final ScheduledExecutorService mExecutor;
 
-    AtomicInteger mPingRequests = new AtomicInteger();
-    AtomicInteger mPingAttempts = new AtomicInteger();
+    private final AtomicInteger mPingRequests = new AtomicInteger();
+    private final AtomicInteger mPingAttempts = new AtomicInteger();
 
-    AtomicInteger mPingFailures = new AtomicInteger();
-    AtomicInteger mPingSuccesses = new AtomicInteger();
+    private final AtomicInteger mPingFailures = new AtomicInteger();
+    private final AtomicInteger mPingSuccesses = new AtomicInteger();
 
-    Timer mPingLatency;
+    private Timer mPingLatency;
 
     public PingAgent(TalkServer server) {
         mServer = server;
         mExecutor = Executors.newScheduledThreadPool(
-            TalkServerConfiguration.THREADS_PING,
-            new NamedThreadFactory("ping-agent")
+                TalkServerConfiguration.THREADS_PING,
+                new NamedThreadFactory("ping-agent")
         );
         initializeMetrics(mServer.getMetrics());
 
@@ -57,7 +57,7 @@ public class PingAgent {
         }
     }
 
-    private void schedulePingAllReadyClients () {
+    private void schedulePingAllReadyClients() {
         LOG.info("Scheduling pinging of all ready clients to occur in '" + TalkServerConfiguration.PING_INTERVAL + "' seconds.");
         mExecutor.schedule(new Runnable() {
             @Override
@@ -75,28 +75,32 @@ public class PingAgent {
                     public Integer getValue() {
                         return mPingRequests.intValue();
                     }
-                });
+                }
+        );
         metrics.register(MetricRegistry.name(PingAgent.class, "pingAttempts"),
                 new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
                         return mPingAttempts.intValue();
                     }
-                });
+                }
+        );
         metrics.register(MetricRegistry.name(PingAgent.class, "pingFailures"),
                 new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
                         return mPingFailures.intValue();
                     }
-                });
+                }
+        );
         metrics.register(MetricRegistry.name(PingAgent.class, "pingSuccesses"),
                 new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
                         return mPingSuccesses.intValue();
                     }
-                });
+                }
+        );
         mPingLatency = metrics.timer(MetricRegistry.name(PingAgent.class, "latency"));
     }
 
@@ -138,7 +142,7 @@ public class PingAgent {
 
     private void pingReadyClients() {
         for (TalkRpcConnection connection : mServer.getReadyConnections()) {
-            // LOG.info("pinging ready client: " + connection.getConnectionId() + " (clientId: " + connection.getClientId() + ")");
+            LOG.trace("pinging ready client: '" + connection.getConnectionId() + "' (clientId: '" + connection.getClientId() + "')");
             performPing(connection.getClientId());
         }
     }
