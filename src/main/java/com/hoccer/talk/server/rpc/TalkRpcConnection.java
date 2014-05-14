@@ -54,12 +54,6 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     private final ITalkRpcClient mClientRpc;
 
     /**
-     * Last time we have seen client activity (connection or message)
-     * *Note:* This does not seem to do anything!
-     */
-    private long mLastActivity;
-
-    /**
      * Client object (if logged in)
      */
     private TalkClient mTalkClient;
@@ -94,11 +88,10 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      * @param connection that we should handle
      */
     public TalkRpcConnection(TalkServer server, JsonRpcWsConnection connection, HttpServletRequest request) {
-        // remember stuff
         mServer = server;
         mConnection = connection;
         mInitialRequest = request;
-        // create a json-rpc proxy for client notifications
+        // create a json-rpc proxy for client notifications and rpc calls
         mClientRpc = connection.makeProxy(ITalkRpcClient.class);
         // register ourselves for connection events
         mConnection.addListener(this);
@@ -219,9 +212,6 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     @Override
     public void onOpen(JsonRpcConnection connection) {
         LOG.info("[connectionId: '" + getConnectionId() + "'] connection opened by " + getRemoteAddress());
-        // reset the time of last activity
-        mLastActivity = System.currentTimeMillis();
-        // tell the server about the connection
         mServer.connectionOpened(this);
     }
 
@@ -237,27 +227,20 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     @Override
     public void onClose(JsonRpcConnection connection) {
         LOG.info("[connectionId: '" + getConnectionId() + "'] connection closed");
-        // invalidate the time of last activity
-        mLastActivity = -1;
-        // tell the server about the disconnect
         mServer.connectionClosed(this);
-
     }
 
     /**
      * Disconnect the underlying connection and finish up
      */
     public void disconnect() {
-
-        if (mTalkClient != null) {
-            if (mTalkClient.isReady()) {
-                // set client to not ready
-                ITalkServerDatabase database = mServer.getDatabase();
-                TalkClient client = database.findClientById(mTalkClient.getClientId());
-                if (client != null) {
-                    client.setTimeReady(null);
-                    database.saveClient(client);
-                }
+        if (mTalkClient != null && mTalkClient.isReady()) {
+            // set client to not ready
+            ITalkServerDatabase database = mServer.getDatabase();
+            TalkClient client = database.findClientById(mTalkClient.getClientId());
+            if (client != null) {
+                client.setTimeReady(null);
+                database.saveClient(client);
             }
         }
 
@@ -270,8 +253,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      */
     public void identifyClient(String clientId) {
         LOG.info("[connectionId: '" + getConnectionId() + "'] logged in as " + clientId);
-
-        ITalkServerDatabase database = mServer.getDatabase();
+        final ITalkServerDatabase database = mServer.getDatabase();
 
         // mark connection as logged in
         mTalkClient = database.findClientById(clientId);
@@ -294,14 +276,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
         if (isLegacyMode()) {
             LOG.info("Legacy mode active -> Issuing upgrade nagging to client");
             nagUserUpdate();
-            return;
         }
-
-        // attempt to deliver anything we might have
-        // mServer.getDeliveryAgent().requestDelivery(mTalkClient.getClientId());
-
-        // request a ping in a few seconds
-        //mServer.getPingAgent().requestPing(mTalkClient.getClientId());
     }
 
     /**
