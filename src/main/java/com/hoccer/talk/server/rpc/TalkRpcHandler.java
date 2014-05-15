@@ -1303,6 +1303,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
             throw new RuntimeException("Group does not exist");
         }
 
+        if (member.getState().equals(TalkGroupMember.STATE_JOINED)) {
+            throw new RuntimeException("Already a member of the group");
+        }
+
         if (!member.getState().equals(TalkGroupMember.STATE_INVITED)) {
             throw new RuntimeException("Not invited to group");
         }
