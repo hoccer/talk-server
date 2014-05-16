@@ -771,11 +771,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         String oldState = rel.getState();
 
-        if (oldState.equals(TalkRelationship.STATE_FRIEND)) {
+        if (TalkRelationship.STATE_FRIEND.equals(oldState)) {
             setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_BLOCKED, true);
             return;
         }
-        if (oldState.equals(TalkRelationship.STATE_BLOCKED)) {
+        if (TalkRelationship.STATE_BLOCKED.equals(oldState)) {
             return;
         }
 
