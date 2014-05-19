@@ -440,7 +440,7 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public void deleteGroup(TalkGroup group) {
-        mGroups.remove("{groupId:#", group.getGroupId());
+        mGroups.remove("{groupId:#}", group.getGroupId());
     }
 
 
