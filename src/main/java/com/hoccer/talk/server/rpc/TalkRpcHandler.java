@@ -1535,7 +1535,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         if (environment.getType() == null) {
             LOG.warn("updateEnvironment: no environment type, defaulting to nearby. Please fix client");
-            environment.setLocationType(TalkEnvironment.TYPE_NEARBY);
+            environment.setType(TalkEnvironment.TYPE_NEARBY);
         }
 
         environment.setTimeReceived(new Date());
