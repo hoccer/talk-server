@@ -328,13 +328,12 @@ public class TalkServer {
         mConnections.remove(connection);
         // remove connection from table
         if (connection.getClientId() != null) {
-            connection.getServerHandler().destroyEnvironment(TalkEnvironment.TYPE_NEARBY);
-
             String clientId = connection.getClientId();
             // remove connection from table
             mConnectionsByClientId.remove(clientId);
             // update presence for connection status change
             mUpdateAgent.requestPresenceUpdate(clientId, CONNECTION_STATUS_UPDATE_FIELDS);
+            connection.getServerHandler().destroyEnvironment(TalkEnvironment.TYPE_NEARBY);
         }
         // disconnect if we still are
         if (connection.isConnected()) {
