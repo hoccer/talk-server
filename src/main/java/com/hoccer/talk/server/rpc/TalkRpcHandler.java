@@ -965,17 +965,17 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 }
             }
         } else {
-            // TODO: actually the check is wrong!
             /*
             1) if a client is blocked we are done - message delivery is disallowed.
             2) Otherwise check if the sender has a valid relationship to the recipient that allows message delivery
+            */
+            final TalkRelationship relationship = mDatabase.findRelationshipBetween(recipientId, senderId);
 
-            (!isBlocked(recipientId, senderId) && // recipient blocks the sender !
-             (areFriends(...) || areRelatedViaGroupMembership(senderId, recipientId)))
-             */
-            // Check if client is friend via relationship OR they know each other through a shared group in which both are "joined" members.
-            if (areBefriended(recipientId, senderId) ||
-                    areRelatedViaGroupMembership(senderId, recipientId)) {
+            if (isBlocking(relationship)) {
+                LOG.info("Recipient: '" + recipientId + "' blocks sender: '" + senderId + "' -> Blocking delivery");
+                delivery.setState(TalkDelivery.STATE_FAILED);
+            } else if (areBefriended(relationship, recipientId, senderId) ||
+                       areRelatedViaGroupMembership(senderId, recipientId)) {
                 if (performOneDelivery(message, delivery)) {
                     result.add(delivery);
                     // mark delivery as in progress
@@ -1018,9 +1018,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return false;
     }
 
-    private boolean areBefriended(String clientId1, String clientId2) {
-        final TalkRelationship relationship = mDatabase.findRelationshipBetween(clientId1, clientId2);
+    private boolean isBlocking(TalkRelationship relationship) {
+        // Check if recipient marked his relationship to the sender as BLOCKED
+        return relationship != null && relationship.isBlocked();
+    }
 
+    private boolean areBefriended(TalkRelationship relationship, String clientId1, String clientId2) {
         // reject if there is no relationship
         if (relationship == null) {
             LOG.info("clients '" + clientId1 + "' and '" + clientId2 + "' have no relationship with each other");
