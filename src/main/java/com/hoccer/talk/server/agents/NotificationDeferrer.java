@@ -9,10 +9,9 @@ import java.util.concurrent.Executors;
 
 public class NotificationDeferrer {
 
-    private Executor mExecutor;
+    private final Executor mExecutor;
 
     public NotificationDeferrer(int poolSize, String poolName) {
-
         mExecutor = Executors.newScheduledThreadPool(
                 poolSize,
                 new NamedThreadFactory(poolName)

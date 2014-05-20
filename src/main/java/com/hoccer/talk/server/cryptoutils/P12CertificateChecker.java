@@ -30,7 +30,7 @@ public class P12CertificateChecker {
         // first convert the p12 into a pem...
         // openssl pkcs12 -in <certificateFilePath> -clcerts -nokeys -out temp.pem
         Path tempDir = Files.createTempDirectory("p12check");
-        String tempPemPath = tempDir.toString() + "/temp.pem";
+        String tempPemPath = tempDir + "/temp.pem";
         executeCommand("openssl pkcs12 -in " + mP12CertificatePath + " -clcerts -nokeys -out " + tempPemPath + " -passin pass:\"" + mImportPassword + "\"");
 
         // Determime expiry date of the extracted pem

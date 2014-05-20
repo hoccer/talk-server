@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class PushRequest {
 
-    private static final Logger LOG = Logger.getLogger(PushAgent.class);
+    private static final Logger LOG = Logger.getLogger(PushRequest.class);
 
     PushAgent mAgent;
 

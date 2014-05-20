@@ -28,7 +28,7 @@ public class PushAgent {
 
     private static final Logger LOG = Logger.getLogger(PushAgent.class);
 
-    private ScheduledExecutorService mExecutor;
+    private final ScheduledExecutorService mExecutor;
 
     TalkServer mServer;
     TalkServerConfiguration mConfig;

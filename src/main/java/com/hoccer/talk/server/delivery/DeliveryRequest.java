@@ -33,7 +33,7 @@ public class DeliveryRequest {
     public DeliveryRequest(DeliveryAgent agent, String clientId) {
         mClientId = clientId;
         mAgent = agent;
-        mServer = agent.getServer();
+        mServer = mAgent.getServer();
         mDatabase = mServer.getDatabase();
     }
 

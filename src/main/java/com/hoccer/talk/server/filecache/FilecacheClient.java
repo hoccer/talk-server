@@ -33,7 +33,7 @@ public class FilecacheClient extends JsonRpcWsClient {
     public FilecacheClient(TalkServer server) {
         super(server.getConfiguration().getFilecacheControlUrl(), "com.hoccer.talk.filecache.control.v1");
         mServer = server;
-        mConfig = server.getConfiguration();
+        mConfig = mServer.getConfiguration();
         mClient = new JsonRpcClient();
         mClient.setRequestTimeout(3000); // XXX constant
         this.bindClient(mClient);

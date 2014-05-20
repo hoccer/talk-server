@@ -10,7 +10,7 @@ public class DeliveryAgent extends NotificationDeferrer {
 
     private static final ThreadLocal<ArrayList<Runnable>> context = new ThreadLocal<ArrayList<Runnable>>();
 
-    private TalkServer mServer;
+    private final TalkServer mServer;
 
     public DeliveryAgent(TalkServer server) {
         super(

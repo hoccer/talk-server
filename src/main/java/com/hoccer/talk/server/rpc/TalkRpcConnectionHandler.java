@@ -55,7 +55,7 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
      *
      * @param request which initiated websocket upgrade
      * @param protocol the user defined websocket protocol (can be null!)
-     * @return
+     * @return websocket
      */
     @Override
     public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
