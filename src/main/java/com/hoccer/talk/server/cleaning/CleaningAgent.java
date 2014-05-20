@@ -28,24 +28,21 @@ public class CleaningAgent {
 
     private final static Logger LOG = Logger.getLogger(CleaningAgent.class);
 
-    TalkServer mServer;
+    @SuppressWarnings("FieldCanBeLocal")
+    private final TalkServer mServer;
+    private final TalkServerConfiguration mConfig;
+    private final ITalkServerDatabase mDatabase;
+    private final FilecacheClient mFilecache;
+    private final ScheduledExecutorService mExecutor;
 
-    TalkServerConfiguration mConfig;
-
-    ITalkServerDatabase mDatabase;
-
-    FilecacheClient mFilecache;
-
-    ScheduledExecutorService mExecutor;
-
-    static final int KEY_LIFE_TIME = 3; // in months
-    static final int RELATIONSHIP_LIFE_TIME = 3; // in months
+    private static final int KEY_LIFE_TIME = 3; // in months
+    private static final int RELATIONSHIP_LIFE_TIME = 3; // in months
 
     public CleaningAgent(TalkServer server) {
         mServer = server;
-        mConfig = server.getConfiguration();
-        mDatabase = server.getDatabase();
-        mFilecache = server.getFilecacheClient();
+        mConfig = mServer.getConfiguration();
+        mDatabase = mServer.getDatabase();
+        mFilecache = mServer.getFilecacheClient();
         mExecutor = Executors.newScheduledThreadPool(
             TalkServerConfiguration.THREADS_CLEANING,
             new NamedThreadFactory("cleaning-agent")
@@ -68,7 +65,6 @@ public class CleaningAgent {
     }
 
     // TODO: Also clean groups (normal and nearby)
-
 
     public void cleanClientData(final String clientId) {
         LOG.debug("cleaning client " + clientId);
