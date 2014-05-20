@@ -752,34 +752,14 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public void blockClient(String clientId) {
         requireIdentification();
-
         logCall("blockClient(id '" + clientId + "')");
-        TalkRelationship rel;
-        rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
-        if (rel == null) {
-            rel = new TalkRelationship();
-            rel.setClientId(mConnection.getClientId());
-            rel.setOtherClientId(clientId);
-            mDatabase.saveRelationship(rel);
-        }
 
-        String oldState = rel.getState();
-
-        if (TalkRelationship.STATE_FRIEND.equals(oldState)) {
-            setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_BLOCKED, true);
-            return;
-        }
-        if (TalkRelationship.STATE_BLOCKED.equals(oldState)) {
-            return;
-        }
-
-        throw new RuntimeException("You are not paired with client with id '" + clientId + "'");
+        setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_BLOCKED, true);
     }
 
     @Override
     public void unblockClient(String clientId) {
         requireIdentification();
-
         logCall("unblockClient(id '" + clientId + "')");
 
         TalkRelationship rel = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
@@ -819,18 +799,29 @@ public class TalkRpcHandler implements ITalkRpcServer {
         if (!TalkRelationship.isValidState(state)) {
             throw new RuntimeException("Invalid state '" + state + "'");
         }
-        LOG.info("relationship between clients with id '" + thisClientId + "' and '" + otherClientId + "' is now in state '" + state + "'");
+        TalkClient otherClient = mDatabase.findClientById(otherClientId);
+        if (otherClient == null) {
+            throw new RuntimeException("Invalid client to relate to - does not exist!");
+        }
+
         TalkRelationship relationship = mDatabase.findRelationshipBetween(thisClientId, otherClientId);
         if (relationship == null) {
             relationship = new TalkRelationship();
         }
+        final String oldState = relationship.getState();
+
         relationship.setClientId(thisClientId);
         relationship.setOtherClientId(otherClientId);
         relationship.setState(state);
         relationship.setLastChanged(new Date());
-        mDatabase.saveRelationship(relationship);
-        if (notify) {
-            mServer.getUpdateAgent().requestRelationshipUpdate(relationship);
+
+        // only save and notify if the relationship actually changed!
+        if (!state.equals(oldState)) {
+            mDatabase.saveRelationship(relationship);
+            LOG.info("relationship between clients with id '" + thisClientId + "' and '" + otherClientId + "' is now in state '" + state + "'");
+            if (notify) {
+                mServer.getUpdateAgent().requestRelationshipUpdate(relationship);
+            }
         }
     }
 
