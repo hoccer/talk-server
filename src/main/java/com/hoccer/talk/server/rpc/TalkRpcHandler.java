@@ -173,9 +173,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
 
         String clientId = UUID.randomUUID().toString();
-
         mConnection.beginRegistration(clientId);
-
         return clientId;
     }
 
@@ -193,7 +191,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             throw new RuntimeException("You need to generate an id before registering");
         }
 
-        // XXX check verifier and salt for viability
+        // TODO: check verifier and salt for viability
 
         TalkClient client = new TalkClient();
         client.setClientId(clientId);
@@ -240,7 +238,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
 
             // parse the salt from DB
-            byte[] salt = null;
+            byte[] salt;
             try {
                 salt = (byte[]) HEX.decode(mSrpClient.getSrpSalt());
             } catch (DecoderException e) {
@@ -294,7 +292,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
 
             // parse the string given by the client
-            byte[] M1b = null;
+            byte[] M1b;
             try {
                 M1b = (byte[]) HEX.decode(M1);
             } catch (DecoderException e) {
@@ -354,7 +352,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         if (registrationToken.isEmpty()) {
             return;
         }
-        // set and save the token
         TalkClient client = mConnection.getClient();
         client.setApnsToken(registrationToken);
         mDatabase.saveClient(client);
@@ -383,7 +380,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
         logCall("getRelationships(lastKnown: '" + lastKnown + "')");
 
-        // query the db
         List<TalkRelationship> relationships =
                 mDatabase.findRelationshipsChangedAfter(mConnection.getClientId(), lastKnown);
 
@@ -393,8 +389,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         for (TalkRelationship r : relationships) {
             res[idx++] = r;
         }
-
-        // return the bunch
         return res;
     }
 
@@ -403,35 +397,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
         logCall("updatePresence()");
         updatePresence(presence, null);
-/*
-        // find existing presence or create one
-        TalkPresence existing = mDatabase.findPresenceForClient(mConnection.getClientId());
-        if (existing == null) {
-            existing = new TalkPresence();
-        }
-
-        // update the presence with what we got
-        existing.setClientId(mConnection.getClientId());
-        existing.setClientName(presence.getClientName());
-        existing.setClientStatus(presence.getClientStatus());
-        existing.setTimestamp(new Date());
-        existing.setAvatarUrl(presence.getAvatarUrl());
-        existing.setKeyId(presence.getKeyId());
-        if (presence.isOffline()) {
-            // client os lying about it's presence
-            existing.setConnectionStatus(TalkPresence.CONN_STATUS_ONLINE);
-        } else if (presence.isConnected()) {
-            existing.setConnectionStatus(presence.getConnectionStatus());
-        } else {
-            LOG.error("undefined connectionStatus in presence:"+presence.getConnectionStatus());
-            existing.setConnectionStatus(TalkPresence.CONN_STATUS_ONLINE);
-        }
-        // save the thing
-        mDatabase.savePresence(existing);
-
-        // start updating other clients
-        mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId());
-        */
     }
 
     @Override
@@ -469,10 +434,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
         }
 
-        // save the thing
         mDatabase.savePresence(existing);
-
-        // start updating other clients
         mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId(), fields);
     }
 
@@ -481,9 +443,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         requireIdentification();
         logCall("getPresences(lastKnown: '" + lastKnown + "')");
 
-        // perform the query
         List<TalkPresence> pres = mDatabase.findPresencesChangedAfter(mConnection.getClientId(), lastKnown);
-
         // update connection status and convert results to array
         TalkPresence[] res = new TalkPresence[pres.size()];
         for (int i = 0; i < res.length; i++) {
@@ -495,7 +455,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
             res[i] = pres.get(i);
         }
 
-        // return it
         return res;
     }
 
@@ -503,17 +462,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void updateKey(TalkKey key) {
         requireIdentification();
         logCall("updateKey()");
-
-        TalkKey k = mDatabase.findKey(mConnection.getClientId(), key.getKeyId());
-        if (k != null) {
+        if (mDatabase.findKey(mConnection.getClientId(), key.getKeyId()) != null) {
             return;
         }
 
         key.setClientId(mConnection.getClientId());
         key.setTimestamp(new Date());
-
-        // XXX should check if the content is ok
-
+        // TODO: should check if the content is ok
         mDatabase.saveKey(key);
     }
 
@@ -726,7 +681,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
             return false;
         }
 
-        // log about it
         LOG.info("performing token-based pairing between clients with id '" + mConnection.getClientId() + "' and '" + token.getClientId() + "'");
 
         // set up relationships
@@ -768,11 +722,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
 
         String oldState = rel.getState();
-
-        if (oldState.equals(TalkRelationship.STATE_FRIEND)) {
+        if (TalkRelationship.STATE_FRIEND.equals(oldState)) {
             return;
         }
-        if (oldState.equals(TalkRelationship.STATE_BLOCKED)) {
+        if (TalkRelationship.STATE_BLOCKED.equals(oldState)) {
             setRelationship(mConnection.getClientId(), clientId, TalkRelationship.STATE_FRIEND, true);
             return;
         }
@@ -828,10 +781,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
     @Override
     public TalkDelivery[] deliveryRequest(TalkMessage message, TalkDelivery[] deliveries) {
         requireIdentification();
-
         logCall("deliveryRequest(" + deliveries.length + " deliveries)");
 
-        // who is doing this again?
         String clientId = mConnection.getClientId();
 
         // generate and assign message id
@@ -861,7 +812,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
             for (TalkDelivery ds : acceptedDeliveries) {
                 mDatabase.saveDelivery(ds);
             }
-            // save the message
             mDatabase.saveMessage(message);
             // initiate delivery for all recipients
             for (TalkDelivery ds : acceptedDeliveries) {
@@ -870,8 +820,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
 
         mStatistics.signalMessageAcceptedSucceeded();
-
-        // done - return whatever we are left with
         return deliveries;
     }
 
@@ -957,7 +905,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 LOG.info("Recipient: '" + recipientId + "' blocks sender: '" + senderId + "' -> Blocking delivery");
                 delivery.setState(TalkDelivery.STATE_FAILED);
             } else if (areBefriended(relationship, recipientId, senderId) ||
-                       areRelatedViaGroupMembership(senderId, recipientId)) {
+                    areRelatedViaGroupMembership(senderId, recipientId)) {
                 if (performOneDelivery(message, delivery)) {
                     result.add(delivery);
                     // mark delivery as in progress
