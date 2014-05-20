@@ -878,22 +878,18 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private Vector<TalkDelivery> requestOneDelivery(TalkMessage message, TalkDelivery delivery) {
         Vector<TalkDelivery> result = new Vector<TalkDelivery>();
 
-        // get the current date for stamping
         Date currentDate = new Date();
-        // who is doing this again?
         String senderId = mConnection.getClientId();
-        // get the receiver
-        String recipientId = delivery.getReceiverId();
 
-        // if we don't have a receiver try group delivery
-        if (recipientId == null) {
+        if (!delivery.hasValidRecipient()) {
+            LOG.info("delivery rejected: no valid recipient (neither group nor client delivery)");
+            delivery.setState(TalkDelivery.STATE_FAILED);
+            return result;
+        }
+
+        if (delivery.isGroupDelivery()) {
             String groupId = delivery.getGroupId();
 
-            if (groupId == null) {
-                LOG.info("delivery rejected: no receiver");
-                delivery.setState(TalkDelivery.STATE_FAILED);
-                return result;
-            }
             // check that group exists
             TalkGroup group = mDatabase.findGroupById(groupId);
             if (group == null) {
@@ -949,11 +945,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     delivery.setTimeChanged(currentDate);
                 }
             }
-        } else {
+        } else if (delivery.isClientDelivery()) {
             /*
             1) if a client is blocked we are done - message delivery is disallowed.
             2) Otherwise check if the sender has a valid relationship to the recipient that allows message delivery
             */
+            String recipientId = delivery.getReceiverId();
             final TalkRelationship relationship = mDatabase.findRelationshipBetween(recipientId, senderId);
 
             if (isBlocking(relationship)) {
@@ -970,7 +967,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     delivery.setTimeChanged(currentDate);
                 }
             } else {
-                LOG.info("Message delivery rejected since no relationship via group or friendship exists. (" + senderId + ", " + recipientId + ")");
+                LOG.info("Message delivery rejected since no permissive relationship via group or friendship exists. (" + senderId + ", " + recipientId + ")");
                 delivery.setState(TalkDelivery.STATE_FAILED);
             }
         }
@@ -1014,7 +1011,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
 
         // reject unless befriended
-        if (!relationship.getState().equals(TalkRelationship.STATE_FRIEND)) {
+        if (!TalkRelationship.STATE_FRIEND.equals(relationship.getState())) {
             LOG.info("clients '" + clientId1 + "' and '" + clientId2 +
                     "' are not friends (relationship is '" + relationship.getState() + "')");
             return false;
