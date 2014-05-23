@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.jetbrains.annotations.Nullable;
+//import org.jetbrains.annotations.Nullable;
 
 /**
  * Connection object representing one JSON-RPC connection each
@@ -157,7 +157,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      *
      * @return TalkClient client (or null)
      */
-    @Nullable
+//    @Nullable
     public String getClientId() {
         if (mTalkClient != null) {
             return mTalkClient.getClientId();
