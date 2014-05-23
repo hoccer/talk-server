@@ -490,9 +490,9 @@ public class UpdateAgent extends NotificationDeferrer {
                 withSharedKeyIdSalt = "RENEW";
             }
             ITalkRpcClient rpc = connection.getClientRpc();
-            LOG.error("requestGroupKeys, calling getEncryptedGroupKeys(" + forGroupId + ") on client for " + forClientIds.length + " client(s)");
+            LOG.info("requestGroupKeys, calling getEncryptedGroupKeys(" + forGroupId + ") on client for " + forClientIds.length + " client(s)");
             String[] newKeyBoxes = rpc.getEncryptedGroupKeys(forGroupId, forSharedKeyId, withSharedKeyIdSalt, forClientIds, withPublicKeyIds);
-            LOG.error("requestGroupKeys, call of getEncryptedGroupKeys(" + forGroupId + ") returned " + newKeyBoxes.length + " items)");
+            LOG.info("requestGroupKeys, call of getEncryptedGroupKeys(" + forGroupId + ") returned " + newKeyBoxes.length + " items)");
             if (newKeyBoxes != null) {
                 boolean responseLengthOk;
                 if ("RENEW".equals(forSharedKeyId)) {
