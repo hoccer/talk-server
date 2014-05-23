@@ -220,6 +220,11 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
     private void nagUserUpdate() {
         mClientRpc.alertUser(UPDATE_NAGGING_MESSAGE);
+        // Additional Nagging for APNS enabled devices since some don't support alertUser properly
+        if (mTalkClient.isPushCapable() &&
+            mTalkClient.isApnsCapable()) {
+            mServer.getPushAgent().submitSystemMessage(mTalkClient, UPDATE_NAGGING_MESSAGE);
+        }
     }
 
     /**
