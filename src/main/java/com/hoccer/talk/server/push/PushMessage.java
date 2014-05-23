@@ -1,15 +1,11 @@
 package com.hoccer.talk.server.push;
 
 import com.hoccer.talk.model.TalkClient;
-import com.hoccer.talk.model.TalkDelivery;
-import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.PayloadBuilder;
 import org.apache.log4j.Logger;
-
-import java.util.List;
 
 public class PushMessage {
 
