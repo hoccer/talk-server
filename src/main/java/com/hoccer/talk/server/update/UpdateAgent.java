@@ -407,7 +407,8 @@ public class UpdateAgent extends NotificationDeferrer {
                     for (TalkGroupMember m : members) {
                         TalkPresence presence = mDatabase.findPresenceForClient(m.getClientId());
                         if (presence != null && presence.getKeyId() != null) {
-                            if (m.isMember() && mServer.isClientReady(m.getClientId())) {
+                            // TODO: change to isMember() as soon as all clients are ready
+                            if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
                                 keyMasterCandidatesWithoutCurrentKey.add(m);
                             }
                             outOfDateMembers.add(m);
@@ -423,12 +424,14 @@ public class UpdateAgent extends NotificationDeferrer {
                             if (!sharedKeyId.equals(m.getSharedKeyId()) || !sharedKeyId.equals(presence.getKeyId())) {
                                 // member has not the current key
                                 outOfDateMembers.add(m);
-                                if (m.isMember() && mServer.isClientReady(m.getClientId())) {
+                                // TODO: change to isMember() as soon as all clients are ready
+                                if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
                                     keyMasterCandidatesWithoutCurrentKey.add(m);
                                 }
                             } else {
                                 // member has the current key
-                                if (m.isMember() && mServer.isClientReady(m.getClientId())) {
+                                // TODO: change to isMember() as soon as all clients are ready
+                                if (m.isAdmin() && mServer.isClientReady(m.getClientId())) {
                                     keyMasterCandidatesWithCurrentKey.add(m);
                                 }
                             }
