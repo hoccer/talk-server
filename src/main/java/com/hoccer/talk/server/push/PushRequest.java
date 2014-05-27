@@ -99,6 +99,9 @@ public class PushRequest {
         } else {
             b.localizedKey("apn_one_new_message");
         }
+
+
+
         b.badge(messageCount);
         b.sound("default");
         apnsService.push(mClient.getApnsToken(), b.build());
