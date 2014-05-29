@@ -77,6 +77,8 @@ public interface ITalkServerDatabase {
 
     public List<TalkRelationship> findRelationshipsForClientInState(String clientId, String state);
 
+    public List<TalkRelationship> findRelationshipsForClientInStates(String clientId, String[] states);
+
     public List<TalkRelationship> findRelationshipsByOtherClient(String other);
 
     public List<TalkRelationship> findRelationshipsChangedAfter(String client, Date lastKnown);

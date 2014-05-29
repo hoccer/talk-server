@@ -136,17 +136,19 @@ public class UpdateAgent extends NotificationDeferrer {
 
         // own client id
         String selfClientId = presence.getClientId();
+
         // set to collect clientIds into
         Set<String> clientIds = new HashSet<String>();
-        // collect clientIds known through relationships
+
+        // collect clientIds known through relationships (have a relationship to me)
         List<TalkRelationship> relationships = mDatabase.findRelationshipsByOtherClient(selfClientId);
         for (TalkRelationship relationship : relationships) {
-            // if the relation is friendly
-            if (relationship.isFriend()) {
+            // if the other clients relation is friendly to or has been invited by present client
+            // Clients that have blocked present client therefore will not be included here
+            if (relationship.isFriend() || relationship.invitedMe()) {
                 LOG.trace(tag + "including friend " + relationship.getClientId());
                 clientIds.add(relationship.getClientId());
             }
-            // XXX what about isBlocked()?
         }
         // collect clientIds known through groups
         List<TalkGroupMember> ownMembers = mDatabase.findGroupMembersForClient(selfClientId);
@@ -165,6 +167,19 @@ public class UpdateAgent extends NotificationDeferrer {
                 }
             }
         }
+
+        // do not send presence to clients the present client has blocked
+        List<TalkRelationship> my_relationships = mDatabase.findRelationships(selfClientId);
+        for (TalkRelationship relationship : my_relationships) {
+            if (relationship.isBlocked()) {
+                if (clientIds.contains(relationship.getClientId())) {
+                    LOG.trace(tag + "excluding blocked contact " + relationship.getClientId());
+                    clientIds.remove(relationship.getClientId());
+                }
+            }
+        }
+        //TODO: deal with blocked group members in conjunction with group key distribution
+
         // remove self
         LOG.trace(tag + "excluding self " + selfClientId);
         clientIds.remove(selfClientId);

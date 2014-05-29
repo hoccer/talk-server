@@ -430,6 +430,11 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkRelationship> findRelationshipsForClientInStates(String clientId, String[] states) {
+        return null;
+    }
+
+    @Override
     public List<TalkRelationship> findRelationshipsByOtherClient(String other) {
         try {
             return mRelationships.queryBuilder().where()

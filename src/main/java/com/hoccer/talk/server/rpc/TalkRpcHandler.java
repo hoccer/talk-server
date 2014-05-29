@@ -499,7 +499,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         TalkKey key = null;
 
         TalkRelationship relationship = mDatabase.findRelationshipBetween(mConnection.getClientId(), clientId);
-        if (relationship != null && relationship.isFriend()) {
+        if (relationship != null && (relationship.isFriend() || relationship.invitedMe())) {
             key = mDatabase.findKey(clientId, keyId);
         } else {
             List<TalkGroupMember> members = mDatabase.findGroupMembersForClient(mConnection.getClientId());
@@ -515,7 +515,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
 
         if (key == null) {
-            throw new RuntimeException("Given client is not your friend or key does not exist");
+            throw new RuntimeException("Given client is not your friend, has invited you or key does not exist");
         }
 
         return key;
@@ -734,6 +734,134 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     @Override
+    public void inviteFriend(String clientId) {
+        requireIdentification();
+        logCall("inviteFriend(id '" + clientId + "')");
+
+        String myId = mConnection.getClientId();
+
+        TalkRelationship rel = mDatabase.findRelationshipBetween(myId, clientId);
+        TalkRelationship reverse_rel = mDatabase.findRelationshipBetween(clientId,myId);
+
+        if (rel != null) {
+            if (reverse_rel == null) {
+                throw new RuntimeException("Server error: Relationship exists, but no reverse relationship found");
+            }
+            if (rel.isFriend()) {
+                throw new RuntimeException("Contact is already a friend");
+            }
+            if (rel.isBlocked()) {
+                throw new RuntimeException("Caller has blocked client, client must unblock contact first");
+            }
+            if (rel.invitedMe()) {
+                throw new RuntimeException("Invited client has already invited me, must accept invitation");
+            }
+        }
+        if (reverse_rel != null) {
+            if (rel == null) {
+                throw new RuntimeException("Server error: Reverse Relationship exists, but relationship to client not found");
+            }
+            if (reverse_rel.isBlocked()) {
+                throw new RuntimeException("Contact has blocked client"); // TODO: leaks information about blocking to client, how shall we deal with it?
+            }
+            if (reverse_rel.isFriend()) {
+                throw new RuntimeException("Server Error: Contact is already a friend, but not friend relationship to caller exists");
+            }
+            if (reverse_rel.isInvited()) {
+                throw new RuntimeException("Server Error: Invited client has already invited me, but relationship does not have proper state");
+            }
+        }
+
+        setRelationship(myId, clientId, TalkRelationship.STATE_INVITED, true);
+        setRelationship(clientId, myId, TalkRelationship.STATE_INVITED_ME, true);
+
+        // give only invited user a presence update from inviting client
+        //mServer.getUpdateAgent().requestPresenceUpdateForClient(clientId, myId);
+        mServer.getUpdateAgent().requestPresenceUpdateForClient(myId, clientId);
+    }
+
+    @Override
+    public void disinviteFriend(String clientId) {
+        requireIdentification();
+        logCall("disinviteFriend(id '" + clientId + "')");
+
+        String myId = mConnection.getClientId();
+
+        TalkRelationship rel = mDatabase.findRelationshipBetween(myId, clientId);
+        TalkRelationship reverse_rel = mDatabase.findRelationshipBetween(clientId,myId);
+
+        if (rel == null) {
+            throw new RuntimeException("No relationship exists with client with id '" + clientId + "'");
+        }
+        if (reverse_rel == null) {
+            throw new RuntimeException("No reverse relationship exists with client with id '" + clientId + "'");
+        }
+        if (!rel.isInvited()) {
+            throw new RuntimeException("Client with id '" + clientId + "'" +"is not invited");
+        }
+        setRelationship(myId, clientId, TalkRelationship.STATE_NONE, true);
+        if (reverse_rel.invitedMe()) {
+            setRelationship(clientId, myId, TalkRelationship.STATE_NONE, true);
+        }
+    }
+
+    @Override
+    public void acceptFriend(String clientId) {
+        requireIdentification();
+        logCall("acceptFriend(id '" + clientId + "')");
+
+        String myId = mConnection.getClientId();
+
+        TalkRelationship rel = mDatabase.findRelationshipBetween(myId, clientId);
+        TalkRelationship reverse_rel = mDatabase.findRelationshipBetween(clientId,myId);
+
+        if (rel == null) {
+            throw new RuntimeException("No relationship exists with client with id '" + clientId + "'");
+        }
+        if (reverse_rel == null) {
+            throw new RuntimeException("No reverse relationship exists with client with id '" + clientId + "'");
+        }
+        if (!rel.invitedMe()) {
+            throw new RuntimeException("Relationship to client with id '" + clientId + "'" +"is not in invitedMe state");
+        }
+        if (!reverse_rel.isInvited()) {
+            throw new RuntimeException("Relationship from client with id '" + clientId + "'" +"is not in invited state");
+        }
+        setRelationship(clientId, myId, TalkRelationship.STATE_FRIEND, true);
+        setRelationship(myId, clientId, TalkRelationship.STATE_FRIEND, true);
+
+        // send each other current presence to new befriended pair
+        mServer.getUpdateAgent().requestPresenceUpdateForClient(clientId, myId);
+        mServer.getUpdateAgent().requestPresenceUpdateForClient(myId, clientId);
+    }
+
+    @Override
+    public void refuseFriend(String clientId) {
+        requireIdentification();
+        logCall("acceptFriend(id '" + clientId + "')");
+
+        String myId = mConnection.getClientId();
+
+        TalkRelationship rel = mDatabase.findRelationshipBetween(myId, clientId);
+        TalkRelationship reverse_rel = mDatabase.findRelationshipBetween(clientId,myId);
+
+        if (rel == null) {
+            throw new RuntimeException("No relationship exists with client with id '" + clientId + "'");
+        }
+        if (reverse_rel == null) {
+            throw new RuntimeException("No reverse relationship exists with client with id '" + clientId + "'");
+        }
+        if (!rel.invitedMe()) {
+            throw new RuntimeException("Relationship to client with id '" + clientId + "'" +"is not in invitedMe state");
+        }
+        if (!reverse_rel.isInvited()) {
+            throw new RuntimeException("Relationship from client with id '" + clientId + "'" +"is not in invited state");
+        }
+        setRelationship(clientId, myId, TalkRelationship.STATE_NONE, true);
+        setRelationship(myId, clientId, TalkRelationship.STATE_NONE, true);
+    }
+
+    @Override
     public void depairClient(String clientId) {
         requireIdentification();
 
@@ -768,13 +896,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
         relationship.setState(state);
         relationship.setLastChanged(new Date());
 
-        // only save and notify if the relationship actually changed!
-        if (!state.equals(oldState)) {
-            mDatabase.saveRelationship(relationship);
-            LOG.info("relationship between clients with id '" + thisClientId + "' and '" + otherClientId + "' is now in state '" + state + "'");
-            if (notify) {
-                mServer.getUpdateAgent().requestRelationshipUpdate(relationship);
-            }
+        // always save and notify
+        mDatabase.saveRelationship(relationship);
+        LOG.info("relationship between clients with id '" + thisClientId + "' and '" + otherClientId + "' is now in state '" + state + "'");
+        if (notify) {
+            mServer.getUpdateAgent().requestRelationshipUpdate(relationship);
         }
     }
 
@@ -1610,6 +1736,41 @@ public class TalkRpcHandler implements ITalkRpcServer {
             TalkGroupMember membership = mDatabase.findGroupMemberForClient(groupId, clientId);
             if (membership != null && (membership.isInvited() || membership.isMember())) {
                 result.add(true);
+            } else {
+                result.add(false);
+            }
+        }
+
+        return result.toArray(new Boolean[result.size()]);
+    }
+
+    @Override
+    public Boolean[] isContactOf(String[] clientIds) {
+        logCall("isContactOf(clientIds: '" + Arrays.toString(clientIds) + "'");
+        final String clientId = mConnection.getClientId();
+
+        final List<TalkRelationship> relationships =
+                mDatabase.findRelationshipsForClientInStates(clientId, TalkRelationship.STATES_RELATED);
+
+        Set<String> myContactIds = new HashSet<String>();
+        for (TalkRelationship relationship : relationships) {
+            myContactIds.add(relationship.getOtherClientId());
+        }
+
+        final List<TalkGroupMember> myMemberships = mDatabase.findGroupMembersForClientWithStates(clientId, TalkGroupMember.ACTIVE_STATES);
+
+        for (TalkGroupMember groupMember : myMemberships) {
+            final List<TalkGroupMember> myGroupContacts = mDatabase.findGroupMembersByIdWithStates(groupMember.getGroupId(),TalkGroupMember.ACTIVE_STATES);
+            for (TalkGroupMember member : myGroupContacts) {
+                myContactIds.add(member.getClientId());
+            }
+        }
+
+        ArrayList<Boolean> result = new ArrayList<Boolean>();
+
+        for (String contactId : clientIds) {
+            if (myContactIds.contains(contactId)) {
+                 result.add(true);
             } else {
                 result.add(false);
             }
