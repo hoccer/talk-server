@@ -94,6 +94,19 @@ public class PushAgent {
                 });
     }
 
+    public void submitSystemMessage(final TalkClient client, final String message) {
+        LOG.info("submitSystemMessage -> clientId: '" + client.getClientId() + "' message: '" + message + "'");
+        final PushMessage pushMessage = new PushMessage(this, client, message);
+        mExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                LOG.info(" -> initializing Message Push for clientId: '" + client.getClientId() +"'!");
+                pushMessage.perform();
+                LOG.info(" -> Message Push done for clientId: '" + client.getClientId() +"'!");
+            }
+        }, 0, TimeUnit.MILLISECONDS);
+    }
+
     public void submitRequest(TalkClient client) {
         long now = System.currentTimeMillis();
 
