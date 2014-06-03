@@ -53,7 +53,7 @@ public class DeliveryRequest {
         List<TalkDelivery> inDeliveries =
                 mDatabase.findDeliveriesForClientInState(mClientId, TalkDelivery.STATE_DELIVERING);
         if (!inDeliveries.isEmpty()) {
-            LOG.info("has " + inDeliveries.size() + " incoming deliveries");
+            LOG.info("clientId: '" + mClientId + "' has " + inDeliveries.size() + " incoming deliveries");
             // we will need to push if we don't succeed
             needToNotify = true;
             // deliver one by one
@@ -83,7 +83,7 @@ public class DeliveryRequest {
                     delivery.setTimeUpdatedIn(new Date());
                     mDatabase.saveDelivery(delivery);
                 } catch (Exception e) {
-                    LOG.info("Exception calling incomingDelivery()", e);
+                    LOG.info("Exception calling incomingDelivery() for clientId: '" + mClientId + "'", e);
                     //currentlyConnected = false; XXX do this when we can differentiate
                 }
 
@@ -98,7 +98,7 @@ public class DeliveryRequest {
         List<TalkDelivery> outDeliveries =
                 mDatabase.findDeliveriesFromClientInState(mClientId, TalkDelivery.STATE_DELIVERED);
         if (currentlyConnected && !outDeliveries.isEmpty()) {
-            LOG.info("has " + outDeliveries.size() + " outgoing deliveries");
+            LOG.info("clientId: '" + mClientId + "' has " + outDeliveries.size() + " outgoing deliveries");
             // deliver one by one
             for (TalkDelivery delivery : outDeliveries) {
                 // we lost the connection somehow
@@ -119,7 +119,7 @@ public class DeliveryRequest {
                     delivery.setTimeUpdatedOut(new Date());
                     mDatabase.saveDelivery(delivery);
                 } catch (Exception e) {
-                    LOG.info("Exception calling outgoingDelivery()", e);
+                    LOG.info("Exception calling outgoingDelivery() for clientId: '" + mClientId + "'", e);
                 }
 
                 // check for disconnects
