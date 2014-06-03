@@ -119,7 +119,7 @@ public class DeliveryRequest {
                     delivery.setTimeUpdatedOut(new Date());
                     mDatabase.saveDelivery(delivery);
                 } catch (Exception e) {
-                    LOG.info("Exception calling outgoingDelivery()");
+                    LOG.info("Exception calling outgoingDelivery()", e);
                 }
 
                 // check for disconnects
