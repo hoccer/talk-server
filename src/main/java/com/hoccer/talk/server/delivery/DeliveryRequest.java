@@ -110,6 +110,7 @@ public class DeliveryRequest {
                 long now = System.currentTimeMillis();
                 long delta = Math.max(0, now - delivery.getTimeUpdatedOut().getTime());
                 if (delta < 5000) {
+                    LOG.info("skipping delivery notification for outgoingDelivery() because delta is too small, delta="+delta);
                     continue;
                 }
 

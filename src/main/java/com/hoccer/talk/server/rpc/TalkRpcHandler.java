@@ -910,7 +910,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
         logCall("deliveryRequest(" + deliveries.length + " deliveries)");
 
         String clientId = mConnection.getClientId();
-
+        if (clientId == null) {
+            LOG.error("deliveryRequest null clientId on connection: '" + mConnection.getConnectionId() + "', address " + mConnection.getRemoteAddress());
+        }
         // generate and assign message id
         String messageId = UUID.randomUUID().toString();
         message.setMessageId(messageId);
@@ -1135,7 +1137,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 LOG.info("confirmed message with id '" + messageId + "' for client with id '" + clientId + "'");
                 setDeliveryState(delivery, TalkDelivery.STATE_DELIVERED);
                 mStatistics.signalMessageConfirmedSucceeded();
+            } else {
+                LOG.error("deliveryConfirm received for delivery not in state 'delivering' (state ="+delivery.getState()+") : message id '" + messageId + "' client id '" + clientId + "'");
             }
+        } else {
+            LOG.error("deliveryConfirm: no delivery found for message with id '" + messageId + "' for client with id '" + clientId + "'");
         }
         return delivery;
     }
@@ -1150,7 +1156,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 LOG.info("acknowledged message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
                 setDeliveryState(delivery, TalkDelivery.STATE_CONFIRMED);
                 mStatistics.signalMessageAcknowledgedSucceeded();
+            }  else {
+                LOG.error("deliveryAcknowledge received for delivery not in state 'delivered' (state ="+delivery.getState()+") : message id '" + messageId + "' recipientId '" + recipientId + "'");
             }
+        }  else {
+            LOG.error("deliveryAcknowledge: no delivery found for message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
         }
         return delivery;
     }
@@ -1172,6 +1182,8 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     setDeliveryState(delivery, TalkDelivery.STATE_ABORTED);
                 }
             }
+        }     else {
+            LOG.error("deliveryAbort(): no delivery found for message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
         }
         return delivery;
     }
