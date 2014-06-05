@@ -24,8 +24,8 @@ public class DeliveryAgent extends NotificationDeferrer {
         return mServer;
     }
 
-    public void requestDelivery(String clientId) {
-        final DeliveryRequest deliveryRequest = new DeliveryRequest(this, clientId);
+    public void requestDelivery(String clientId, boolean forceAll) {
+        final DeliveryRequest deliveryRequest = new DeliveryRequest(this, clientId, forceAll);
 
         Runnable notificationGenerator = new Runnable() {
             @Override

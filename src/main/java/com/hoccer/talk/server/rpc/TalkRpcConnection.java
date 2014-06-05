@@ -314,7 +314,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
             mServer.readyClient(mTalkClient, this);
 
             // attempt to deliver anything we might have
-            mServer.getDeliveryAgent().requestDelivery(mTalkClient.getClientId());
+            mServer.getDeliveryAgent().requestDelivery(mTalkClient.getClientId(), true);
 
             // request a ping in a few seconds
             mServer.getPingAgent().requestPing(mTalkClient.getClientId());

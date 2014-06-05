@@ -30,11 +30,14 @@ public class DeliveryRequest {
     TalkServer mServer;
     ITalkServerDatabase mDatabase;
 
-    public DeliveryRequest(DeliveryAgent agent, String clientId) {
+    boolean mForceAll;
+
+    public DeliveryRequest(DeliveryAgent agent, String clientId, boolean forceAll) {
         mClientId = clientId;
         mAgent = agent;
         mServer = mAgent.getServer();
         mDatabase = mServer.getDatabase();
+        mForceAll = forceAll;
     }
 
     void perform() {
@@ -63,12 +66,19 @@ public class DeliveryRequest {
                     break;
                 }
 
+                delivery.ensureDates();
+                if (!mForceAll && (delivery.getTimeUpdatedIn().getTime() > delivery.getTimeChanged().getTime())) {
+                    continue;
+                }
+                /*
                 // rate limit
                 long now = System.currentTimeMillis();
                 long delta = Math.max(0, now - delivery.getTimeUpdatedIn().getTime());
                 if (delta < 5000) {
                     continue;
                 }
+                */
+
 
                 // get the matching message
                 TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
@@ -79,7 +89,11 @@ public class DeliveryRequest {
 
                 // post the delivery for the client
                 try {
-                    rpc.incomingDelivery(delivery, message);
+                    TalkDelivery filtered = new TalkDelivery();
+                    filtered.updateWith(delivery);
+                    filtered.setTimeUpdatedIn(null);
+                    filtered.setTimeUpdatedOut(null);
+                    rpc.incomingDelivery(filtered, message);
                     delivery.setTimeUpdatedIn(new Date());
                     mDatabase.saveDelivery(delivery);
                 } catch (Exception e) {
@@ -106,6 +120,12 @@ public class DeliveryRequest {
                     break;
                 }
 
+                delivery.ensureDates();
+                if (!mForceAll && (delivery.getTimeUpdatedOut().getTime() > delivery.getTimeChanged().getTime())) {
+                    continue;
+                }
+
+                /*
                 // rate limit
                 long now = System.currentTimeMillis();
                 long delta = Math.max(0, now - delivery.getTimeUpdatedOut().getTime());
@@ -113,10 +133,13 @@ public class DeliveryRequest {
                     LOG.info("skipping delivery notification for outgoingDelivery() because delta is too small, delta="+delta);
                     continue;
                 }
+                */
 
                 // notify it
                 try {
-                    rpc.outgoingDelivery(delivery);
+                    TalkDelivery filtered = new TalkDelivery();
+                    filtered.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+                    rpc.outgoingDelivery(filtered);
                     delivery.setTimeUpdatedOut(new Date());
                     mDatabase.saveDelivery(delivery);
                 } catch (Exception e) {
@@ -135,6 +158,7 @@ public class DeliveryRequest {
             LOG.info("pushing " + mClientId);
             performPush();
         }
+        mForceAll = false;
     }
 
     private void performPush() {

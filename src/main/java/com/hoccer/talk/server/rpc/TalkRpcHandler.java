@@ -923,12 +923,19 @@ public class TalkRpcHandler implements ITalkRpcServer {
         // walk deliveries and determine which to accept,
         // filling in missing things as we go
         Vector<TalkDelivery> acceptedDeliveries = new Vector<TalkDelivery>();
+        Vector<TalkDelivery> resultDeliveries = new Vector<TalkDelivery>();
         for (TalkDelivery delivery : deliveries) {
             // fill out various fields
+            delivery.ensureDates();
             delivery.setMessageId(message.getMessageId());
             delivery.setSenderId(clientId);
-            // perform the delivery request
+
             acceptedDeliveries.addAll(requestOneDelivery(message, delivery));
+            // delivery will be returned as result, so mark outgoing time
+            delivery.setTimeUpdatedOut(new Date(delivery.getTimeChanged().getTime()+1));
+            TalkDelivery resultDelivery = new TalkDelivery();
+            resultDelivery.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+            resultDeliveries.add(resultDelivery);
         }
 
         // update number of deliveries
@@ -943,12 +950,12 @@ public class TalkRpcHandler implements ITalkRpcServer {
             mDatabase.saveMessage(message);
             // initiate delivery for all recipients
             for (TalkDelivery ds : acceptedDeliveries) {
-                mServer.getDeliveryAgent().requestDelivery(ds.getReceiverId());
+                mServer.getDeliveryAgent().requestDelivery(ds.getReceiverId(), false);
             }
         }
 
         mStatistics.signalMessageAcceptedSucceeded();
-        return deliveries;
+        return resultDeliveries.toArray(new TalkDelivery[0]);
     }
 
     private Vector<TalkDelivery> requestOneDelivery(TalkMessage message, TalkDelivery delivery) {
@@ -1000,7 +1007,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 }
                 LOG.info("delivering message " + message.getMessageId() + " for client " + member.getClientId() + " group " + groupId + " sharedKeyId=" + message.getSharedKeyId() + ", member sharedKeyId=" + member.getSharedKeyId());
 
-                TalkDelivery memberDelivery = new TalkDelivery();
+                TalkDelivery memberDelivery = new TalkDelivery(true);
                 memberDelivery.setMessageId(message.getMessageId());
                 memberDelivery.setMessageTag(delivery.getMessageTag());
                 memberDelivery.setGroupId(groupId);
@@ -1135,11 +1142,14 @@ public class TalkRpcHandler implements ITalkRpcServer {
         if (delivery != null) {
             if (delivery.getState().equals(TalkDelivery.STATE_DELIVERING)) {
                 LOG.info("confirmed message with id '" + messageId + "' for client with id '" + clientId + "'");
-                setDeliveryState(delivery, TalkDelivery.STATE_DELIVERED);
+                setDeliveryState(delivery, TalkDelivery.STATE_DELIVERED, true, false);
                 mStatistics.signalMessageConfirmedSucceeded();
             } else {
                 LOG.error("deliveryConfirm received for delivery not in state 'delivering' (state ="+delivery.getState()+") : message id '" + messageId + "' client id '" + clientId + "'");
             }
+            TalkDelivery result = new TalkDelivery();
+            result.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+            return result;
         } else {
             LOG.error("deliveryConfirm: no delivery found for message with id '" + messageId + "' for client with id '" + clientId + "'");
         }
@@ -1154,10 +1164,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
         if (delivery != null) {
             if (delivery.getState().equals(TalkDelivery.STATE_DELIVERED)) {
                 LOG.info("acknowledged message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
-                setDeliveryState(delivery, TalkDelivery.STATE_CONFIRMED);
+                setDeliveryState(delivery, TalkDelivery.STATE_CONFIRMED, false, true);
                 mStatistics.signalMessageAcknowledgedSucceeded();
+                TalkDelivery result = new TalkDelivery();
+                result.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+                return result;
             }  else {
-                LOG.error("deliveryAcknowledge received for delivery not in state 'delivered' (state ="+delivery.getState()+") : message id '" + messageId + "' recipientId '" + recipientId + "'");
+                LOG.error("deliveryAcknowledge received for delivery not in state 'delivered' (state =" + delivery.getState() + ") : message id '" + messageId + "' recipientId '" + recipientId + "'");
             }
         }  else {
             LOG.error("deliveryAcknowledge: no delivery found for message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
@@ -1175,27 +1188,36 @@ public class TalkRpcHandler implements ITalkRpcServer {
         if (delivery != null) {
             if (recipientId.equals(clientId)) {
                 // abort incoming delivery, regardless of sender
-                setDeliveryState(delivery, TalkDelivery.STATE_ABORTED);
+                setDeliveryState(delivery, TalkDelivery.STATE_ABORTED, true, false);
             } else {
                 // abort outgoing delivery iff we are the actual sender
                 if (delivery.getSenderId().equals(clientId)) {
-                    setDeliveryState(delivery, TalkDelivery.STATE_ABORTED);
+                    setDeliveryState(delivery, TalkDelivery.STATE_ABORTED, false, true);
                 }
             }
-        }     else {
+            TalkDelivery result = new TalkDelivery();
+            result.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+            return result;
+        } else {
             LOG.error("deliveryAbort(): no delivery found for message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
         }
         return delivery;
     }
 
-    private void setDeliveryState(TalkDelivery delivery, String state) {
+    private void setDeliveryState(TalkDelivery delivery, String state, boolean willReturnDeliveryIn, boolean willReturnDeliveryOut) {
         delivery.setState(state);
         delivery.setTimeChanged(new Date());
+        if (willReturnDeliveryIn) {
+            delivery.setTimeUpdatedIn(new Date(delivery.getTimeChanged().getTime()+1));
+        }
+        if (willReturnDeliveryOut) {
+            delivery.setTimeUpdatedOut(new Date(delivery.getTimeChanged().getTime() + 1));
+        }
         mDatabase.saveDelivery(delivery);
         if (TalkDelivery.STATE_DELIVERED.equals(state)) {
-            mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId());
+            mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId(), false);
         } else if (TalkDelivery.STATE_DELIVERING.equals(state)) {
-            mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId());
+            mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId(), false);
         } else if (delivery.isFinished()) {
             mServer.getCleaningAgent().cleanFinishedDelivery(delivery);
         }
