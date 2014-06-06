@@ -302,7 +302,7 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
      * Called by handler when the client has called ready()
      */
     public void readyClient() {
-        if (isLoggedIn() && mTalkClient != null) {
+        if (isLoggedIn() && mTalkClient != null) { // TODO: why do we have these checks here anyway? They seems quite redundant
             LOG.info("[connectionId: '" + getConnectionId() + "'] signalled Ready: " + mTalkClient.getClientId());
 
             // mark connection as logged in
@@ -318,6 +318,8 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
 
             // request a ping in a few seconds
             mServer.getPingAgent().requestPing(mTalkClient.getClientId());
+        } else {
+            LOG.warn("[connectionId: '" + getConnectionId() + "'] client signalled ready but is actually NOT ready!");
         }
     }
 
