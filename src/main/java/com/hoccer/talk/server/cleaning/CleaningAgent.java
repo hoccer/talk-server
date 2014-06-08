@@ -252,7 +252,7 @@ public class CleaningAgent {
 
         // delete attached file if there is one
         String fileId = message.getAttachmentFileId();
-        if (fileId != null) {
+        if (fileId != null && mFilecache != null) {   // TODO: mFilecache is sometimes null for unknown reasons, should be fixed
             mFilecache.deleteFile(fileId);
         }
 

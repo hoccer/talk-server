@@ -932,7 +932,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
             acceptedDeliveries.addAll(requestOneDelivery(message, delivery));
             // delivery will be returned as result, so mark outgoing time
-            delivery.setTimeUpdatedOut(new Date(delivery.getTimeChanged().getTime()+1));
+            delivery.setTimeUpdatedOut(new Date(delivery.getTimeChanged().getTime() + 1));
             TalkDelivery resultDelivery = new TalkDelivery();
             resultDelivery.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
             resultDeliveries.add(resultDelivery);
@@ -1269,7 +1269,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void updateGroupName(String groupId, String name) {
         requireIdentification();
         requireGroupAdmin(groupId);
-        requireNotNearbyGroupType(groupId);
+        //requireNotNearbyGroupType(groupId);
         logCall("updateGroupName(groupId: '" + groupId + "', name: '" + name + "')");
         TalkGroup targetGroup = mDatabase.findGroupById(groupId);
         targetGroup.setGroupName(name);
@@ -1280,7 +1280,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void updateGroupAvatar(String groupId, String avatarUrl) {
         requireIdentification();
         requireGroupAdmin(groupId);
-        requireNotNearbyGroupType(groupId);
+        //requireNotNearbyGroupType(groupId);
         logCall("updateGroupAvatar(groupId: '" + groupId + "', avatarUrl: '" + avatarUrl + "')");
         TalkGroup targetGroup = mDatabase.findGroupById(groupId);
         targetGroup.setGroupAvatarUrl(avatarUrl);
@@ -1346,7 +1346,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void inviteGroupMember(String groupId, String clientId) {
         requireIdentification();
         requireGroupAdmin(groupId);
-        requireNotNearbyGroupType(groupId);
+        //requireNotNearbyGroupType(groupId);
         logCall("inviteGroupMember(groupId: '" + groupId + "' / clientId: '" + clientId + "')");
 
         // check that the client exists
@@ -1425,7 +1425,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public void removeGroupMember(String groupId, String clientId) {
         requireIdentification();
         requireGroupAdmin(groupId);
-        requireNotNearbyGroupType(groupId);
+        //requireNotNearbyGroupType(groupId);
         logCall("removeGroupMember(groupId: '" + groupId + "' / clientId: '" + clientId + "')");
 
         TalkGroupMember targetMember = mDatabase.findGroupMemberForClient(groupId, clientId);
@@ -1544,7 +1544,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         TalkGroupMember groupAdmin = new TalkGroupMember();
         groupAdmin.setClientId(mConnection.getClientId());
         groupAdmin.setGroupId(group.getGroupId());
-        groupAdmin.setRole(TalkGroupMember.ROLE_ADMIN);
+        groupAdmin.setRole(TalkGroupMember.ROLE_NEARBY_MEMBER);
         groupAdmin.setState(TalkGroupMember.STATE_JOINED);
         changedGroup(group, new Date());
         changedGroupMember(groupAdmin, group.getLastChanged(), true);
@@ -1568,24 +1568,24 @@ public class TalkRpcHandler implements ITalkRpcServer {
     private void joinGroupWithEnvironment(TalkGroup group, TalkEnvironment environment) {
         LOG.info("joinGroupWithEnvironment: joining group with client id '" + mConnection.getClientId() + "'");
 
-        TalkGroupMember groupAdmin = mDatabase.findGroupMemberForClient(group.getGroupId(), mConnection.getClientId());
+        TalkGroupMember nearbyMember = mDatabase.findGroupMemberForClient(group.getGroupId(), mConnection.getClientId());
         boolean isNew = false;
-        if (groupAdmin == null) {
-            groupAdmin = new TalkGroupMember();
+        if (nearbyMember == null) {
+            nearbyMember = new TalkGroupMember();
             isNew = true;
         }
-        groupAdmin.setClientId(mConnection.getClientId());
-        groupAdmin.setGroupId(group.getGroupId());
-        groupAdmin.setRole(TalkGroupMember.ROLE_ADMIN);
+        nearbyMember.setClientId(mConnection.getClientId());
+        nearbyMember.setGroupId(group.getGroupId());
+        nearbyMember.setRole(TalkGroupMember.ROLE_NEARBY_MEMBER);
         // TODO: Idea: if we would only invite here the client would only receive nearby group messages after joining, which
         // the clients could do on their discretion
-        groupAdmin.setState(TalkGroupMember.STATE_JOINED);
+        nearbyMember.setState(TalkGroupMember.STATE_JOINED);
         if (!group.getState().equals(TalkGroup.STATE_EXISTS)) {
             group.setState(TalkGroup.STATE_EXISTS);
             mDatabase.saveGroup(group);
         }
         changedGroup(group, new Date());
-        changedGroupMember(groupAdmin, group.getLastChanged(), isNew);
+        changedGroupMember(nearbyMember, group.getLastChanged(), isNew);
 
         environment.setGroupId(group.getGroupId());
         environment.setClientId(mConnection.getClientId());
