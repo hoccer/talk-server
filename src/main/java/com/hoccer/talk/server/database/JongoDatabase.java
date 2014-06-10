@@ -153,6 +153,18 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkMessage> findMessagesWithAttachmentFileId(String fileId) {
+        List<TalkMessage> res = new ArrayList<TalkMessage>();
+        Iterator<TalkMessage> it =
+                mMessages.find("{attachmentFileId:#}", fileId)
+                        .as(TalkMessage.class).iterator();
+        while (it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
     public void deleteMessage(TalkMessage message) {
         mMessages.remove("{messageId:#}", message.getMessageId());
     }
@@ -217,10 +229,49 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
+    public List<TalkDelivery> findDeliveriesForClientInDeliveryAndAttachmentStates(String clientId, String[] deliveryStates, String[] attachmentStates) {
+
+        List<TalkDelivery> res = new ArrayList<TalkDelivery>();
+        Iterator<TalkDelivery> it =
+                mDeliveries.find("{receiverId:#, state: { $in: # }, attachmentState: {$in: #}", clientId, Arrays.asList(deliveryStates), Arrays.asList(attachmentStates))
+                        .as(TalkDelivery.class).iterator();
+        while (it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
     public List<TalkDelivery> findDeliveriesFromClientInState(String clientId, String state) {
         List<TalkDelivery> res = new ArrayList<TalkDelivery>();
         Iterator<TalkDelivery> it =
                 mDeliveries.find("{senderId:#,state:#}", clientId, state)
+                        .as(TalkDelivery.class).iterator();
+        while (it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
+    public List<TalkDelivery> findDeliveriesFromClientInStates(String clientId, String[] deliveryStates) {
+
+        List<TalkDelivery> res = new ArrayList<TalkDelivery>();
+        Iterator<TalkDelivery> it =
+                mDeliveries.find("{senderId:#, state: { $in: # }", clientId, Arrays.asList(deliveryStates))
+                        .as(TalkDelivery.class).iterator();
+        while (it.hasNext()) {
+            res.add(it.next());
+        }
+        return res;
+    }
+
+    @Override
+    public List<TalkDelivery> findDeliveriesFromClientInDeliveryAndAttachmentStates(String clientId, String[] deliveryStates, String[] attachmentStates) {
+
+        List<TalkDelivery> res = new ArrayList<TalkDelivery>();
+        Iterator<TalkDelivery> it =
+                mDeliveries.find("{senderId:#, state: { $in: # }, attachmentState: {$in: #}", clientId, Arrays.asList(deliveryStates), Arrays.asList(attachmentStates))
                         .as(TalkDelivery.class).iterator();
         while (it.hasNext()) {
             res.add(it.next());

@@ -29,6 +29,8 @@ public interface ITalkServerDatabase {
 
     public TalkMessage findMessageById(String messageId);
 
+    public List<TalkMessage> findMessagesWithAttachmentFileId(String fileId);
+
     public void deleteMessage(TalkMessage message);
 
     public void saveMessage(TalkMessage message);
@@ -41,9 +43,15 @@ public interface ITalkServerDatabase {
 
     public List<TalkDelivery> findDeliveriesForClientInState(String clientId, String state);
 
+    public List<TalkDelivery> findDeliveriesForClientInDeliveryAndAttachmentStates(String clientId, String[] deliveryStates, String[] attachmentStates);
+
     public List<TalkDelivery> findDeliveriesFromClient(String clientId);
 
     public List<TalkDelivery> findDeliveriesFromClientInState(String clientId, String state);
+
+    public List<TalkDelivery> findDeliveriesFromClientInStates(String clientId, String[] states);
+
+    public List<TalkDelivery> findDeliveriesFromClientInDeliveryAndAttachmentStates(String clientId, String[] deliveryStates, String[] attachmentStates);
 
     public List<TalkDelivery> findDeliveriesForMessage(String messageId);
 

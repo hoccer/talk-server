@@ -929,6 +929,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
             delivery.ensureDates();
             delivery.setMessageId(message.getMessageId());
             delivery.setSenderId(clientId);
+            if (message.getAttachmentFileId() == null) {
+                delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_NONE);
+            } else {
+                if (delivery.getAttachmentState() == null) {
+                    delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_NEW);
+                }
+            }
 
             acceptedDeliveries.addAll(requestOneDelivery(message, delivery));
             // delivery will be returned as result, so mark outgoing time
@@ -1016,6 +1023,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 memberDelivery.setKeyCiphertext(member.getEncryptedGroupKey());
                 memberDelivery.setReceiverId(member.getClientId());
                 memberDelivery.setState(TalkDelivery.STATE_DELIVERING);
+                memberDelivery.setAttachmentState(delivery.getAttachmentState());
                 memberDelivery.setTimeAccepted(currentDate);
 
                 boolean success = performOneDelivery(message, memberDelivery);
@@ -1177,7 +1185,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         return delivery;
     }
-
+    /*
     // TODO: do not allow abortion of message that are already delivered or confirmed
     @Override
     public TalkDelivery deliveryAbort(String messageId, String recipientId) {
@@ -1203,23 +1211,87 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         return delivery;
     }
+     */
+
+    private TalkDelivery deliverySenderChangeState(String messageId, String recipientId, String newState) {
+        String clientId = mConnection.getClientId();
+        TalkDelivery delivery = mDatabase.findDelivery(messageId, recipientId);
+        if (delivery != null) {
+            // abort outgoing delivery if we are the actual sender
+            if (delivery.getSenderId().equals(clientId)) {
+                setDeliveryState(delivery, TalkDelivery.STATE_ABORTED_CONFIRMED, false, true);
+            } else {
+                throw new RuntimeException("you are not the sender");
+            }
+            TalkDelivery result = new TalkDelivery();
+            result.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+            return result;
+        } else {
+            throw new RuntimeException("no delivery found for message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
+        }
+    }
+
+    @Override
+    public TalkDelivery deliveryAbort(String messageId, String recipientId) {
+        requireIdentification();
+        logCall("deliveryAbort(messageId: '" + messageId + "', recipientId: '" + recipientId + "'");
+        return deliverySenderChangeState(messageId, recipientId, TalkDelivery.STATE_ABORTED_CONFIRMED);
+    }
+
+    @Override
+    public TalkDelivery deliveryRejectedAcknowledge(String messageId, String recipientId) {
+        requireIdentification();
+        logCall("deliveryAbort(messageId: '" + messageId + "', recipientId: '" + recipientId + "'");
+        return deliverySenderChangeState(messageId, recipientId, TalkDelivery.STATE_REJECTED_CONFIRMED);
+    }
+    @Override
+    public TalkDelivery deliveryFailedAcknowledge(String messageId, String recipientId) {
+        requireIdentification();
+        logCall("deliveryAbort(messageId: '" + messageId + "', recipientId: '" + recipientId + "'");
+        return deliverySenderChangeState(messageId, recipientId, TalkDelivery.STATE_FAILED_CONFIRMED);
+    }
+
+    @Override
+    public TalkDelivery deliveryReject(String messageId) {
+        requireIdentification();
+        logCall("deliveryReject(messageId: '" + messageId);
+        String clientId = mConnection.getClientId();
+        TalkDelivery delivery = mDatabase.findDelivery(messageId, clientId);
+        if (delivery != null) {
+                setDeliveryState(delivery, TalkDelivery.STATE_REJECTED, true, false);
+            TalkDelivery result = new TalkDelivery();
+            result.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+            return result;
+        } else {
+            throw new RuntimeException("deliveryReject(): no delivery found for message with id '" + messageId + "' for recipient with id '" + clientId + "'");
+        }
+    }
+
+
+
+
 
     private void setDeliveryState(TalkDelivery delivery, String state, boolean willReturnDeliveryIn, boolean willReturnDeliveryOut) {
-        delivery.setState(state);
-        delivery.setTimeChanged(new Date());
-        if (willReturnDeliveryIn) {
-            delivery.setTimeUpdatedIn(new Date(delivery.getTimeChanged().getTime()+1));
-        }
-        if (willReturnDeliveryOut) {
-            delivery.setTimeUpdatedOut(new Date(delivery.getTimeChanged().getTime() + 1));
-        }
-        mDatabase.saveDelivery(delivery);
-        if (TalkDelivery.STATE_DELIVERED.equals(state)) {
-            mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId(), false);
-        } else if (TalkDelivery.STATE_DELIVERING.equals(state)) {
-            mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId(), false);
-        } else if (delivery.isFinished()) {
-            mServer.getCleaningAgent().cleanFinishedDelivery(delivery);
+        if (delivery.nextStateAllowed(state)) {
+
+            delivery.setState(state);
+            delivery.setTimeChanged(new Date());
+            if (willReturnDeliveryIn) {
+                delivery.setTimeUpdatedIn(new Date(delivery.getTimeChanged().getTime()+1));
+            }
+            if (willReturnDeliveryOut) {
+                delivery.setTimeUpdatedOut(new Date(delivery.getTimeChanged().getTime() + 1));
+            }
+            mDatabase.saveDelivery(delivery);
+            if (TalkDelivery.STATE_DELIVERED.equals(state)) {
+                mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId(), false);
+            } else if (TalkDelivery.STATE_DELIVERING.equals(state)) {
+                mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId(), false);
+            } else if (delivery.isFinished()) {
+                mServer.getCleaningAgent().cleanFinishedDelivery(delivery);
+            }
+        } else {
+            throw new RuntimeException("Setting delivery state from '"+delivery.getState()+" to '"+state+"'not allowed");
         }
     }
 
@@ -1501,7 +1573,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         throw new RuntimeException("Client is not a member in group with id: '" + groupId + "'");
     }
-
+/*
     private void requireNotNearbyGroupType(String groupId) {
         // perspectively we should evolve a permission model to enable checking of WHO is allowed to do WHAT in which CONTEXT
         // e.g. client (permission depending on role) inviteGroupMembers to Group (permission depending on type)
@@ -1511,7 +1583,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             throw new RuntimeException("Group type is: nearby. not allowed.");
         }
     }
-
+*/
     @Override
     public FileHandles createFileForStorage(int contentLength) {
         requireIdentification();
@@ -1528,6 +1600,168 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 .createFileForTransfer(mConnection.getClientId(), "application/octet-stream", contentLength);
     }
 
+    // should be called by the receiver of an transfer file if the user has aborted the download
+    @Override
+    public String receivedFile(String fileId) {
+        requireIdentification();
+        logCall("receivedFile(fileId: '" + fileId + "')");
+        return processFileDownloadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_RECEIVED);
+    }
+    // should be called by the receiver of an transfer file after download; the server can the delete the file in case
+    @Override
+    public String abortedFileDownload(String fileId) {
+        requireIdentification();
+        logCall("abortedFileDownload(fileId: '" + fileId + "')");
+        return processFileDownloadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_DOWNLOAD_ABORTED);
+    }
+    // should be called by the receiver of an transfer file if the client has exceeded the download retry count
+    @Override
+    public String failedFileDownload(String fileId) {
+        requireIdentification();
+        logCall("failedFileDownload(fileId: '" + fileId + "')");
+        return processFileDownloadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_DOWNLOAD_FAILED);
+    }
+    // should be called by the receiver of an transfer file when a final attachment sender set state has been seen
+    @Override
+    public String acknowledgeAbortedFileUpload(String fileId) {
+        requireIdentification();
+        logCall("failedFileDownload(fileId: '" + fileId + "')");
+        return processFileDownloadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_ABORTED_CONFIRMED);
+    }
+    // should be called by the receiver of an transfer file when a final attachment sender set state has been seen
+    @Override
+    public String acknowledgeFailedFileUpload(String fileId) {
+        requireIdentification();
+        logCall("acknowledgeFailedFileUpload(fileId: '" + fileId + "')");
+        return processFileDownloadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_ABORTED_CONFIRMED);
+    }
+
+    private String processFileDownloadMessage(String fileId, String nextState) {
+        final String clientId = mConnection.getClientId();
+
+        List<TalkMessage> messages = mDatabase.findMessagesWithAttachmentFileId(fileId);
+        if (messages.size() == 0) {
+            throw new RuntimeException("No message found with this file id");
+        }
+        for (TalkMessage message : messages) {
+            if (clientId.equals(message.getSenderId())) {
+                throw new RuntimeException("Sender must not mess with download");
+            }
+            TalkDelivery delivery = mDatabase.findDelivery(message.getMessageId(), clientId);
+            if (delivery != null) {
+                if (!delivery.nextAttachmentStateAllowed(nextState)) {
+                    throw new RuntimeException("next state '"+nextState+"'not allowed, delivery already in state '"+delivery.getAttachmentState()+"'");
+                }
+                delivery.setAttachmentState(nextState);
+                delivery.setTimeChanged(message.getAttachmentUploadStarted());
+                mDatabase.saveDelivery(delivery);
+                mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId(), false);
+            } else {
+                throw new RuntimeException("delivery not found");
+            }
+        }
+        return nextState;
+    }
+
+    //------ sender attachment state indication methods
+    // should be called by the sender of an transfer file after upload has been started
+    @Override
+    public String startedFileUpload(String fileId) {
+        requireIdentification();
+        logCall("startedFileUpload(fileId: '" + fileId + "')");
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOADING);
+    }
+    // should be called by the sender of an transfer file when the upload has been paused
+    @Override
+    public String pausedFileUpload(String fileId) {
+        requireIdentification();
+        logCall("pausedFileUpload(fileId: '" + fileId + "')");
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_PAUSED);
+    }
+    // should be called by the sender of an transfer file after upload has been finished
+    @Override
+    public String finishedFileUpload(String fileId) {
+        requireIdentification();
+        logCall("finishedFileUpload(fileId: '" + fileId + "')");
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOADED);
+    }
+    // should be called by the sender of an transfer file when the upload is aborted by the user
+    @Override
+    public String abortedFileUpload(String fileId) {
+        requireIdentification();
+        logCall("abortedFileUpload(fileId: '" + fileId + "')");
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_ABORTED);
+    }
+    // should be called by the sender of an transfer file when upload retry count has been exceeded
+    @Override
+    public String failedFileUpload(String fileId) {
+        requireIdentification();
+        logCall("failedFileUpload(fileId: '" + fileId + "')");
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_FAILED);
+    }
+    // should be called by the sender of an transfer file when a final attachment receiver set state has been seen
+    @Override
+    public String acknowledgeReceivedFile(String fileId) {
+        requireIdentification();
+        logCall("acknowledgeReceivedFile(fileId: '" + fileId + "')");
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_RECEIVED_CONFIRMED);
+    }
+    // should be called by the sender of an transfer file when a final attachment receiver set state has been seen
+    @Override
+    public String acknowledgeAbortedFileDownload(String fileId) {
+        requireIdentification();
+        logCall("acknowledgeReceivedFile(fileId: '" + fileId + "')");
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_DOWNLOAD_ABORTED_CONFIRMED);
+    }
+    // should be called by the sender of an transfer file when a final attachment receiver set state has been seen
+    @Override
+    public String acknowledgeFailedFileDownload(String fileId) {
+        requireIdentification();
+        logCall("acknowledgeReceivedFile(fileId: '" + fileId + "')");
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_DOWNLOAD_FAILED_CONFIRMED);
+    }
+
+    private String processFileUploadMessage(String fileId, String nextState) {
+        final String clientId = mConnection.getClientId();
+
+        List<TalkMessage> messages = mDatabase.findMessagesWithAttachmentFileId(fileId);
+        if (messages.size() == 0) {
+            throw new RuntimeException("No message found with this file id");
+        }
+        for (TalkMessage message : messages) {
+            if (clientId.equals(message.getSenderId())) {
+                message.setAttachmentUploadStarted(new Date());
+                mDatabase.saveMessage(message);
+                List<TalkDelivery> deliveries = mDatabase.findDeliveriesForMessage(message.getMessageId());
+                for (TalkDelivery delivery : deliveries) {
+                    if (!delivery.nextAttachmentStateAllowed(nextState)) {
+                        throw new RuntimeException("next state '"+nextState+"'not allowed, delivery already in state '"+delivery.getAttachmentState()+"'");
+                    }
+                    delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_UPLOADING);
+                    delivery.setTimeChanged(message.getAttachmentUploadStarted());
+                    mDatabase.saveDelivery(delivery);
+                    mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId(), false);
+                }
+            } else {
+                throw new RuntimeException("you are not the sender of this file");
+            }
+        }
+        return nextState;
+    }
+
+
+    // should be called by the sender of an transfer file after upload has been finished
+    //void finishedFileUpload(String fileId);
+
+    /*
+    @Override
+    public void deleteFile(String fileId) {
+        requireIdentification();
+        logCall("deleteFile(fileId: '" + fileId + "')");
+        mServer.getFilecacheClient().deleteFile(fileId);
+        // TODO: notify receivers
+    }
+    */
     private void createGroupWithEnvironment(TalkEnvironment environment) {
         LOG.info("createGroupWithEnvironment: creating new group for client with id '" + mConnection.getClientId() + "'");
         TalkGroup group = new TalkGroup();

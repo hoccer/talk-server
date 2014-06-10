@@ -124,6 +124,10 @@ public class OrmliteDatabase implements ITalkServerDatabase {
             return null;
         }
     }
+    @Override
+    public List<TalkMessage> findMessagesWithAttachmentFileId(String fileId) {
+        return null;
+    }
 
     @Override
     public void deleteMessage(TalkMessage message) {
@@ -217,6 +221,20 @@ public class OrmliteDatabase implements ITalkServerDatabase {
             e.printStackTrace();
             return null;
         }
+    }
+    @Override
+    public List<TalkDelivery> findDeliveriesForClientInDeliveryAndAttachmentStates(String clientId, String[] deliveryStates, String[] attachmentStates) {
+        return null;
+    }
+
+    @Override
+    public List<TalkDelivery> findDeliveriesFromClientInStates(String clientId, String[] deliveryStates) {
+        return null;
+    }
+
+    @Override
+    public List<TalkDelivery> findDeliveriesFromClientInDeliveryAndAttachmentStates(String clientId, String[] deliveryStates, String[] attachmentStates) {
+        return null;
     }
 
     @Override
