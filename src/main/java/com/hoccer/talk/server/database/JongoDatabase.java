@@ -233,7 +233,7 @@ public class JongoDatabase implements ITalkServerDatabase {
 
         List<TalkDelivery> res = new ArrayList<TalkDelivery>();
         Iterator<TalkDelivery> it =
-                mDeliveries.find("{receiverId:#, state: { $in: # }, attachmentState: {$in: #}", clientId, Arrays.asList(deliveryStates), Arrays.asList(attachmentStates))
+                mDeliveries.find("{receiverId:#, state: { $in: # }, attachmentState: {$in: # } }", clientId, Arrays.asList(deliveryStates), Arrays.asList(attachmentStates))
                         .as(TalkDelivery.class).iterator();
         while (it.hasNext()) {
             res.add(it.next());
@@ -258,7 +258,7 @@ public class JongoDatabase implements ITalkServerDatabase {
 
         List<TalkDelivery> res = new ArrayList<TalkDelivery>();
         Iterator<TalkDelivery> it =
-                mDeliveries.find("{senderId:#, state: { $in: # }", clientId, Arrays.asList(deliveryStates))
+                mDeliveries.find("{senderId:#, state: { $in: # } }", clientId, Arrays.asList(deliveryStates))
                         .as(TalkDelivery.class).iterator();
         while (it.hasNext()) {
             res.add(it.next());
@@ -271,7 +271,7 @@ public class JongoDatabase implements ITalkServerDatabase {
 
         List<TalkDelivery> res = new ArrayList<TalkDelivery>();
         Iterator<TalkDelivery> it =
-                mDeliveries.find("{senderId:#, state: { $in: # }, attachmentState: {$in: #}", clientId, Arrays.asList(deliveryStates), Arrays.asList(attachmentStates))
+                mDeliveries.find("{senderId:#, state: { $in: # }, attachmentState: {$in: #} }", clientId, Arrays.asList(deliveryStates), Arrays.asList(attachmentStates))
                         .as(TalkDelivery.class).iterator();
         while (it.hasNext()) {
             res.add(it.next());

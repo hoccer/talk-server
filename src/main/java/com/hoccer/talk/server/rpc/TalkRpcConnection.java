@@ -84,6 +84,8 @@ public class TalkRpcConnection implements JsonRpcConnection.Listener, JsonRpcCon
     private long mCurrentPriorityPenalty = 0L;
     private boolean mNagWhenOffline = false;
 
+    public Object deliveryLock = new Object();
+
     /**
      * Construct a connection for the given server using the given connection
      *

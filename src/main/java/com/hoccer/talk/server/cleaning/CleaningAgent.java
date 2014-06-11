@@ -133,7 +133,7 @@ public class CleaningAgent {
                 doCleanFinishedDelivery(delivery);
             }
         }
-        List<TalkDelivery> confirmedDeliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_CONFIRMED);
+        List<TalkDelivery> confirmedDeliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_DELIVERED_ACKNOWLEDGED);
         if (!confirmedDeliveries.isEmpty()) {
             LOG.info("cleanup found " + confirmedDeliveries.size() + " confirmed deliveries");
             for (TalkDelivery delivery : confirmedDeliveries) {

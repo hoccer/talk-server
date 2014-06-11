@@ -121,10 +121,14 @@ public class TalkServer {
     AtomicInteger mConnectionsTotal = new AtomicInteger();
     AtomicInteger mConnectionsOpen = new AtomicInteger();
 
+    Map<String,Object> mIdLocks;
+
     /**
      * Create and initialize a Hoccer Talk server
      */
     public TalkServer(TalkServerConfiguration configuration, ITalkServerDatabase database) {
+        mIdLocks = new HashMap<String, Object>();
+
         mConfiguration = configuration;
         mDatabase = database;
 
@@ -150,9 +154,24 @@ public class TalkServer {
         mJmxReporter.start();
     }
 
-    /**
-     * @return the JSON mapper used by this server
-     */
+    public Object idLock(String id) {
+        Object lock = mIdLocks.get(id);
+        if (lock == null) {
+            lock = new Object();
+            mIdLocks.put(id, lock);
+        }
+        return lock;
+    }
+
+    // TODO: call this when we are through with an id (e.g. message)
+    public void removeIdLock(String id) {
+        mIdLocks.remove(id);
+    }
+
+
+        /**
+         * @return the JSON mapper used by this server
+         */
     public ObjectMapper getJsonMapper() {
         return mJsonMapper;
     }
