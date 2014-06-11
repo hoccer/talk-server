@@ -79,16 +79,22 @@ public class DeliveryRequest {
                     }
 
                     // post the delivery for the client
-                    TalkDelivery filtered = new TalkDelivery();
-                    filtered.updateWith(latestDelivery);
-                    filtered.setTimeUpdatedIn(null);
-                    filtered.setTimeUpdatedOut(null);
-                    if (TalkDelivery.STATE_DELIVERING.equals(filtered.getState())) {
+
+                    boolean recentlyDelivered = (latestDelivery.getTimeUpdatedIn() != null &&
+                            latestDelivery.getTimeUpdatedIn().getTime() + 15 * 1000 > new Date().getTime());
+
+                    if (!recentlyDelivered && TalkDelivery.STATE_DELIVERING.equals(latestDelivery.getState())) {
+                        TalkDelivery filtered = new TalkDelivery();
+                        filtered.updateWith(latestDelivery);
+                        filtered.setTimeUpdatedIn(null);
+                        filtered.setTimeUpdatedOut(null);
                         rpc.incomingDelivery(filtered, message);
                     } else {
-                        rpc.incomingDeliveryUpdate(filtered);
+                        TalkDelivery filtered = new TalkDelivery();
+                        filtered.updateWith(delivery, TalkDelivery.REQUIRED_IN_UPDATE_FIELDS_SET);
+                        rpc.incomingDeliveryUpdated(filtered);
                     }
-                    delivery.setTimeUpdatedIn(new Date());
+                    latestDelivery.setTimeUpdatedIn(new Date());
                     mDatabase.saveDelivery(latestDelivery);
                 } catch (Exception e) {
                     LOG.info("Exception calling incomingDelivery() for clientId: '" + mClientId + "'", e);
@@ -136,8 +142,8 @@ public class DeliveryRequest {
                 // notify it
                 try {
                     TalkDelivery filtered = new TalkDelivery();
-                    filtered.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
-                    rpc.outgoingDeliveryUpdate(filtered);
+                    filtered.updateWith(delivery, TalkDelivery.REQUIRED_OUT_UPDATE_FIELDS_SET);
+                    rpc.outgoingDeliveryUpdated(filtered);
                     delivery.setTimeUpdatedOut(new Date());
                     mDatabase.saveDelivery(delivery);
                 } catch (Exception e) {

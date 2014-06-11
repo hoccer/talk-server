@@ -941,7 +941,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             // delivery will be returned as result, so mark outgoing time
             delivery.setTimeUpdatedOut(new Date(delivery.getTimeChanged().getTime() + 1));
             TalkDelivery resultDelivery = new TalkDelivery();
-            resultDelivery.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+            resultDelivery.updateWith(delivery, TalkDelivery.REQUIRED_OUT_UPDATE_FIELDS_SET);
             resultDeliveries.add(resultDelivery);
         }
 
@@ -1164,7 +1164,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     LOG.error("deliveryConfirm received for delivery not in state 'delivering' (state ="+delivery.getState()+") : message id '" + messageId + "' client id '" + clientId + "'");
                 }
                 TalkDelivery result = new TalkDelivery();
-                result.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+                result.updateWith(delivery, TalkDelivery.REQUIRED_IN_UPDATE_FIELDS_SET);
                 return result;
             } else {
                 LOG.error("deliveryConfirm: no delivery found for message with id '" + messageId + "' for client with id '" + clientId + "'");
@@ -1185,7 +1185,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     setDeliveryState(delivery, TalkDelivery.STATE_DELIVERED_ACKNOWLEDGED, false, true);
                     mStatistics.signalMessageAcknowledgedSucceeded();
                     TalkDelivery result = new TalkDelivery();
-                    result.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+                    result.updateWith(delivery, TalkDelivery.REQUIRED_OUT_UPDATE_FIELDS_SET);
                     return result;
                 }  else {
                     LOG.error("deliveryAcknowledge received for delivery not in state 'delivered' (state =" + delivery.getState() + ") : message id '" + messageId + "' recipientId '" + recipientId + "'");
@@ -1236,7 +1236,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     throw new RuntimeException("you are not the sender");
                 }
                 TalkDelivery result = new TalkDelivery();
-                result.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+                result.updateWith(delivery, TalkDelivery.REQUIRED_OUT_UPDATE_FIELDS_SET);
                 return result;
             } else {
                 throw new RuntimeException("no delivery found for message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
@@ -1275,7 +1275,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 delivery.setReason(reason);
                 setDeliveryState(delivery, TalkDelivery.STATE_REJECTED, true, false);
                 TalkDelivery result = new TalkDelivery();
-                result.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+                result.updateWith(delivery, TalkDelivery.REQUIRED_OUT_UPDATE_FIELDS_SET);
                 return result;
             } else {
                 throw new RuntimeException("deliveryReject(): no delivery found for message with id '" + messageId + "' for recipient with id '" + clientId + "'");
