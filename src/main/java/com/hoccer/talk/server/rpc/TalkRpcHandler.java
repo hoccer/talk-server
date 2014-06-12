@@ -1180,49 +1180,22 @@ public class TalkRpcHandler implements ITalkRpcServer {
         synchronized (mServer.idLock(messageId)) {
             TalkDelivery delivery = mDatabase.findDelivery(messageId, recipientId);
             if (delivery != null) {
-                if (delivery.getState().equals(TalkDelivery.STATE_DELIVERED)) {
+                String state = delivery.getState();
+                if (TalkDelivery.STATE_DELIVERED.equals(state) || TalkDelivery.STATE_DELIVERED_ACKNOWLEDGED.equals(state)) {
                     LOG.info("acknowledged message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
                     setDeliveryState(delivery, TalkDelivery.STATE_DELIVERED_ACKNOWLEDGED, false, true);
                     mStatistics.signalMessageAcknowledgedSucceeded();
-                    TalkDelivery result = new TalkDelivery();
-                    result.updateWith(delivery, TalkDelivery.REQUIRED_OUT_UPDATE_FIELDS_SET);
-                    return result;
                 }  else {
                     LOG.error("deliveryAcknowledge received for delivery not in state 'delivered' (state =" + delivery.getState() + ") : message id '" + messageId + "' recipientId '" + recipientId + "'");
                 }
             }  else {
                 LOG.error("deliveryAcknowledge: no delivery found for message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
             }
-            return delivery;
-        }
-    }
-    /*
-    // TODO: do not allow abortion of message that are already delivered or confirmed
-    @Override
-    public TalkDelivery deliveryAbort(String messageId, String recipientId) {
-        requireIdentification();
-        logCall("deliveryAbort(messageId: '" + messageId + "', recipientId: '" + recipientId + "'");
-        String clientId = mConnection.getClientId();
-        TalkDelivery delivery = mDatabase.findDelivery(messageId, recipientId);
-        if (delivery != null) {
-            if (recipientId.equals(clientId)) {
-                // abort incoming delivery, regardless of sender
-                setDeliveryState(delivery, TalkDelivery.STATE_ABORTED, true, false);
-            } else {
-                // abort outgoing delivery iff we are the actual sender
-                if (delivery.getSenderId().equals(clientId)) {
-                    setDeliveryState(delivery, TalkDelivery.STATE_ABORTED, false, true);
-                }
-            }
             TalkDelivery result = new TalkDelivery();
-            result.updateWith(delivery, TalkDelivery.REQUIRED_UPDATE_FIELDS_SET);
+            result.updateWith(delivery, TalkDelivery.REQUIRED_OUT_UPDATE_FIELDS_SET);
             return result;
-        } else {
-            LOG.error("deliveryAbort(): no delivery found for message with id '" + messageId + "' for recipient with id '" + recipientId + "'");
         }
-        return delivery;
     }
-     */
 
     private TalkDelivery deliverySenderChangeState(String messageId, String recipientId, String newState) {
         synchronized (mServer.idLock(messageId)) {

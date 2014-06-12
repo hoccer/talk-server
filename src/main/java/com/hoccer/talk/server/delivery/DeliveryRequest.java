@@ -83,7 +83,7 @@ public class DeliveryRequest {
                     boolean recentlyDelivered = (latestDelivery.getTimeUpdatedIn() != null &&
                             latestDelivery.getTimeUpdatedIn().getTime() + 15 * 1000 > new Date().getTime());
 
-                    if (!recentlyDelivered && TalkDelivery.STATE_DELIVERING.equals(latestDelivery.getState())) {
+                    if (!recentlyDelivered && (TalkDelivery.STATE_DELIVERING.equals(latestDelivery.getState()) /*|| mForceAll*/)) {
                         TalkDelivery filtered = new TalkDelivery();
                         filtered.updateWith(latestDelivery);
                         filtered.setTimeUpdatedIn(null);
