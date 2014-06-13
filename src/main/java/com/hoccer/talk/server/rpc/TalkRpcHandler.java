@@ -1639,9 +1639,9 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 }
                 LOG.info("AttachmentState '"+delivery.getAttachmentState()+"' --> '"+nextState+"' (download)");
                 delivery.setAttachmentState(nextState);
-                delivery.setTimeChanged(message.getAttachmentUploadStarted());
+                delivery.setTimeChanged(new Date());
                 mDatabase.saveDelivery(delivery);
-                mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId(), false);
+                mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId(), false);
             } else {
                 throw new RuntimeException("delivery not found");
             }

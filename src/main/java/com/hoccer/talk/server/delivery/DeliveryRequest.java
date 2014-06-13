@@ -115,12 +115,14 @@ public class DeliveryRequest {
         for (TalkDelivery delivery : outDeliveries) {
             // we lost the connection somehow
             if (!currentlyConnected) {
+                LOG.info("performOutgoing: clientId: '" + mClientId + "no longer connected");
                 break;
             }
             synchronized (mServer.idLock(delivery.getMessageId())) {
 
                 delivery.ensureDates();
                 if (!mForceAll && (delivery.getTimeUpdatedOut().getTime() > delivery.getTimeChanged().getTime())) {
+                    LOG.info("performOutgoing: clientId: '" + mClientId + "delivery has not changed since last out");
                     continue;
                 }
 
@@ -137,6 +139,7 @@ public class DeliveryRequest {
                 }
 
                 if (!mForceAll && (latestDelivery.getTimeUpdatedOut().getTime() > latestDelivery.getTimeChanged().getTime())) {
+                    LOG.info("performOutgoing: clientId: '" + mClientId + "delivery has not changed since last out (2)");
                     continue;
                 }
                 // notify it
