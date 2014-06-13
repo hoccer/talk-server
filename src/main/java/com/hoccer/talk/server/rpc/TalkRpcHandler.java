@@ -1626,24 +1626,26 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         List<TalkMessage> messages = mDatabase.findMessagesWithAttachmentFileId(fileId);
         if (messages.size() == 0) {
-            throw new RuntimeException("No message found with this file id");
+            throw new RuntimeException("No message found with file id "+fileId);
         }
         for (TalkMessage message : messages) {
             if (clientId.equals(message.getSenderId())) {
-                throw new RuntimeException("Sender must not mess with download");
+                throw new RuntimeException("Sender must not mess with download, messageId="+message.getMessageId());
             }
-            TalkDelivery delivery = mDatabase.findDelivery(message.getMessageId(), clientId);
-            if (delivery != null) {
-                if (!delivery.nextAttachmentStateAllowed(nextState)) {
-                    throw new RuntimeException("next state '"+nextState+"'not allowed, delivery already in state '"+delivery.getAttachmentState()+"'");
+            synchronized (mServer.idLock(message.getMessageId())) {
+                TalkDelivery delivery = mDatabase.findDelivery(message.getMessageId(), clientId);
+                if (delivery != null) {
+                    if (!delivery.nextAttachmentStateAllowed(nextState)) {
+                        throw new RuntimeException("next state '"+nextState+"'not allowed, delivery already in state '"+delivery.getAttachmentState()+"', messageId="+message.getMessageId());
+                    }
+                    LOG.info("AttachmentState '"+delivery.getAttachmentState()+"' --> '"+nextState+"' (download), messageId="+message.getMessageId());
+                    delivery.setAttachmentState(nextState);
+                    delivery.setTimeChanged(new Date());
+                    mDatabase.saveDelivery(delivery);
+                    mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId(), false);
+                } else {
+                    throw new RuntimeException("delivery not found, messageId="+message.getMessageId());
                 }
-                LOG.info("AttachmentState '"+delivery.getAttachmentState()+"' --> '"+nextState+"' (download)");
-                delivery.setAttachmentState(nextState);
-                delivery.setTimeChanged(new Date());
-                mDatabase.saveDelivery(delivery);
-                mServer.getDeliveryAgent().requestDelivery(delivery.getSenderId(), false);
-            } else {
-                throw new RuntimeException("delivery not found");
             }
         }
         return nextState;
@@ -1712,7 +1714,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
         List<TalkMessage> messages = mDatabase.findMessagesWithAttachmentFileId(fileId);
         if (messages.size() == 0) {
-            throw new RuntimeException("No message found with this file id");
+            throw new RuntimeException("No message found with file id "+fileId);
         }
         for (TalkMessage message : messages) {
             if (clientId.equals(message.getSenderId())) {
@@ -1722,7 +1724,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     List<TalkDelivery> deliveries = mDatabase.findDeliveriesForMessage(message.getMessageId());
                     for (TalkDelivery delivery : deliveries) {
                         if (!delivery.nextAttachmentStateAllowed(nextState)) {
-                            throw new RuntimeException("next state '"+nextState+"'not allowed, delivery already in state '"+delivery.getAttachmentState()+"'");
+                            throw new RuntimeException("next state '"+nextState+"'not allowed, delivery already in state '"+delivery.getAttachmentState()+"', messageId="+message.getMessageId());
                         }
                         LOG.info("AttachmentState '"+delivery.getAttachmentState()+"' --> '"+nextState+"' (upload)");
                         delivery.setAttachmentState(nextState);
@@ -1732,7 +1734,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     }
                 }
             } else {
-                throw new RuntimeException("you are not the sender of this file");
+                throw new RuntimeException("you are not the sender of this file with messageId="+message.getMessageId());
             }
         }
         return nextState;
