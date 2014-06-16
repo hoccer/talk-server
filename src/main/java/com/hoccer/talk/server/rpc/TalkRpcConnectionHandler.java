@@ -30,6 +30,9 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
     public static final String TALK_TEXT_PROTOCOL_NAME_V2 = "com.hoccer.talk.v2";
     public static final String TALK_BINARY_PROTOCOL_NAME_V2 = "com.hoccer.talk.v2.bson";
 
+    // Version 3
+    public static final String TALK_TEXT_PROTOCOL_NAME_V3 = "com.hoccer.talk.v3";
+    public static final String TALK_BINARY_PROTOCOL_NAME_V3 = "com.hoccer.talk.v3.bson";
     /**
      * Talk server instance
      */
@@ -59,22 +62,22 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
      */
     @Override
     public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
-        if (TALK_TEXT_PROTOCOL_NAME_V2.equals(protocol)) {
-            return createTalkV2Connection(request, mTalkServer.getJsonMapper(), false);
-        } else if (TALK_BINARY_PROTOCOL_NAME_V2.equals(protocol)) {
-            return createTalkV2Connection(request, mTalkServer.getBsonMapper(), true);
-        } else if (TALK_TEXT_PROTOCOL_NAME_V1.equals(protocol)) {
+        if (TALK_TEXT_PROTOCOL_NAME_V3.equals(protocol)) {
+            return createTalkActiveConnection(request, mTalkServer.getJsonMapper(), false);
+        } else if (TALK_BINARY_PROTOCOL_NAME_V3.equals(protocol)) {
+            return createTalkActiveConnection(request, mTalkServer.getBsonMapper(), true);
+        } else if (TALK_TEXT_PROTOCOL_NAME_V1.equals(protocol) || TALK_TEXT_PROTOCOL_NAME_V2.equals(protocol)) {
             // Legacy handler for old clients connecting
-            return createTalkV1Connection(request, mTalkServer.getJsonMapper(), false);
-        } else if (TALK_BINARY_PROTOCOL_NAME_V1.equals(protocol)) {
+            return createTalkLegacyConnection(request, mTalkServer.getJsonMapper(), false);
+        } else if (TALK_BINARY_PROTOCOL_NAME_V1.equals(protocol) || TALK_TEXT_PROTOCOL_NAME_V2.equals(protocol)) {
             // Legacy handler for old clients connecting
-            return createTalkV1Connection(request, mTalkServer.getBsonMapper(), true);
+            return createTalkLegacyConnection(request, mTalkServer.getBsonMapper(), true);
         }
         LOG.info("new connection with unknown protocol '" + protocol + "'");
         return null;
     }
 
-    private WebSocket createTalkV1Connection(HttpServletRequest request, ObjectMapper mapper, boolean binary) {
+    private WebSocket createTalkLegacyConnection(HttpServletRequest request, ObjectMapper mapper, boolean binary) {
         JsonRpcWsConnection connection = new JsonRpcWsConnection(mapper);
         TalkRpcConnection rpcConnection = new TalkRpcConnection(mTalkServer, connection, request);
         rpcConnection.setLegacyMode(true);
@@ -86,7 +89,7 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
         return connection;
     }
 
-    private WebSocket createTalkV2Connection(HttpServletRequest request, ObjectMapper mapper, boolean binary) {
+    private WebSocket createTalkActiveConnection(HttpServletRequest request, ObjectMapper mapper, boolean binary) {
         // create JSON-RPC connection (this implements the websocket interface)
         JsonRpcWsConnection connection = new JsonRpcWsConnection(mapper);
         // create talk high-level connection object

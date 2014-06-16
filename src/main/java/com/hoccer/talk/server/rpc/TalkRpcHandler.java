@@ -1987,6 +1987,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     @Override
     public Boolean[] isMemberInGroups(String[] groupIds) {
+        requireIdentification();
         ArrayList<Boolean> result = new ArrayList<Boolean>();
         logCall("isMemberInGroups(groupIds: '" + Arrays.toString(groupIds) + "'");
         String clientId = mConnection.getClientId();
@@ -2006,6 +2007,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     // return true if for each client the caller is related to by a relationsShip or by an active group membership
     @Override
     public Boolean[] isContactOf(String[] clientIds) {
+        requireIdentification();
         logCall("isContactOf(clientIds: '" + Arrays.toString(clientIds) + "'");
         final String clientId = mConnection.getClientId();
 
