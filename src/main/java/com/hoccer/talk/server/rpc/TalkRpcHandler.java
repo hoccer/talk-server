@@ -2003,6 +2003,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         return result.toArray(new Boolean[result.size()]);
     }
 
+    // return true if for each client the caller is related to by a relationsShip or by an active group membership
     @Override
     public Boolean[] isContactOf(String[] clientIds) {
         logCall("isContactOf(clientIds: '" + Arrays.toString(clientIds) + "'");
