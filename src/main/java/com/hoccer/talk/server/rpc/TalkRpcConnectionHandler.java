@@ -33,7 +33,9 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
     // Version 3
     public static final String TALK_TEXT_PROTOCOL_NAME_V3 = "com.hoccer.talk.v3";
     public static final String TALK_BINARY_PROTOCOL_NAME_V3 = "com.hoccer.talk.v3.bson";
-    /**
+    // Version 4
+    public static final String TALK_TEXT_PROTOCOL_NAME_V4 = "com.hoccer.talk.v4";
+    public static final String TALK_BINARY_PROTOCOL_NAME_V4 = "com.hoccer.talk.v4.bson";   /**
      * Talk server instance
      */
     private final TalkServer mTalkServer;
@@ -62,14 +64,20 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
      */
     @Override
     public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
-        if (TALK_TEXT_PROTOCOL_NAME_V3.equals(protocol)) {
+        if (TALK_TEXT_PROTOCOL_NAME_V4.equals(protocol)) {
             return createTalkActiveConnection(request, mTalkServer.getJsonMapper(), false);
-        } else if (TALK_BINARY_PROTOCOL_NAME_V3.equals(protocol)) {
+        } else if (TALK_BINARY_PROTOCOL_NAME_V4.equals(protocol)) {
             return createTalkActiveConnection(request, mTalkServer.getBsonMapper(), true);
-        } else if (TALK_TEXT_PROTOCOL_NAME_V1.equals(protocol) || TALK_TEXT_PROTOCOL_NAME_V2.equals(protocol)) {
+        } else if (TALK_TEXT_PROTOCOL_NAME_V1.equals(protocol) ||
+                TALK_TEXT_PROTOCOL_NAME_V2.equals(protocol) ||
+            TALK_TEXT_PROTOCOL_NAME_V3.equals(protocol))
+        {
             // Legacy handler for old clients connecting
             return createTalkLegacyConnection(request, mTalkServer.getJsonMapper(), false);
-        } else if (TALK_BINARY_PROTOCOL_NAME_V1.equals(protocol) || TALK_TEXT_PROTOCOL_NAME_V2.equals(protocol)) {
+        } else if (TALK_BINARY_PROTOCOL_NAME_V1.equals(protocol) ||
+                TALK_TEXT_PROTOCOL_NAME_V2.equals(protocol) ||
+            TALK_TEXT_PROTOCOL_NAME_V3.equals(protocol))
+        {
             // Legacy handler for old clients connecting
             return createTalkLegacyConnection(request, mTalkServer.getBsonMapper(), true);
         }

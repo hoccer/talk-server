@@ -28,6 +28,9 @@ public class DeliveryAgent extends NotificationDeferrer {
     }
 
     public void requestDelivery(String clientId, boolean forceAll) {
+        if (clientId == null) {
+            throw new NullPointerException("no clientId");
+        }
         final DeliveryRequest deliveryRequest = new DeliveryRequest(this, clientId, forceAll);
 
         Runnable notificationGenerator = new Runnable() {

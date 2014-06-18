@@ -32,7 +32,6 @@ public class CleaningAgent {
     private final TalkServer mServer;
     private final TalkServerConfiguration mConfig;
     private final ITalkServerDatabase mDatabase;
-    private final FilecacheClient mFilecache;
     private final ScheduledExecutorService mExecutor;
 
     private static final int KEY_LIFE_TIME = 3; // in months
@@ -42,7 +41,6 @@ public class CleaningAgent {
         mServer = server;
         mConfig = mServer.getConfiguration();
         mDatabase = mServer.getDatabase();
-        mFilecache = mServer.getFilecacheClient();
         mExecutor = Executors.newScheduledThreadPool(
             TalkServerConfiguration.THREADS_CLEANING,
             new NamedThreadFactory("cleaning-agent")
@@ -119,6 +117,16 @@ public class CleaningAgent {
         long startTime = System.currentTimeMillis();
         LOG.info("Cleaning all finished deliveries...");
 
+        List<TalkDelivery> finishedDeliveries = mDatabase.findDeliveriesInStatesAndAttachmentStates(TalkDelivery.FINAL_STATES, TalkDelivery.FINAL_ATTACHMENT_STATES);
+        if (!finishedDeliveries.isEmpty()) {
+            LOG.info("cleanup found " + finishedDeliveries.size() + " finished deliveries");
+            for (TalkDelivery delivery : finishedDeliveries) {
+                doCleanFinishedDelivery(delivery);
+            }
+        }
+        int totalDeliveriesCleaned = finishedDeliveries.size();
+
+        /*
         List<TalkDelivery> abortedDeliveries = mDatabase.findDeliveriesInState(TalkDelivery.STATE_ABORTED);
         if (!abortedDeliveries.isEmpty()) {
             LOG.info("cleanup found " + abortedDeliveries.size() + " aborted deliveries");
@@ -141,6 +149,7 @@ public class CleaningAgent {
             }
         }
         int totalDeliveriesCleaned = abortedDeliveries.size() + failedDeliveries.size() + confirmedDeliveries.size();
+        */
         long endTime = System.currentTimeMillis();
         LOG.info("Cleaning of '" + totalDeliveriesCleaned + "' deliveries done (took '" + (endTime - startTime) + "ms'). rescheduling next run...");
     }
@@ -252,8 +261,12 @@ public class CleaningAgent {
 
         // delete attached file if there is one
         String fileId = message.getAttachmentFileId();
-        if (fileId != null && mFilecache != null) {   // TODO: mFilecache is sometimes null for unknown reasons, should be fixed
-            mFilecache.deleteFile(fileId);
+        if (fileId != null) {
+            FilecacheClient filecache = mServer.getFilecacheClient();
+            if (filecache == null) {
+                throw new RuntimeException("cant get filecache");
+            }
+            filecache.deleteFile(fileId);
         }
 
         // delete the message itself

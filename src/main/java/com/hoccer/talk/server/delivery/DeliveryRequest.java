@@ -149,9 +149,14 @@ public class DeliveryRequest {
                 try {
                     TalkDelivery filtered = new TalkDelivery();
                     filtered.updateWith(delivery, TalkDelivery.REQUIRED_OUT_UPDATE_FIELDS_SET);
-                    rpc.outgoingDeliveryUpdated(filtered);
-                    delivery.setTimeUpdatedOut(new Date());
-                    mDatabase.saveDelivery(delivery);
+                    if (filtered.hasValidRecipient() || filtered.isExpandedGroupDelivery()) {
+                        rpc.outgoingDeliveryUpdated(filtered);
+                        delivery.setTimeUpdatedOut(new Date());
+                        mDatabase.saveDelivery(delivery);
+                    } else {
+                        mDatabase.deleteDelivery(delivery);
+                        throw new RuntimeException("delivery is missing group and receiver, deleted");
+                    }
                 } catch (Exception e) {
                     LOG.info("Exception calling outgoingDelivery() for clientId: '" + mClientId + "'", e);
                 }
@@ -164,24 +169,6 @@ public class DeliveryRequest {
         return currentlyConnected;
     }
 
-    // attachment states the receiver is interested in
-    final static String[] IN_ATTACHMENT_DELIVERY_STATES = {TalkDelivery.STATE_DELIVERED, TalkDelivery.STATE_DELIVERED_ACKNOWLEDGED};
-    final static String[] IN_ATTACHMENT_STATES = {TalkDelivery.ATTACHMENT_STATE_UPLOADING, TalkDelivery.ATTACHMENT_STATE_UPLOADED,
-            TalkDelivery.ATTACHMENT_STATE_UPLOAD_PAUSED, TalkDelivery.ATTACHMENT_STATE_UPLOAD_ABORTED, TalkDelivery.ATTACHMENT_STATE_UPLOAD_FAILED};
-
-    // attachment states the sender is interested in
-    final static String[] OUT_ATTACHMENT_DELIVERY_STATES = {TalkDelivery.STATE_DELIVERED_ACKNOWLEDGED};
-    final static String[] OUT_ATTACHMENT_STATES = {TalkDelivery.ATTACHMENT_STATE_RECEIVED, TalkDelivery.ATTACHMENT_STATE_DOWNLOAD_ABORTED, TalkDelivery.ATTACHMENT_STATE_DOWNLOAD_FAILED};
-
-    // The delivery states the sender is interested in
-    public static final String[] OUT_STATES = {TalkDelivery.STATE_DELIVERED, TalkDelivery.STATE_FAILED, TalkDelivery.STATE_REJECTED};
-
-    // The delivery states the receiver is interested in
-    public static final String[] IN_STATES = {TalkDelivery.STATE_DELIVERING};
-
-    //public static final String[] ALL_STATES = {STATE_NEW, STATE_DELIVERING, STATE_DELIVERED,
-    //        STATE_DELIVERED_ACKNOWLEDGED, STATE_FAILED, STATE_ABORTED, STATE_REJECTED, STATE_FAILED_ACKNOWLEDGED, STATE_ABORTED_ACKNOWLEDGED,
-    //        STATE_REJECTED_ACKNOWLEDGED};
 
     void perform() {
         LOG.info("DeliverRequest.perform for clientId: '" + mClientId);
@@ -195,12 +182,12 @@ public class DeliveryRequest {
                 currentlyConnected = true;
                 rpc = connection.getClientRpc();
             }
-        LOG.info("DeliverRequest.perform for clientId: '" + mClientId + ", currentlyConnected="+currentlyConnected);
+        LOG.info("DeliverRequest.perform for clientId: '" + mClientId + ", currentlyConnected=" + currentlyConnected);
         if (currentlyConnected) {
 
             LOG.debug("DeliverRequest.perform acquiring delivery lock for connection: '"+connection.getConnectionId() + ", mClientId="+mClientId);
             synchronized(connection.deliveryLock) {
-                LOG.info("DeliverRequest.perform acquired delivery lock for connection: '"+connection.getConnectionId() + ", mClientId="+mClientId);
+                LOG.info("DeliverRequest.perform acquired delivery lock for connection: '" + connection.getConnectionId() + ", mClientId=" + mClientId);
                 // get all outstanding deliveries for the client
                 List<TalkDelivery> inDeliveries =
                         mDatabase.findDeliveriesForClientInState(mClientId, TalkDelivery.STATE_DELIVERING);
@@ -215,7 +202,7 @@ public class DeliveryRequest {
                 if (currentlyConnected) {
                     // get all deliveries for the client with not yet completed attachment transfers
                     List<TalkDelivery> inAttachmentDeliveries =
-                            mDatabase.findDeliveriesForClientInDeliveryAndAttachmentStates(mClientId, IN_ATTACHMENT_DELIVERY_STATES, IN_ATTACHMENT_STATES);
+                            mDatabase.findDeliveriesForClientInDeliveryAndAttachmentStates(mClientId, TalkDelivery.IN_ATTACHMENT_DELIVERY_STATES, TalkDelivery.IN_ATTACHMENT_STATES);
                     LOG.info("clientId: '" + mClientId + "' has " + inAttachmentDeliveries.size() + " incoming deliveries with relevant attachment states");
                     if (!inAttachmentDeliveries.isEmpty()) {
                         // we will need to push if we don't succeed
@@ -226,7 +213,7 @@ public class DeliveryRequest {
 
                 if (currentlyConnected) {
                     List<TalkDelivery> outDeliveries =
-                            mDatabase.findDeliveriesFromClientInStates(mClientId, OUT_STATES);
+                            mDatabase.findDeliveriesFromClientInStates(mClientId, TalkDelivery.OUT_STATES);
                     LOG.info("clientId: '" + mClientId + "' has " + outDeliveries.size() + " outgoing deliveries");
                     if (!outDeliveries.isEmpty())      {
                         // deliver one by one
@@ -236,7 +223,7 @@ public class DeliveryRequest {
 
                 if (currentlyConnected) {
                     List<TalkDelivery> outDeliveries =
-                            mDatabase.findDeliveriesFromClientInDeliveryAndAttachmentStates(mClientId, OUT_ATTACHMENT_DELIVERY_STATES, OUT_ATTACHMENT_STATES);
+                            mDatabase.findDeliveriesFromClientInDeliveryAndAttachmentStates(mClientId, TalkDelivery.OUT_ATTACHMENT_DELIVERY_STATES, TalkDelivery.OUT_ATTACHMENT_STATES);
                     LOG.info("clientId: '" + mClientId + "' has " + outDeliveries.size() + " outgoing deliveries with relevant attachment states");
                     if (!outDeliveries.isEmpty())      {
                         // deliver one by one

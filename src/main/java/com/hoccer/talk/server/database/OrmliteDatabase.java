@@ -172,8 +172,17 @@ public class OrmliteDatabase implements ITalkServerDatabase {
             return null;
         }
     }
+    @Override
+    public List<TalkDelivery> findDeliveriesInStates(String[] states) {
+        return null;
+    }
 
     @Override
+    public List<TalkDelivery> findDeliveriesInStatesAndAttachmentStates(String[] deliveryStates, String[] attachmentStates) {
+        return null;
+    }
+
+        @Override
     public List<TalkDelivery> findDeliveriesForMessage(String messageId) {
         try {
             return mDeliveries.queryBuilder().where()
