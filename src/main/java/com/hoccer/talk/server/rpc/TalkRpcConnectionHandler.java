@@ -10,6 +10,8 @@ import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketHandler;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * WebSocket handler
@@ -33,9 +35,18 @@ public class TalkRpcConnectionHandler extends WebSocketHandler {
     // Version 3
     public static final String TALK_TEXT_PROTOCOL_NAME_V3 = "com.hoccer.talk.v3";
     public static final String TALK_BINARY_PROTOCOL_NAME_V3 = "com.hoccer.talk.v3.bson";
+
     // Version 4
     public static final String TALK_TEXT_PROTOCOL_NAME_V4 = "com.hoccer.talk.v4";
     public static final String TALK_BINARY_PROTOCOL_NAME_V4 = "com.hoccer.talk.v4.bson";
+
+    public static List<String> getCurrentProtocolVersions() {
+        List<String> list = new ArrayList<String>();
+        list.add(TALK_BINARY_PROTOCOL_NAME_V4);
+        list.add(TALK_TEXT_PROTOCOL_NAME_V4);
+        return list;
+    }
+
     /**
      * Talk server instance
      */

@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 public class ServerInfoServlet extends HttpServlet {
     @Override
@@ -24,8 +25,10 @@ public class ServerInfoServlet extends HttpServlet {
         serverInfo.setServerTime(new Date());
         serverInfo.setVersion(server.getConfiguration().getVersion());
         serverInfo.setCommitId(server.getConfiguration().getGitInfo().commitId);
-        serverInfo.addProtocolVersion(TalkRpcConnectionHandler.TALK_TEXT_PROTOCOL_NAME_V2);
-        serverInfo.addProtocolVersion(TalkRpcConnectionHandler.TALK_BINARY_PROTOCOL_NAME_V2);
+        List<String> protcolVersions = TalkRpcConnectionHandler.getCurrentProtocolVersions();
+        for (String protcolVersion : protcolVersions) {
+            serverInfo.addProtocolVersion(protcolVersion);
+        }
 
         ObjectMapper mapper = new ObjectMapper();
         response.getWriter().print(mapper.writeValueAsString(serverInfo));

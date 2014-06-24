@@ -155,8 +155,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
         serverInfo.setSupportMode(mConnection.isSupportMode());
         serverInfo.setVersion(mServer.getConfiguration().getVersion());
         serverInfo.setCommitId(mServer.getConfiguration().getGitInfo().commitId);
-        serverInfo.addProtocolVersion(TalkRpcConnectionHandler.TALK_TEXT_PROTOCOL_NAME_V2);
-        serverInfo.addProtocolVersion(TalkRpcConnectionHandler.TALK_BINARY_PROTOCOL_NAME_V2);
+
+        List<String> protcolVersions = TalkRpcConnectionHandler.getCurrentProtocolVersions();
+        for (String protcolVersion : protcolVersions) {
+            serverInfo.addProtocolVersion(protcolVersion);
+        }
 
         return serverInfo;
     }
