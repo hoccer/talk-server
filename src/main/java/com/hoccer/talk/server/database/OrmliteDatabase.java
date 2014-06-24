@@ -671,4 +671,10 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public void reportPing() {
         LOG.info(ping());
     }
+
+    @Override
+    public TalkClientHostInfo getClientHostInfo(String clientId) {
+        // TODO: implement me properly!
+        return null;
+    }
 }

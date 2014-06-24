@@ -801,4 +801,10 @@ public class JongoDatabase implements ITalkServerDatabase {
         }
     }
 
+    @Override
+    public TalkClientHostInfo getClientHostInfo(String clientId) {
+        return mEnvironments.findOne("{clientId:#}", clientId)
+                .as(TalkClientHostInfo.class);
+    }
+
 }

@@ -141,4 +141,6 @@ public interface ITalkServerDatabase {
     public boolean ping();
 
     public void reportPing();
+
+    TalkClientHostInfo getClientHostInfo(String clientId);
 }
