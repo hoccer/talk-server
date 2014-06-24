@@ -406,10 +406,12 @@ public class UpdateAgent extends NotificationDeferrer {
     }
 
     private void performCheckAndRequestGroupMemberKeys(String groupId) {
+        LOG.debug("performCheckAndRequestGroupMemberKeys for groupId: '" + groupId + "'");
         TalkGroup group = mDatabase.findGroupById(groupId);
         if (group != null && group.exists()) {
 
             List<TalkGroupMember> members = mDatabase.findGroupMembersByIdWithStates(group.getGroupId(), TalkGroupMember.ACTIVE_STATES);
+            LOG.debug("  * members: " + members.size());
             if (!members.isEmpty()) {
                 List<TalkGroupMember> outOfDateMembers = new ArrayList<TalkGroupMember>();
                 List<TalkGroupMember> keyMasterCandidatesWithCurrentKey = new ArrayList<TalkGroupMember>();
@@ -419,6 +421,7 @@ public class UpdateAgent extends NotificationDeferrer {
                 String sharedKeyIdSalt = group.getSharedKeyIdSalt();
                 if (sharedKeyId == null) {
                     // nobody has supplied a group key yet
+                    LOG.debug("  * nobody has supplied a group key yet...");
                     for (TalkGroupMember m : members) {
                         TalkPresence presence = mDatabase.findPresenceForClient(m.getClientId());
                         if (presence != null && presence.getKeyId() != null) {
@@ -432,6 +435,7 @@ public class UpdateAgent extends NotificationDeferrer {
                     }
                 } else {
                     // there is a group key
+                    LOG.debug("  * There is a group key...");
                     for (TalkGroupMember m : members) {
                         TalkPresence presence = mDatabase.findPresenceForClient(m.getClientId());
                         if (presence != null && presence.getKeyId() != null) {
@@ -453,6 +457,7 @@ public class UpdateAgent extends NotificationDeferrer {
                     }
                 }
                 if (!outOfDateMembers.isEmpty()) {
+                    LOG.debug("  * There are members (" + outOfDateMembers.size() + ") without a current group key - need to issue a rekeying...");
                     // we need request some keys
                     if (!keyMasterCandidatesWithCurrentKey.isEmpty()) {
                         // prefer candidates that already have a key
