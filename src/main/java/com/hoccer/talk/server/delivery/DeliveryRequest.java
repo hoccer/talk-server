@@ -185,9 +185,9 @@ public class DeliveryRequest {
         LOG.info("DeliverRequest.perform for clientId: '" + mClientId + ", currentlyConnected=" + currentlyConnected);
         if (currentlyConnected) {
 
-            LOG.debug("DeliverRequest.perform acquiring delivery lock for connection: '"+connection.getConnectionId() + ", mClientId="+mClientId);
+            LOG.debug("DeliverRequest.perform acquiring delivery lock for connection: "+connection.getConnectionId() + "', mClientId="+mClientId);
             synchronized(connection.deliveryLock) {
-                LOG.info("DeliverRequest.perform acquired delivery lock for connection: '" + connection.getConnectionId() + ", mClientId=" + mClientId);
+                LOG.info("DeliverRequest.perform acquired delivery lock for connection: '" + connection.getConnectionId() + "', mClientId=" + mClientId);
                 // get all outstanding deliveries for the client
                 List<TalkDelivery> inDeliveries =
                         mDatabase.findDeliveriesForClientInState(mClientId, TalkDelivery.STATE_DELIVERING);
@@ -230,14 +230,20 @@ public class DeliveryRequest {
                         currentlyConnected = performOutgoing(outDeliveries,rpc, connection);
                     }
                 }
-
-                // initiate push delivery if needed
-                if (needToNotify && !currentlyConnected) {
-                    LOG.info("pushing " + mClientId);
-                    performPush();
-                }
                 mForceAll = false;
             }
+        } else {
+            List<TalkDelivery> inDeliveries =
+                    mDatabase.findDeliveriesForClientInState(mClientId, TalkDelivery.STATE_DELIVERING);
+            LOG.info("unconnected clientId: '" + mClientId + "' has " + inDeliveries.size() + " incoming deliveries");
+            if (!inDeliveries.isEmpty()) {
+                needToNotify = true;
+            }
+        }
+        // initiate push delivery if needed
+        if (needToNotify && !currentlyConnected) {
+            LOG.info("pushing " + mClientId);
+            performPush();
         }
     }
 

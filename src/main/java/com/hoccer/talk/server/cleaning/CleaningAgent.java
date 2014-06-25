@@ -175,12 +175,15 @@ public class CleaningAgent {
     private void doCleanDeliveriesForMessage(String messageId, TalkMessage message) {
         boolean keepMessage = false;
         List<TalkDelivery> deliveries = mDatabase.findDeliveriesForMessage(messageId);
+        LOG.debug("Found "+deliveries.size()+" deliveries for messageId: "+messageId);
         for (TalkDelivery delivery : deliveries) {
             // confirmed and failed deliveries can always be deleted
             if (delivery.isFinished()) {
+                LOG.debug("Deleting delivery with state '" + delivery.getState() + "' and attachmentState '"+ delivery.getAttachmentState()+"', messageId: "+messageId+", receiverId:"+delivery.getReceiverId());
                 mDatabase.deleteDelivery(delivery);
                 continue;
             }
+            LOG.debug("Keeping delivery with state '" + delivery.getState() + "' and attachmentState '"+ delivery.getAttachmentState()+"', messageId: "+messageId+", receiverId:"+delivery.getReceiverId());
             keepMessage = true;
         }
         if (message != null && !keepMessage) {

@@ -1053,7 +1053,6 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
                         boolean success = checkOneDelivery(message, memberDelivery);
                         if (success) {
-                            // group deliveries are confirmed from acceptance
                             memberDelivery.setState(TalkDelivery.STATE_DELIVERING);
                             LOG.info("delivering message " + message.getMessageId() + " for client " + member.getClientId() + " group " + groupId + " sharedKeyId=" + message.getSharedKeyId() + ", member sharedKeyId=" + member.getSharedKeyId());
                         } else {
@@ -1185,20 +1184,19 @@ public class TalkRpcHandler implements ITalkRpcServer {
             String clientId = mConnection.getClientId();
             TalkDelivery delivery = mDatabase.findDelivery(messageId, clientId);
             if (delivery != null) {
-                if (delivery.getState().equals(TalkDelivery.STATE_DELIVERING)) {
+                if (delivery.nextStateAllowed(confirmationState)) {
                     LOG.info("confirmed '"+confirmationState+"' message with id '" + messageId + "' for client with id '" + clientId + "'");
                     setDeliveryState(delivery, confirmationState, true, false);
                     mStatistics.signalMessageConfirmedSucceeded();
                 } else {
-                    LOG.error("deliveryConfirm '"+confirmationState+"'received for delivery not in state 'delivering' (state ="+delivery.getState()+") : message id '" + messageId + "' client id '" + clientId + "'");
+                    throw new RuntimeException("deliveryConfirm: no state change path to '"+confirmationState+"' from current delivery state ="+delivery.getState()+") : message id '" + messageId + "' client id '" + clientId + "'");
                 }
                 TalkDelivery result = new TalkDelivery();
                 result.updateWith(delivery, TalkDelivery.REQUIRED_IN_UPDATE_FIELDS_SET);
                 return result;
             } else {
-                LOG.error("deliveryConfirm '"+confirmationState+"': no delivery found for message with id '" + messageId + "' for client with id '" + clientId + "'");
+                throw new RuntimeException("deliveryConfirm '"+confirmationState+"': no delivery found for message with id '" + messageId + "' for client with id '" + clientId + "'");
             }
-            return delivery;
         }
     }
 
@@ -1683,10 +1681,14 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     private String processFileDownloadMessage(String fileId, String nextState) {
         final String clientId = mConnection.getClientId();
+        logCall("processFileDownloadMessage(fileId: '" + fileId + "') for client "+clientId + ", nextState='"+nextState+"'");
 
         List<TalkMessage> messages = mDatabase.findMessagesWithAttachmentFileId(fileId);
         if (messages.size() == 0) {
             throw new RuntimeException("No message found with file id "+fileId);
+        }
+        if (messages.size() > 1) {
+            LOG.error("Multiple messages ("+messages.size()+") found with file id " + fileId);
         }
         for (TalkMessage message : messages) {
             if (clientId.equals(message.getSenderId())) {
