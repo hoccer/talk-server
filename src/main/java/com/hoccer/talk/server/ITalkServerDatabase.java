@@ -142,5 +142,7 @@ public interface ITalkServerDatabase {
 
     public void reportPing();
 
-    TalkClientHostInfo getClientHostInfo(String clientId);
+    TalkClientHostInfo findClientHostInfo(String clientId);
+
+    public void saveClientHostInfo(TalkClientHostInfo clientHostInfo);
 }
