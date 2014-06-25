@@ -53,6 +53,7 @@ public class JongoDatabase implements ITalkServerDatabase {
     MongoCollection mGroups;
     MongoCollection mGroupMembers;
     MongoCollection mEnvironments;
+    MongoCollection mClientHostInfos;
 
     public JongoDatabase(TalkServerConfiguration configuration) {
         mCollections = new ArrayList<MongoCollection>();
@@ -101,6 +102,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         mGroups = getCollection("group");
         mGroupMembers = getCollection("groupMember");
         mEnvironments = getCollection("environment");
+        mClientHostInfos = getCollection("clientHostInfo");
     }
 
     private MongoCollection getCollection(String name) {
@@ -802,9 +804,18 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
-    public TalkClientHostInfo getClientHostInfo(String clientId) {
-        return mEnvironments.findOne("{clientId:#}", clientId)
+    public TalkClientHostInfo findClientHostInfo(String clientId) {
+        return mClientHostInfos.findOne("{clientId: #}", clientId)
                 .as(TalkClientHostInfo.class);
     }
 
+    @Override
+    public void saveClientHostInfo(TalkClientHostInfo clientHostInfo) {
+        final String clientId = clientHostInfo.getClientId();
+        if (findClientHostInfo(clientId) != null) {
+            mClientHostInfos.update("{clientId: #}", clientId).with("{$set: #}", clientHostInfo);
+        } else {
+            mClientHostInfos.save(clientHostInfo);
+        }
+    }
 }

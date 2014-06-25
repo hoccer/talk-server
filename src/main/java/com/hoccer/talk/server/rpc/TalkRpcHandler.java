@@ -148,13 +148,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
         }
 
-        // TODO: Persist the TalkClientInfo and associate it to the connected clientId
-        /*TalkClientHostInfo clientHostInfo = mDatabase.getClientHostInfo(mConnection.getClientId());
-        if (clientHostInfo == null) {
-            LOG.info("would create clientHostInfo");
-        } else {
-            LOG.info("client host info already exists - updating that...");
-        }*/
+        TalkClientHostInfo clientHostInfo = new TalkClientHostInfo(clientInfo);
+        clientHostInfo.setClientId(mConnection.getClientId());
+        clientHostInfo.setServerTime(new Date());
+        mDatabase.saveClientHostInfo(clientHostInfo);
 
         TalkServerInfo serverInfo = new TalkServerInfo();
         serverInfo.setServerTime(new Date());
