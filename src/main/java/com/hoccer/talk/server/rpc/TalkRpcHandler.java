@@ -1697,10 +1697,10 @@ public class TalkRpcHandler implements ITalkRpcServer {
             synchronized (mServer.idLock(message.getMessageId())) {
                 TalkDelivery delivery = mDatabase.findDelivery(message.getMessageId(), clientId);
                 if (delivery != null) {
+                    LOG.info("AttachmentState '"+delivery.getAttachmentState()+"' --> '"+nextState+"' (download), messageId="+message.getMessageId()+", delivery="+delivery.getId());
                     if (!delivery.nextAttachmentStateAllowed(nextState)) {
-                        throw new RuntimeException("next state '"+nextState+"'not allowed, delivery already in state '"+delivery.getAttachmentState()+"', messageId="+message.getMessageId());
+                        throw new RuntimeException("next state '"+nextState+"'not allowed, delivery already in state '"+delivery.getAttachmentState()+"', messageId="+message.getMessageId()+", delivery="+delivery.getId());
                     }
-                    LOG.info("AttachmentState '"+delivery.getAttachmentState()+"' --> '"+nextState+"' (download), messageId="+message.getMessageId());
                     delivery.setAttachmentState(nextState);
                     delivery.setTimeChanged(new Date());
                     mDatabase.saveDelivery(delivery);
@@ -1719,59 +1719,59 @@ public class TalkRpcHandler implements ITalkRpcServer {
     public String startedFileUpload(String fileId) {
         requireIdentification();
         logCall("startedFileUpload(fileId: '" + fileId + "')");
-        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOADING);
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOADING, null);
     }
     // should be called by the sender of an transfer file when the upload has been paused
     @Override
     public String pausedFileUpload(String fileId) {
         requireIdentification();
         logCall("pausedFileUpload(fileId: '" + fileId + "')");
-        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_PAUSED);
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_PAUSED, null);
     }
     // should be called by the sender of an transfer file after upload has been finished
     @Override
     public String finishedFileUpload(String fileId) {
         requireIdentification();
         logCall("finishedFileUpload(fileId: '" + fileId + "')");
-        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOADED);
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOADED, null);
     }
     // should be called by the sender of an transfer file when the upload is aborted by the user
     @Override
     public String abortedFileUpload(String fileId) {
         requireIdentification();
         logCall("abortedFileUpload(fileId: '" + fileId + "')");
-        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_ABORTED);
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_ABORTED, null);
     }
     // should be called by the sender of an transfer file when upload retry count has been exceeded
     @Override
     public String failedFileUpload(String fileId) {
         requireIdentification();
         logCall("failedFileUpload(fileId: '" + fileId + "')");
-        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_FAILED);
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_UPLOAD_FAILED, null);
     }
     // should be called by the sender of an transfer file when a final attachment receiver set state has been seen
     @Override
-    public String acknowledgeReceivedFile(String fileId) {
+    public String acknowledgeReceivedFile(String fileId, String receiverId) {
         requireIdentification();
         logCall("acknowledgeReceivedFile(fileId: '" + fileId + "')");
-        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED);
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED, receiverId);
     }
     // should be called by the sender of an transfer file when a final attachment receiver set state has been seen
     @Override
-    public String acknowledgeAbortedFileDownload(String fileId) {
+    public String acknowledgeAbortedFileDownload(String fileId, String receiverId) {
         requireIdentification();
         logCall("acknowledgeReceivedFile(fileId: '" + fileId + "')");
-        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_DOWNLOAD_ABORTED_ACKNOWLEDGED);
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_DOWNLOAD_ABORTED_ACKNOWLEDGED, receiverId);
     }
     // should be called by the sender of an transfer file when a final attachment receiver set state has been seen
     @Override
-    public String acknowledgeFailedFileDownload(String fileId) {
+    public String acknowledgeFailedFileDownload(String fileId, String receiverId) {
         requireIdentification();
         logCall("acknowledgeReceivedFile(fileId: '" + fileId + "')");
-        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_DOWNLOAD_FAILED_ACKNOWLEDGED);
+        return processFileUploadMessage(fileId, TalkDelivery.ATTACHMENT_STATE_DOWNLOAD_FAILED_ACKNOWLEDGED, receiverId);
     }
 
-    private String processFileUploadMessage(String fileId, String nextState) {
+    private String processFileUploadMessage(String fileId, String nextState, String receiverId) {
         final String clientId = mConnection.getClientId();
 
         List<TalkMessage> messages = mDatabase.findMessagesWithAttachmentFileId(fileId);
@@ -1785,14 +1785,17 @@ public class TalkRpcHandler implements ITalkRpcServer {
                     mDatabase.saveMessage(message);
                     List<TalkDelivery> deliveries = mDatabase.findDeliveriesForMessage(message.getMessageId());
                     for (TalkDelivery delivery : deliveries) {
-                        if (!delivery.nextAttachmentStateAllowed(nextState)) {
-                            throw new RuntimeException("next state '"+nextState+"'not allowed, delivery already in state '"+delivery.getAttachmentState()+"', messageId="+message.getMessageId());
+                        // for some calls we update only a specific delivery, while for other calls we update only the delivery with the proper receiverId
+                        if (receiverId == null || delivery.getReceiverId().equals(receiverId)) {
+                            LOG.info("AttachmentState '"+delivery.getAttachmentState()+"' --> '"+nextState+"' (upload), messageId="+message.getMessageId()+", delivery="+delivery.getId());
+                            if (!delivery.nextAttachmentStateAllowed(nextState)) {
+                                throw new RuntimeException("next state '"+nextState+"'not allowed, delivery already in state '"+delivery.getAttachmentState()+"', messageId="+message.getMessageId()+", delivery="+delivery.getId());
+                            }
+                            delivery.setAttachmentState(nextState);
+                            delivery.setTimeChanged(message.getAttachmentUploadStarted());
+                            mDatabase.saveDelivery(delivery);
+                            mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId(), false);
                         }
-                        LOG.info("AttachmentState '" + delivery.getAttachmentState() + "' --> '" + nextState + "' (upload)");
-                        delivery.setAttachmentState(nextState);
-                        delivery.setTimeChanged(message.getAttachmentUploadStarted());
-                        mDatabase.saveDelivery(delivery);
-                        mServer.getDeliveryAgent().requestDelivery(delivery.getReceiverId(), false);
                     }
                 }
             } else {
