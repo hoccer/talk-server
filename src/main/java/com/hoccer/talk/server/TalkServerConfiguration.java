@@ -147,7 +147,6 @@ public class TalkServerConfiguration {
     }
 
     private String mVersion = "<unknown>";
-    private String mBuildNumber;
     private GitInfo gitInfo = new GitInfo();
 
     public TalkServerConfiguration() {
@@ -332,14 +331,6 @@ public class TalkServerConfiguration {
 
     public void setVersion(String version) {
         this.mVersion = version;
-    }
-
-    public void setBuildNumber(String buildNumber) {
-        this.mBuildNumber = buildNumber;
-    }
-
-    public String getBuildNumber() {
-        return mBuildNumber;
     }
 
     public void setGitInfo(GitInfo gitInfo) {
