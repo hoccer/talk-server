@@ -61,7 +61,7 @@ public class PushRequest {
         LOG.info("GCM push for " + mClientId);
         Message message = new Message.Builder()
                 .collapseKey("com.hoccer.talk.wake")
-                .timeToLive(mConfig.getGcmWakeTtl())
+                .timeToLive(TalkServerConfiguration.GCM_WAKE_TTL)
                 .restrictedPackageName(mClient.getGcmPackage())
                 .dryRun(false) //TODO: maybe make a setting out of it
                 .build();

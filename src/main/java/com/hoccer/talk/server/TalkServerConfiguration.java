@@ -28,6 +28,8 @@ public class TalkServerConfiguration {
     public static final int PING_INTERVAL = 300; // in seconds
     public static final boolean PERFORM_PING_AT_INTERVALS = false;
 
+    public final static int GCM_WAKE_TTL = 1 * 7 * 24 * 3600; // 1 week
+
     // top level property prefix for all talk related properties, e.g. 'talk.foo.bar'
     private static final String PROPERTY_PREFIX = "talk";
     private enum PropertyTypes {STRING, BOOLEAN, INTEGER}
@@ -68,7 +70,37 @@ public class TalkServerConfiguration {
         APNS_INVALIDATE_INTERVAL(PROPERTY_PREFIX + ".apns.invalidate.interval",
                 PropertyTypes.INTEGER,
                 3600), // in seconds
-        GCM_ENABLED(PROPERTY_PREFIX + "gcm.enabled",
+        GCM_ENABLED(PROPERTY_PREFIX + ".gcm.enabled",
+                PropertyTypes.BOOLEAN,
+                false),
+        GCM_API_KEY(PROPERTY_PREFIX + ".gcm.apikey",
+                PropertyTypes.STRING,
+                "AIzaSyA25wabV4kSQTaF73LTgTkjmw0yZ8inVr8"), // TODO: Do we really need this api key in code here?
+        CLEANUP_ALL_CLIENTS_DELAY(PROPERTY_PREFIX + ".cleanup.allClientsDelay",
+                PropertyTypes.INTEGER,
+                7200), // in seconds (2 hours)
+        CLEANUP_ALL_CLIENTS_INTERVAL(PROPERTY_PREFIX + ".cleanup.allClientsInterval",
+                PropertyTypes.INTEGER,
+                60 * 60 * 24), // in seconds (once a day)
+        CLEANUP_ALL_DEVLIVERIES_DELAY(PROPERTY_PREFIX + ".cleanup.allDeliveriesDelay",
+                PropertyTypes.INTEGER,
+                3600), // in second (1 hour)
+        CLEANUP_ALL_DELIVERIES_INTERVAL(PROPERTY_PREFIX + ".cleanup.allDeliveriesInterval",
+                PropertyTypes.INTEGER,
+                60 * 60 * 6), // in seconds (every 6 hours)
+        FILECACHE_CONTROL_URL(PROPERTY_PREFIX + ".filecache.controlUrl",
+                PropertyTypes.STRING,
+                "http://localhost:8081/control"),
+        FILECACHE_UPLOAD_BASE(PROPERTY_PREFIX + ".filecache.uploadBase",
+                PropertyTypes.STRING,
+                "http://localhost:8081/upload/"),
+        FILECACHE_DOWNLOAD_BASE(PROPERTY_PREFIX + ".filecache.downloadBase",
+                PropertyTypes.STRING,
+                "http://localhost:8081/download/"),
+        SUPPORT_TAG(PROPERTY_PREFIX + ".support.tag",
+                PropertyTypes.STRING,
+                "Oos8guceich2yoox"),
+        LOG_ALL_CALLS(PROPERTY_PREFIX + ".debug.logallcalls",
                 PropertyTypes.BOOLEAN,
                 false);
 
@@ -94,7 +126,7 @@ public class TalkServerConfiguration {
             }
         }
 
-        private void setValue(String rawValue) {
+        public void setValue(String rawValue) {
             LOG.debug("   - setValue: " + rawValue + "  (" + this.type.name() + ")");
             if (PropertyTypes.STRING.equals(this.type)) {
                 this.value = rawValue;
@@ -105,22 +137,6 @@ public class TalkServerConfiguration {
             }
         }
     }
-
-    private String  mGcmApiKey = "AIzaSyA25wabV4kSQTaF73LTgTkjmw0yZ8inVr8";
-    private int     mGcmWakeTtl = 1 * 7 * 24 * 3600; // 1 week
-
-    private int mCleanupAllClientsDelay = 7200; // 2 hours //300;
-    private int mCleanupAllClientsInterval = 60 * 60 * 24; // once a day //900;
-    private int mCleanupAllDeliveriesDelay = 3600; // 1 hour //600;
-    private int mCleanupAllDeliveriesInterval = 60 * 60 * 6; // every 6 hours //900;
-
-    private String mFilecacheControlUrl = "http://localhost:8081/control";
-    private String mFilecacheUploadBase = "http://localhost:8081/upload/";
-    private String mFilecacheDownloadBase = "http://localhost:8081/download/";
-
-    private String mSupportTag = "Oos8guceich2yoox";
-
-    private boolean mLogAllCalls = false;
 
     private String mVersion = "<unknown>";
     private String mBuildNumber;
@@ -147,63 +163,45 @@ public class TalkServerConfiguration {
                         "\n - Push Configuration:" +
                         MessageFormat.format("\n   * push rate limit (in milli-seconds): {0}",     Long.toString(this.getPushRateLimit())) +
                         "\n   - APNS:" +
-                        MessageFormat.format("\n     * enabled:                          ''{0}''", this.isApnsEnabled()) +
+                        MessageFormat.format("\n     * enabled:                          {0}",     this.isApnsEnabled()) +
                         MessageFormat.format("\n     * production cert path :            ''{0}''", this.getApnsCertProductionPath()) +
                         MessageFormat.format("\n     * production cert password (length):''{0}''", this.getApnsCertProductionPassword().length()) + // here we don't really print the password literal to stdout of course
                         MessageFormat.format("\n     * sandbox cert path :               ''{0}''", this.getApnsCertSandboxPath()) +
                         MessageFormat.format("\n     * sandbox cert password (length):   ''{0}''", this.getApnsCertSandboxPassword().length()) + // here we don't really print the password literal to stdout of course
-                        MessageFormat.format("\n     * apns invalidate delay (in s):     {0}", Long.toString(this.getApnsInvalidateDelay())) +
-                        MessageFormat.format("\n     * apns invalidate interval (in s):  {0}", Long.toString(this.getApnsInvalidateInterval())) +
+                        MessageFormat.format("\n     * apns invalidate delay (in s):     {0}",     Long.toString(this.getApnsInvalidateDelay())) +
+                        MessageFormat.format("\n     * apns invalidate interval (in s):  {0}",     Long.toString(this.getApnsInvalidateInterval())) +
                         "\n   - GCM:" +
-                        MessageFormat.format("\n     * gcm enabled:                      ''{0}''", this.isGcmEnabled()) +
-                        MessageFormat.format("\n     * gcm api key (length):             ''{0}''", mGcmApiKey.length()) +
+                        MessageFormat.format("\n     * enabled:                          {0}",     this.isGcmEnabled()) +
+                        MessageFormat.format("\n     * api key (length):                 ''{0}''", getGcmApiKey().length()) +
+                        MessageFormat.format("\n     * wake ttl (in s)                   ''{0}''", Long.toString(GCM_WAKE_TTL)) +
                         "\n - Cleaning Agent Configuration:" +
-                        MessageFormat.format("\n   * clients cleanup delay (in s):       {0}",     Long.toString(mCleanupAllClientsDelay)) +
-                        MessageFormat.format("\n   * clients cleanup interval (in s):    {0}",     Long.toString(mCleanupAllClientsInterval)) +
-                        MessageFormat.format("\n   * deliveries cleanup delay (in s):    {0}",     Long.toString(mCleanupAllDeliveriesDelay)) +
-                        MessageFormat.format("\n   * deliveries cleanup interval (in s): {0}",     Long.toString(mCleanupAllDeliveriesInterval)) +
+                        MessageFormat.format("\n   * clients cleanup delay (in s):       {0}",     Long.toString(this.getApnsInvalidateDelay())) +
+                        MessageFormat.format("\n   * clients cleanup interval (in s):    {0}",     Long.toString(this.getCleanupAllClientsInterval())) +
+                        MessageFormat.format("\n   * deliveries cleanup delay (in s):    {0}",     Long.toString(this.getCleanupAllDeliveriesDelay())) +
+                        MessageFormat.format("\n   * deliveries cleanup interval (in s): {0}",     Long.toString(this.getCleanupAllDeliveriesInterval())) +
                         "\n - Filecache Configuration:" +
-                        MessageFormat.format("\n   * filecache control url:              ''{0}''", mFilecacheControlUrl) +
-                        MessageFormat.format("\n   * filecache upload base url:          ''{0}''", mFilecacheUploadBase) +
-                        MessageFormat.format("\n   * filecache download base url:        ''{0}''", mFilecacheDownloadBase) +
+                        MessageFormat.format("\n   * filecache control url:              ''{0}''", this.getFilecacheControlUrl()) +
+                        MessageFormat.format("\n   * filecache upload base url:          ''{0}''", this.getFilecacheUploadBase()) +
+                        MessageFormat.format("\n   * filecache download base url:        ''{0}''", this.getFilecacheDownloadBase()) +
                         "\n - Other:" +
-                        MessageFormat.format("\n   * support tag: ''{0}''", mSupportTag) +
-                        "\n - Constants:" +
-                        MessageFormat.format("\n   * DeliveryAgent Threads Poolsize:     ''{0}''", THREADS_DELIVERY) +
-                        MessageFormat.format("\n   * CleanupAgent  Threads Poolsize:     ''{0}''", THREADS_CLEANING) +
-                        MessageFormat.format("\n   * PushAgent     Threads Poolsize:     ''{0}''", THREADS_PUSH) +
-                        MessageFormat.format("\n   * PingAgent     Threads Poolsize:     ''{0}''", THREADS_PING) +
-                        MessageFormat.format("\n   * UpdateAgent   Threads Poolsize:     ''{0}''", THREADS_UPDATE) +
-                        MessageFormat.format("\n   * Ping interval (in s):               ''{0}''", PING_INTERVAL) +
-                        MessageFormat.format("\n   * perform ping at intervals:          ''{0}''", PERFORM_PING_AT_INTERVALS) +
+                        MessageFormat.format("\n   * support tag: ''{0}''", this.getSupportTag()) +
+                        "\n - Threads:" +
+                        MessageFormat.format("\n   * DeliveryAgent Threads Poolsize:     {0}",     THREADS_DELIVERY) +
+                        MessageFormat.format("\n   * CleanupAgent  Threads Poolsize:     {0}",     THREADS_CLEANING) +
+                        MessageFormat.format("\n   * PushAgent     Threads Poolsize:     {0}",     THREADS_PUSH) +
+                        MessageFormat.format("\n   * PingAgent     Threads Poolsize:     {0}",     THREADS_PING) +
+                        MessageFormat.format("\n   * UpdateAgent   Threads Poolsize:     {0}",     THREADS_UPDATE) +
+                        "\n - Ping:" +
+                        MessageFormat.format("\n   * Ping interval (in s):               {0}",     PING_INTERVAL) +
+                        MessageFormat.format("\n   * perform ping at intervals:          {0}",     PERFORM_PING_AT_INTERVALS) +
                         "\n - Debugging:" +
-                        MessageFormat.format("\n   * LogAllCalls:     ''{0}''", mLogAllCalls)
+                        MessageFormat.format("\n   * LogAllCalls:                        {0}",     this.getLogAllCalls())
         );
     }
 
     public void configureFromProperties(Properties properties) {
         LOG.info("Loading from properties...");
         ConfigurableProperties.loadFromProperties(properties);
-
-        // GCM
-        mGcmApiKey  = properties.getProperty(PROPERTY_PREFIX + ".gcm.apikey", mGcmApiKey);
-
-        // Cleanup
-        mCleanupAllClientsDelay = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".cleanup.allClientsDelay", Integer.toString(mCleanupAllClientsDelay)));
-        mCleanupAllClientsInterval = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".cleanup.allClientsInterval", Integer.toString(mCleanupAllClientsInterval)));
-        mCleanupAllDeliveriesDelay = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".cleanup.allDeliveriesDelay", Integer.toString(mCleanupAllDeliveriesDelay)));
-        mCleanupAllDeliveriesInterval = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".cleanup.allDeliveriesInterval", Integer.toString(mCleanupAllDeliveriesInterval)));
-
-        // Filecache
-        mFilecacheControlUrl = properties.getProperty(PROPERTY_PREFIX + ".filecache.controlUrl", mFilecacheControlUrl);
-        mFilecacheUploadBase = properties.getProperty(PROPERTY_PREFIX + ".filecache.uploadBase", mFilecacheUploadBase);
-        mFilecacheDownloadBase = properties.getProperty(PROPERTY_PREFIX + ".filecache.downloadBase", mFilecacheDownloadBase);
-
-        // Support
-        mSupportTag = properties.getProperty(PROPERTY_PREFIX + ".support.tag", mSupportTag);
-
-        // Debugging
-        mLogAllCalls = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".debug.logallcalls", Boolean.toString(mLogAllCalls)));
     }
 
     public String getListenAddress() {
@@ -231,11 +229,7 @@ public class TalkServerConfiguration {
     }
 
     public String getGcmApiKey() {
-        return mGcmApiKey;
-    }
-
-    public int getGcmWakeTtl() {
-        return mGcmWakeTtl;
+        return (String)ConfigurableProperties.GCM_API_KEY.value;
     }
 
     public boolean isApnsEnabled() {
@@ -266,62 +260,62 @@ public class TalkServerConfiguration {
         return (Integer)ConfigurableProperties.APNS_INVALIDATE_INTERVAL.value;
     }
 
+    public int getCleanupAllClientsDelay() {
+        return (Integer)ConfigurableProperties.CLEANUP_ALL_CLIENTS_DELAY.value;
+    }
+
+    public int getCleanupAllClientsInterval() {
+        return (Integer)ConfigurableProperties.CLEANUP_ALL_CLIENTS_INTERVAL.value;
+    }
+
+    public int getCleanupAllDeliveriesDelay() {
+        return (Integer)ConfigurableProperties.CLEANUP_ALL_DEVLIVERIES_DELAY.value;
+    }
+
+    public int getCleanupAllDeliveriesInterval() {
+        return (Integer)ConfigurableProperties.CLEANUP_ALL_CLIENTS_INTERVAL.value;
+    }
+
     public URI getFilecacheControlUrl() {
         URI url = null;
         try {
-            url = new URI(mFilecacheControlUrl);
+            url = new URI((String)ConfigurableProperties.FILECACHE_CONTROL_URL.value);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
         return url;
     }
 
-    public int getCleanupAllClientsDelay() {
-        return mCleanupAllClientsDelay;
-    }
-
-    public int getCleanupAllClientsInterval() {
-        return mCleanupAllClientsInterval;
-    }
-
-    public int getCleanupAllDeliveriesDelay() {
-        return mCleanupAllDeliveriesDelay;
-    }
-
-    public int getCleanupAllDeliveriesInterval() {
-        return mCleanupAllDeliveriesInterval;
+    public void setFilecacheControlUrl(String pFilecacheControlUrl) {
+        ConfigurableProperties.FILECACHE_CONTROL_URL.setValue(pFilecacheControlUrl);
     }
 
     public String getFilecacheUploadBase() {
-        return mFilecacheUploadBase;
+        return (String)ConfigurableProperties.FILECACHE_UPLOAD_BASE.value;
+    }
+
+    public void setFilecacheUploadBase(String pFilecacheUploadBase) {
+        ConfigurableProperties.FILECACHE_UPLOAD_BASE.setValue(pFilecacheUploadBase);
     }
 
     public String getFilecacheDownloadBase() {
-        return mFilecacheDownloadBase;
-    }
-
-    public void setFilecacheControlUrl(String mFilecacheControlUrl) {
-        this.mFilecacheControlUrl = mFilecacheControlUrl;
-    }
-
-    public void setFilecacheUploadBase(String mFilecacheUploadBase) {
-        this.mFilecacheUploadBase = mFilecacheUploadBase;
+        return (String)ConfigurableProperties.FILECACHE_DOWNLOAD_BASE.value;
     }
 
     public void setFilecacheDownloadBase(String mFilecacheDownloadBase) {
-        this.mFilecacheDownloadBase = mFilecacheDownloadBase;
+        ConfigurableProperties.FILECACHE_DOWNLOAD_BASE.setValue(mFilecacheDownloadBase);
     }
 
     public String getSupportTag() {
-        return mSupportTag;
-    }
-
-    public void setLogAllCalls(boolean flag) {
-        mLogAllCalls = flag;
+        return (String)ConfigurableProperties.SUPPORT_TAG.value;
     }
 
     public boolean getLogAllCalls() {
-        return mLogAllCalls;
+        return (Boolean)ConfigurableProperties.LOG_ALL_CALLS.value;
+    }
+
+    public void setLogAllCalls(Boolean flag) {
+        ConfigurableProperties.LOG_ALL_CALLS.setValue(flag.toString());
     }
 
     public String getVersion() {
