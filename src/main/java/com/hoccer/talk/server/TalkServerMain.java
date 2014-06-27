@@ -135,14 +135,13 @@ public class TalkServerMain {
             } catch (IOException e) {
                 LOG.error("Could not load configuration", e);
             }
-            // if we could load it then configure using it
             if (properties != null) {
                 configuration.configureFromProperties(properties);
             }
         }
 
         // also read additional bundled property files
-        LOG.info("Loading bundled properties...");
+        LOG.info("Loading bundled properties (server.properties)...");
         Properties bundled_properties = new Properties();
         try {
             InputStream bundledConfigIs = TalkServerConfiguration.class.getResourceAsStream("/server.properties");
@@ -152,7 +151,7 @@ public class TalkServerMain {
             LOG.error("Unable to load bundled configuration", e);
         }
 
-        LOG.info("Loading GIT properties...");
+        LOG.info("Loading GIT properties (git.properties)...");
         Properties git_properties = new Properties();
         try {
             InputStream gitConfigIs = TalkServerConfiguration.class.getResourceAsStream("/git.properties");
