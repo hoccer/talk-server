@@ -2,10 +2,13 @@ package com.hoccer.talk.server;
 
 import com.hoccer.scm.GitInfo;
 import org.apache.log4j.Logger;
+import org.bouncycastle.jcajce.provider.config.ProviderConfigurationPermission;
 
+import javax.rmi.PortableRemoteObject;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.MessageFormat;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -15,7 +18,6 @@ import java.util.Properties;
  * be overloaded from a property file.
  */
 
-// TODO: maybe use Lombok's @Data and @ToString ?
 public class TalkServerConfiguration {
 
     private static final Logger LOG = Logger.getLogger(TalkServerConfiguration.class);
@@ -31,29 +33,76 @@ public class TalkServerConfiguration {
 
     // top level property prefix for all talk related properties, e.g. 'talk.foo.bar'
     private static final String PROPERTY_PREFIX = "talk";
+    private enum PropertyTypes {STRING, BOOLEAN, INTEGER}
+    private enum ConfigurableProperties {
+        LISTEN_ADDRESS(PROPERTY_PREFIX + ".listen.address",
+                PropertyTypes.STRING,
+                "localhost"),
+        LISTEN_PORT(PROPERTY_PREFIX + ".listen.port",
+                PropertyTypes.INTEGER,
+                8080),
+        DATABASE_BACKEND(PROPERTY_PREFIX + ".db.backend",
+                PropertyTypes.STRING,
+                "jongo"),
+        JONGO_DATABASE(PROPERTY_PREFIX + ".jongo.db",
+                PropertyTypes.STRING,
+                "talk"),
+        PUSH_RATE_LIMIT(PROPERTY_PREFIX + ".push.rateLimit",
+                PropertyTypes.INTEGER,
+                15000),
+        APNS_ENABLED(PROPERTY_PREFIX + ".apns.enabled",
+                PropertyTypes.BOOLEAN,
+                false),
+        APNS_PRODUCTION_CERTIFICATE_PATH(PROPERTY_PREFIX + ".apns.cert.production.path",
+                PropertyTypes.STRING,
+                "apns_production.p12"),
+        APNS_PRODUCTION_CERTIFICATE_PASSWORD(PROPERTY_PREFIX + ".apns.cert.production.password",
+                PropertyTypes.STRING,
+                "password");
 
-    private static final String PROPERTY_LISTEN_ADDRESS = PROPERTY_PREFIX + ".listen.address";
-    private String mListenAddress = "localhost";
+        public final String key;
+        public final PropertyTypes type;
+        public Object value;
 
-    private static final String PROPERTY_LISTEN_PORT = PROPERTY_PREFIX + ".listen.port";
-    private int    mListenPort = 8080;
+        private ConfigurableProperties(String name, PropertyTypes type, Object defaultValue) {
+            this.key = name;
+            this.type = type;
+            this.value = defaultValue;
+        }
 
-    private int     mPushRateLimit = 15000;
+        static public void loadFromProperties(Properties properties) {
+            for(ConfigurableProperties property : ConfigurableProperties.values()) {
+                LOG.debug("Loading configurable property " + property.name() + " from key: '" + property.key + "'");
+                String rawValue = properties.getProperty(property.key);
+                if (rawValue != null) {
+                    property.setValue(rawValue);
+                } else {
+                    LOG.info("Property " + property.name() + " (type: " + property.type.name() + ") is unconfigured (key: '" + property.key + "'): default value is '" + property.value + "'");
+                }
+            }
+        }
+
+        private void setValue(String rawValue) {
+            LOG.debug("   - setValue: " + rawValue + "  (" + this.type.name() + ")");
+            if (PropertyTypes.STRING.equals(this.type)) {
+                this.value = rawValue;
+            } else if (PropertyTypes.INTEGER.equals(this.type)) {
+                this.value = Integer.valueOf(rawValue);
+            } else if (PropertyTypes.BOOLEAN.equals(this.type)) {
+                this.value = Boolean.valueOf(rawValue);
+            }
+        }
+    }
+
     private boolean mGcmEnabled = false;
     private String  mGcmApiKey = "AIzaSyA25wabV4kSQTaF73LTgTkjmw0yZ8inVr8";
     private int     mGcmWakeTtl = 1 * 7 * 24 * 3600; // 1 week
 
     // APNS settings
-    private boolean mApnsEnabled = false;
-    private String  mApnsCertProductionPath = "apns_production.p12";
-    private String  mApnsCertProductionPassword = "password";
     private String  mApnsCertSandboxPath =  "apns_sandbox.p12";
     private String  mApnsCertSandboxPassword = "password";
     private int     mApnsInvalidateDelay = 30;
     private int     mApnsInvalidateInterval = 3600;
-
-    private String mDatabaseBackend = "jongo";
-    private String mJongoDb = "talk";
 
     private int mCleanupAllClientsDelay = 7200; // 2 hours //300;
     private int mCleanupAllClientsInterval = 60 * 60 * 24; // once a day //900;
@@ -86,30 +135,30 @@ public class TalkServerConfiguration {
                         MessageFormat.format("\n   * git.commit.time:                    ''{0}''", gitInfo.commitTime) +
                         MessageFormat.format("\n   * git.build.time:                     ''{0}''", gitInfo.buildTime) +
                         "\n - WebServer Configuration:" +
-                        MessageFormat.format("\n   * listen address:                     ''{0}''", mListenAddress) +
-                        MessageFormat.format("\n   * listen port:                        ''{0}''", Long.toString(mListenPort)) +
+                        MessageFormat.format("\n   * listen address:                     ''{0}''", this.getListenAddress()) +
+                        MessageFormat.format("\n   * listen port:                        {0}",     Long.toString(getListenPort())) +
                         "\n - Database Configuration:" +
-                        MessageFormat.format("\n   * database backend:                   ''{0}''", mDatabaseBackend) +
-                        MessageFormat.format("\n   * jongo database:                     ''{0}''", mJongoDb) +
+                        MessageFormat.format("\n   * database backend:                   ''{0}''", this.getDatabaseBackend()) +
+                        MessageFormat.format("\n   * jongo database:                     ''{0}''", this.getJongoDb()) +
                         "\n - Push Configuration:" +
-                        MessageFormat.format("\n   * push rate limit:                    ''{0}''", Long.toString(mPushRateLimit)) +
+                        MessageFormat.format("\n   * push rate limit (in milli-seconds): {0}",     Long.toString(this.getPushRateLimit())) +
                         "\n   - APNS:" +
-                        MessageFormat.format("\n     * enabled:                          ''{0}''", mApnsEnabled) +
-                        MessageFormat.format("\n     * production cert path :            ''{0}''", mApnsCertProductionPath) +
-                        MessageFormat.format("\n     * production cert password (length):''{0}''", mApnsCertProductionPassword.length()) + // here we don't really print the password literal to stdout of course
+                        MessageFormat.format("\n     * enabled:                          ''{0}''", this.isApnsEnabled()) +
+                        MessageFormat.format("\n     * production cert path :            ''{0}''", this.getApnsCertProductionPath()) +
+                        MessageFormat.format("\n     * production cert password (length):''{0}''", this.getApnsCertProductionPassword().length()) + // here we don't really print the password literal to stdout of course
                         MessageFormat.format("\n     * sandbox cert path :               ''{0}''", mApnsCertSandboxPath) +
                         MessageFormat.format("\n     * sandbox cert password (length):   ''{0}''", mApnsCertSandboxPassword.length()) + // here we don't really print the password literal to stdout of course
 
-                        MessageFormat.format("\n     * apns invalidate delay:            ''{0}''", mApnsInvalidateDelay) +
-                        MessageFormat.format("\n     * apns invalidate interval:         ''{0}''", mApnsInvalidateInterval) +
+                        MessageFormat.format("\n     * apns invalidate delay (in s):     {0}", Long.toString(mApnsInvalidateDelay)) +
+                        MessageFormat.format("\n     * apns invalidate interval (in s):  {0}", Long.toString(mApnsInvalidateInterval)) +
                         "\n   - GCM:" +
                         MessageFormat.format("\n     * gcm enabled:                      ''{0}''", mGcmEnabled) +
                         MessageFormat.format("\n     * gcm api key (length):             ''{0}''", mGcmApiKey.length()) +
                         "\n - Cleaning Agent Configuration:" +
-                        MessageFormat.format("\n   * clients cleanup delay (in s):       ''{0}''", Long.toString(mCleanupAllClientsDelay)) +
-                        MessageFormat.format("\n   * clients cleanup interval (in s):    ''{0}''", Long.toString(mCleanupAllClientsInterval)) +
-                        MessageFormat.format("\n   * deliveries cleanup delay (in s):    ''{0}''", Long.toString(mCleanupAllDeliveriesDelay)) +
-                        MessageFormat.format("\n   * deliveries cleanup interval (in s): ''{0}''", Long.toString(mCleanupAllDeliveriesInterval)) +
+                        MessageFormat.format("\n   * clients cleanup delay (in s):       {0}",     Long.toString(mCleanupAllClientsDelay)) +
+                        MessageFormat.format("\n   * clients cleanup interval (in s):    {0}",     Long.toString(mCleanupAllClientsInterval)) +
+                        MessageFormat.format("\n   * deliveries cleanup delay (in s):    {0}",     Long.toString(mCleanupAllDeliveriesDelay)) +
+                        MessageFormat.format("\n   * deliveries cleanup interval (in s): {0}",     Long.toString(mCleanupAllDeliveriesInterval)) +
                         "\n - Filecache Configuration:" +
                         MessageFormat.format("\n   * filecache control url:              ''{0}''", mFilecacheControlUrl) +
                         MessageFormat.format("\n   * filecache upload base url:          ''{0}''", mFilecacheUploadBase) +
@@ -130,23 +179,10 @@ public class TalkServerConfiguration {
     }
 
     public void configureFromProperties(Properties properties) {
-        // listening
-        mListenAddress = properties.getProperty(PROPERTY_LISTEN_ADDRESS, mListenAddress);
-        mListenPort = Integer.parseInt(properties.getProperty(PROPERTY_LISTEN_PORT, Integer.toString(mListenPort)));
-
-        // Database
-        mDatabaseBackend = properties.getProperty(PROPERTY_PREFIX + ".db.backend", mDatabaseBackend);
-
-        // Jongo
-        mJongoDb = properties.getProperty(PROPERTY_PREFIX + ".jongo.db", mJongoDb);
-
-        // Push
-        mPushRateLimit = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".push.rateLimit", Integer.toString(mPushRateLimit)));
+        LOG.info("Loading from properties...");
+        ConfigurableProperties.loadFromProperties(properties);
 
         // APNS
-        mApnsEnabled = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.enabled", Boolean.toString(mApnsEnabled)));
-        mApnsCertProductionPath = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.production.path", mApnsCertProductionPath);
-        mApnsCertProductionPassword = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.production.password", mApnsCertProductionPassword);
         mApnsCertSandboxPath = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.sandbox.path", mApnsCertSandboxPath);
         mApnsCertSandboxPassword = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.sandbox.password", mApnsCertSandboxPassword);
 
@@ -176,23 +212,23 @@ public class TalkServerConfiguration {
     }
 
     public String getListenAddress() {
-        return mListenAddress;
+        return (String)ConfigurableProperties.LISTEN_ADDRESS.value;
     }
 
     public int getListenPort() {
-        return mListenPort;
+        return (Integer)ConfigurableProperties.LISTEN_PORT.value;
     }
 
     public String getDatabaseBackend() {
-        return mDatabaseBackend;
+        return (String)ConfigurableProperties.DATABASE_BACKEND.value;
     }
 
     public String getJongoDb() {
-        return mJongoDb;
+        return (String)ConfigurableProperties.JONGO_DATABASE.value;
     }
 
     public int getPushRateLimit() {
-        return mPushRateLimit;
+        return (Integer)ConfigurableProperties.PUSH_RATE_LIMIT.value;
     }
 
     public boolean isGcmEnabled() {
@@ -208,15 +244,15 @@ public class TalkServerConfiguration {
     }
 
     public boolean isApnsEnabled() {
-        return mApnsEnabled;
+        return (Boolean)ConfigurableProperties.APNS_ENABLED.value;
     }
 
     public String getApnsCertProductionPath() {
-        return mApnsCertProductionPath;
+        return (String)ConfigurableProperties.APNS_PRODUCTION_CERTIFICATE_PATH.value;
     }
 
     public String getApnsCertProductionPassword() {
-        return mApnsCertProductionPassword;
+        return (String)ConfigurableProperties.APNS_PRODUCTION_CERTIFICATE_PASSWORD.value;
     }
 
     public String getApnsCertSandboxPath() {
