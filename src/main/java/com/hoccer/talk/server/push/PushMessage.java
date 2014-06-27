@@ -42,6 +42,7 @@ public class PushMessage {
 
     private void performApns() {
         LOG.info("performApns: to clientId: '" + mClient.getClientId() + "', message: '" + mMessage + "'");
+        // TODO: Actually use the apns service that is specified by the client (TalkClientHost) - use PRODUCTION if unspecified
         ApnsService apnsService = mAgent.getApnsService(PushAgent.APNS_SERVICE_TYPE.PRODUCTION);
         PayloadBuilder b = APNS.newPayload();
 

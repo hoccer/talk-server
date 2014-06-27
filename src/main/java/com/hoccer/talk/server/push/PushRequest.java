@@ -84,6 +84,7 @@ public class PushRequest {
     private void performApns() {
         LOG.info("APNS push for " + mClientId);
         ITalkServerDatabase database = mAgent.getDatabase();
+        // TODO: Actually use the apns service that is specified by the client (TalkClientHost) - use PRODUCTION if unspecified
         ApnsService apnsService = mAgent.getApnsService(PushAgent.APNS_SERVICE_TYPE.PRODUCTION);
         PayloadBuilder b = APNS.newPayload();
         List<TalkDelivery> deliveries =
