@@ -2,13 +2,10 @@ package com.hoccer.talk.server;
 
 import com.hoccer.scm.GitInfo;
 import org.apache.log4j.Logger;
-import org.bouncycastle.jcajce.provider.config.ProviderConfigurationPermission;
 
-import javax.rmi.PortableRemoteObject;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.MessageFormat;
-import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -58,7 +55,22 @@ public class TalkServerConfiguration {
                 "apns_production.p12"),
         APNS_PRODUCTION_CERTIFICATE_PASSWORD(PROPERTY_PREFIX + ".apns.cert.production.password",
                 PropertyTypes.STRING,
-                "password");
+                "password"),
+        APNS_SANDBOX_CERTIFICATE_PATH(PROPERTY_PREFIX + ".apns.cert.sandbox.path",
+                PropertyTypes.STRING,
+                "apns_sandbox.p12"),
+        APNS_SANDBOX_CERTIFICATE_PASSWORD(PROPERTY_PREFIX + ".apns.cert.sandbox.password",
+                PropertyTypes.STRING,
+                "password"),
+        APNS_INVALIDATE_DELAY(PROPERTY_PREFIX + ".apns.invalidate.delay",
+                PropertyTypes.INTEGER,
+                30), // in seconds
+        APNS_INVALIDATE_INTERVAL(PROPERTY_PREFIX + ".apns.invalidate.interval",
+                PropertyTypes.INTEGER,
+                3600), // in seconds
+        GCM_ENABLED(PROPERTY_PREFIX + "gcm.enabled",
+                PropertyTypes.BOOLEAN,
+                false);
 
         public final String key;
         public final PropertyTypes type;
@@ -94,21 +106,13 @@ public class TalkServerConfiguration {
         }
     }
 
-    private boolean mGcmEnabled = false;
     private String  mGcmApiKey = "AIzaSyA25wabV4kSQTaF73LTgTkjmw0yZ8inVr8";
     private int     mGcmWakeTtl = 1 * 7 * 24 * 3600; // 1 week
-
-    // APNS settings
-    private String  mApnsCertSandboxPath =  "apns_sandbox.p12";
-    private String  mApnsCertSandboxPassword = "password";
-    private int     mApnsInvalidateDelay = 30;
-    private int     mApnsInvalidateInterval = 3600;
 
     private int mCleanupAllClientsDelay = 7200; // 2 hours //300;
     private int mCleanupAllClientsInterval = 60 * 60 * 24; // once a day //900;
     private int mCleanupAllDeliveriesDelay = 3600; // 1 hour //600;
     private int mCleanupAllDeliveriesInterval = 60 * 60 * 6; // every 6 hours //900;
-
 
     private String mFilecacheControlUrl = "http://localhost:8081/control";
     private String mFilecacheUploadBase = "http://localhost:8081/upload/";
@@ -146,13 +150,12 @@ public class TalkServerConfiguration {
                         MessageFormat.format("\n     * enabled:                          ''{0}''", this.isApnsEnabled()) +
                         MessageFormat.format("\n     * production cert path :            ''{0}''", this.getApnsCertProductionPath()) +
                         MessageFormat.format("\n     * production cert password (length):''{0}''", this.getApnsCertProductionPassword().length()) + // here we don't really print the password literal to stdout of course
-                        MessageFormat.format("\n     * sandbox cert path :               ''{0}''", mApnsCertSandboxPath) +
-                        MessageFormat.format("\n     * sandbox cert password (length):   ''{0}''", mApnsCertSandboxPassword.length()) + // here we don't really print the password literal to stdout of course
-
-                        MessageFormat.format("\n     * apns invalidate delay (in s):     {0}", Long.toString(mApnsInvalidateDelay)) +
-                        MessageFormat.format("\n     * apns invalidate interval (in s):  {0}", Long.toString(mApnsInvalidateInterval)) +
+                        MessageFormat.format("\n     * sandbox cert path :               ''{0}''", this.getApnsCertSandboxPath()) +
+                        MessageFormat.format("\n     * sandbox cert password (length):   ''{0}''", this.getApnsCertSandboxPassword().length()) + // here we don't really print the password literal to stdout of course
+                        MessageFormat.format("\n     * apns invalidate delay (in s):     {0}", Long.toString(this.getApnsInvalidateDelay())) +
+                        MessageFormat.format("\n     * apns invalidate interval (in s):  {0}", Long.toString(this.getApnsInvalidateInterval())) +
                         "\n   - GCM:" +
-                        MessageFormat.format("\n     * gcm enabled:                      ''{0}''", mGcmEnabled) +
+                        MessageFormat.format("\n     * gcm enabled:                      ''{0}''", this.isGcmEnabled()) +
                         MessageFormat.format("\n     * gcm api key (length):             ''{0}''", mGcmApiKey.length()) +
                         "\n - Cleaning Agent Configuration:" +
                         MessageFormat.format("\n   * clients cleanup delay (in s):       {0}",     Long.toString(mCleanupAllClientsDelay)) +
@@ -182,15 +185,7 @@ public class TalkServerConfiguration {
         LOG.info("Loading from properties...");
         ConfigurableProperties.loadFromProperties(properties);
 
-        // APNS
-        mApnsCertSandboxPath = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.sandbox.path", mApnsCertSandboxPath);
-        mApnsCertSandboxPassword = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.sandbox.password", mApnsCertSandboxPassword);
-
-        mApnsInvalidateDelay = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.invalidate.delay", Integer.toString(mApnsInvalidateDelay)));
-        mApnsInvalidateInterval = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.invalidate.interval", Integer.toString(mApnsInvalidateInterval)));
-
         // GCM
-        mGcmEnabled = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".gcm.enabled", Boolean.toString(mGcmEnabled)));
         mGcmApiKey  = properties.getProperty(PROPERTY_PREFIX + ".gcm.apikey", mGcmApiKey);
 
         // Cleanup
@@ -232,7 +227,7 @@ public class TalkServerConfiguration {
     }
 
     public boolean isGcmEnabled() {
-        return mGcmEnabled;
+        return (Boolean)ConfigurableProperties.GCM_ENABLED.value;
     }
 
     public String getGcmApiKey() {
@@ -256,19 +251,19 @@ public class TalkServerConfiguration {
     }
 
     public String getApnsCertSandboxPath() {
-        return mApnsCertSandboxPath;
+        return (String)ConfigurableProperties.APNS_SANDBOX_CERTIFICATE_PATH.value;
     }
 
     public String getApnsCertSandboxPassword() {
-        return mApnsCertSandboxPassword;
+        return (String)ConfigurableProperties.APNS_SANDBOX_CERTIFICATE_PASSWORD.value;
     }
 
     public int getApnsInvalidateDelay() {
-        return mApnsInvalidateDelay;
+        return (Integer)ConfigurableProperties.APNS_INVALIDATE_DELAY.value;
     }
 
     public int getApnsInvalidateInterval() {
-        return mApnsInvalidateInterval;
+        return (Integer)ConfigurableProperties.APNS_INVALIDATE_INTERVAL.value;
     }
 
     public URI getFilecacheControlUrl() {
