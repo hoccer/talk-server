@@ -34,21 +34,25 @@ public class TalkServerConfiguration {
     private static final String PROPERTY_PREFIX = "talk";
     private enum PropertyTypes {STRING, BOOLEAN, INTEGER}
     private enum ConfigurableProperties {
+        // WEB-SERVER
         LISTEN_ADDRESS(PROPERTY_PREFIX + ".listen.address",
                 PropertyTypes.STRING,
                 "localhost"),
         LISTEN_PORT(PROPERTY_PREFIX + ".listen.port",
                 PropertyTypes.INTEGER,
                 8080),
+        // DATABASE
         DATABASE_BACKEND(PROPERTY_PREFIX + ".db.backend",
                 PropertyTypes.STRING,
                 "jongo"),
         JONGO_DATABASE(PROPERTY_PREFIX + ".jongo.db",
                 PropertyTypes.STRING,
                 "talk"),
+        // PUSH GENERIC
         PUSH_RATE_LIMIT(PROPERTY_PREFIX + ".push.rateLimit",
                 PropertyTypes.INTEGER,
                 15000),
+        // APNS
         APNS_ENABLED(PROPERTY_PREFIX + ".apns.enabled",
                 PropertyTypes.BOOLEAN,
                 false),
@@ -70,12 +74,14 @@ public class TalkServerConfiguration {
         APNS_INVALIDATE_INTERVAL(PROPERTY_PREFIX + ".apns.invalidate.interval",
                 PropertyTypes.INTEGER,
                 3600), // in seconds
+        // GCM
         GCM_ENABLED(PROPERTY_PREFIX + ".gcm.enabled",
                 PropertyTypes.BOOLEAN,
                 false),
         GCM_API_KEY(PROPERTY_PREFIX + ".gcm.apikey",
                 PropertyTypes.STRING,
                 "AIzaSyA25wabV4kSQTaF73LTgTkjmw0yZ8inVr8"), // TODO: Do we really need this api key in code here?
+        // CLEANUP
         CLEANUP_ALL_CLIENTS_DELAY(PROPERTY_PREFIX + ".cleanup.allClientsDelay",
                 PropertyTypes.INTEGER,
                 7200), // in seconds (2 hours)
@@ -88,6 +94,7 @@ public class TalkServerConfiguration {
         CLEANUP_ALL_DELIVERIES_INTERVAL(PROPERTY_PREFIX + ".cleanup.allDeliveriesInterval",
                 PropertyTypes.INTEGER,
                 60 * 60 * 6), // in seconds (every 6 hours)
+        // FILECACHE
         FILECACHE_CONTROL_URL(PROPERTY_PREFIX + ".filecache.controlUrl",
                 PropertyTypes.STRING,
                 "http://localhost:8081/control"),
@@ -97,6 +104,7 @@ public class TalkServerConfiguration {
         FILECACHE_DOWNLOAD_BASE(PROPERTY_PREFIX + ".filecache.downloadBase",
                 PropertyTypes.STRING,
                 "http://localhost:8081/download/"),
+        // MISC
         SUPPORT_TAG(PROPERTY_PREFIX + ".support.tag",
                 PropertyTypes.STRING,
                 "Oos8guceich2yoox"),
