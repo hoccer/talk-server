@@ -38,12 +38,11 @@ public class PushMessage {
                 LOG.info("client " + mClient.getClientId() + " has no registration");
             }
         }
-
     }
 
     private void performApns() {
         LOG.info("performApns: to clientId: '" + mClient.getClientId() + "', message: '" + mMessage + "'");
-        ApnsService apnsService = mAgent.getApnsService();
+        ApnsService apnsService = mAgent.getApnsService(PushAgent.APNS_SERVICE_TYPE.PRODUCTION);
         PayloadBuilder b = APNS.newPayload();
 
         b.alertBody(mMessage);
