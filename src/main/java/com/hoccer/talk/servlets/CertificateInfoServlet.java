@@ -19,13 +19,22 @@ public class CertificateInfoServlet extends HttpServlet {
         TalkServer server = (TalkServer)getServletContext().getAttribute("server");
         TalkServerConfiguration config = server.getConfiguration();
 
-        final P12CertificateChecker p12Verifier = new P12CertificateChecker(config.getApnsCertPath(), config.getApnsCertPassword());
+        final P12CertificateChecker p12ProductionVerifier = new P12CertificateChecker(
+                config.getApnsCertProductionPath(),
+                config.getApnsCertProductionPassword());
+        final P12CertificateChecker p12SandboxVerifier = new P12CertificateChecker(
+                config.getApnsCertSandboxPath(),
+                config.getApnsCertSandboxPassword());
 
         String result = "{" +
                 "\"apns\" : {" +
-                "    \"expirationDate\" : \"" + p12Verifier.getCertificateExpiryDate() + "\"," +
-                "    \"isExpired\"      : \"" + p12Verifier.isExpired() + "\"" +
-                "}}";
+                "    \"production\": {" +
+                "        \"expirationDate\" : \"" + p12ProductionVerifier.getCertificateExpiryDate() + "\"," +
+                "        \"isExpired\"      : \"" + p12ProductionVerifier.isExpired() + "\"" +
+                "    }, \"sandbox\": {" +
+                "        \"expirationDate\" : \"" + p12SandboxVerifier.getCertificateExpiryDate() + "\"," +
+                "        \"isExpired\"      : \"" + p12SandboxVerifier.isExpired() + "\"" +
+                "}}}";
         response.getWriter().print(result);
     }
 }

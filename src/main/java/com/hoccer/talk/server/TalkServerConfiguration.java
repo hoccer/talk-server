@@ -29,20 +29,26 @@ public class TalkServerConfiguration {
     public static final int PING_INTERVAL = 300; // in seconds
     public static final boolean PERFORM_PING_AT_INTERVALS = false;
 
+    // top level property prefix for all talk related properties, e.g. 'talk.foo.bar'
     private static final String PROPERTY_PREFIX = "talk";
 
+    private static final String PROPERTY_LISTEN_ADDRESS = PROPERTY_PREFIX + ".listen.address";
     private String mListenAddress = "localhost";
-    private int    mListenPort = 8080;
 
+    private static final String PROPERTY_LISTEN_PORT = PROPERTY_PREFIX + ".listen.port";
+    private int    mListenPort = 8080;
 
     private int     mPushRateLimit = 15000;
     private boolean mGcmEnabled = false;
     private String  mGcmApiKey = "AIzaSyA25wabV4kSQTaF73LTgTkjmw0yZ8inVr8";
     private int     mGcmWakeTtl = 1 * 7 * 24 * 3600; // 1 week
+
+    // APNS settings
     private boolean mApnsEnabled = false;
-    private boolean mApnsSandbox = false;
-    private String  mApnsCertPath = "HoccerTalkApplePushNotificationDev.p12";
-    private String  mApnsCertPassword = "password";
+    private String  mApnsCertProductionPath = "apns_production.p12";
+    private String  mApnsCertProductionPassword = "password";
+    private String  mApnsCertSandboxPath =  "apns_sandbox.p12";
+    private String  mApnsCertSandboxPassword = "password";
     private int     mApnsInvalidateDelay = 30;
     private int     mApnsInvalidateInterval = 3600;
 
@@ -88,12 +94,14 @@ public class TalkServerConfiguration {
                         "\n - Push Configuration:" +
                         MessageFormat.format("\n   * push rate limit:                    ''{0}''", Long.toString(mPushRateLimit)) +
                         "\n   - APNS:" +
-                        MessageFormat.format("\n     * apns enabled:                     ''{0}''", mApnsEnabled) +
-                        MessageFormat.format("\n     * apns sandbox:                     ''{0}''", mApnsSandbox) +
-                        MessageFormat.format("\n     * apns cert file:                   ''{0}''", mApnsCertPath) +
-                        MessageFormat.format("\n     * apns cert password (length):      ''{0}''", mApnsCertPassword.length()) +
+                        MessageFormat.format("\n     * enabled:                          ''{0}''", mApnsEnabled) +
+                        MessageFormat.format("\n     * production cert path :            ''{0}''", mApnsCertProductionPath) +
+                        MessageFormat.format("\n     * production cert password (length):''{0}''", mApnsCertProductionPassword.length()) + // here we don't really print the password literal to stdout of course
+                        MessageFormat.format("\n     * sandbox cert path :               ''{0}''", mApnsCertSandboxPath) +
+                        MessageFormat.format("\n     * sandbox cert password (length):   ''{0}''", mApnsCertSandboxPassword.length()) + // here we don't really print the password literal to stdout of course
+
                         MessageFormat.format("\n     * apns invalidate delay:            ''{0}''", mApnsInvalidateDelay) +
-                        MessageFormat.format("\n     * apns invalidate interval:         ''{0}''", mApnsSandbox) +
+                        MessageFormat.format("\n     * apns invalidate interval:         ''{0}''", mApnsInvalidateInterval) +
                         "\n   - GCM:" +
                         MessageFormat.format("\n     * gcm enabled:                      ''{0}''", mGcmEnabled) +
                         MessageFormat.format("\n     * gcm api key (length):             ''{0}''", mGcmApiKey.length()) +
@@ -123,8 +131,8 @@ public class TalkServerConfiguration {
 
     public void configureFromProperties(Properties properties) {
         // listening
-        mListenAddress = properties.getProperty(PROPERTY_PREFIX + ".listen.address", mListenAddress);
-        mListenPort = Integer.parseInt(properties.getProperty(PROPERTY_PREFIX + ".listen.port", Integer.toString(mListenPort)));
+        mListenAddress = properties.getProperty(PROPERTY_LISTEN_ADDRESS, mListenAddress);
+        mListenPort = Integer.parseInt(properties.getProperty(PROPERTY_LISTEN_PORT, Integer.toString(mListenPort)));
 
         // Database
         mDatabaseBackend = properties.getProperty(PROPERTY_PREFIX + ".db.backend", mDatabaseBackend);
@@ -137,9 +145,11 @@ public class TalkServerConfiguration {
 
         // APNS
         mApnsEnabled = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.enabled", Boolean.toString(mApnsEnabled)));
-        mApnsSandbox = Boolean.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.sandbox", Boolean.toString(mApnsSandbox)));
-        mApnsCertPath = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.path", mApnsCertPath);
-        mApnsCertPassword = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.password", mApnsCertPassword);
+        mApnsCertProductionPath = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.production.path", mApnsCertProductionPath);
+        mApnsCertProductionPassword = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.production.password", mApnsCertProductionPassword);
+        mApnsCertSandboxPath = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.sandbox.path", mApnsCertSandboxPath);
+        mApnsCertSandboxPassword = properties.getProperty(PROPERTY_PREFIX + ".apns.cert.sandbox.password", mApnsCertSandboxPassword);
+
         mApnsInvalidateDelay = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.invalidate.delay", Integer.toString(mApnsInvalidateDelay)));
         mApnsInvalidateInterval = Integer.valueOf(properties.getProperty(PROPERTY_PREFIX + ".apns.invalidate.interval", Integer.toString(mApnsInvalidateInterval)));
 
@@ -201,16 +211,20 @@ public class TalkServerConfiguration {
         return mApnsEnabled;
     }
 
-    public boolean isApnsSandbox() {
-        return mApnsSandbox;
+    public String getApnsCertProductionPath() {
+        return mApnsCertProductionPath;
     }
 
-    public String getApnsCertPath() {
-        return mApnsCertPath;
+    public String getApnsCertProductionPassword() {
+        return mApnsCertProductionPassword;
     }
 
-    public String getApnsCertPassword() {
-        return mApnsCertPassword;
+    public String getApnsCertSandboxPath() {
+        return mApnsCertSandboxPath;
+    }
+
+    public String getApnsCertSandboxPassword() {
+        return mApnsCertSandboxPassword;
     }
 
     public int getApnsInvalidateDelay() {

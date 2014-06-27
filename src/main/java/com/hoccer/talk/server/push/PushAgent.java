@@ -185,14 +185,14 @@ public class PushAgent {
         // set up services
         LOG.info("  * setting up APNS service (type: '" + APNS_SERVICE_TYPE.PRODUCTION + "')");
         mApnsServices.put(APNS_SERVICE_TYPE.PRODUCTION, APNS.newService()
-                .withCert(mConfig.getApnsCertPath(),
-                        mConfig.getApnsCertPassword())
+                .withCert(mConfig.getApnsCertProductionPath(),
+                        mConfig.getApnsCertProductionPassword())
                 .withProductionDestination()
                 .build());
         LOG.info("  * setting up APNS service (type: '" + APNS_SERVICE_TYPE.SANDBOX + "')");
         mApnsServices.put(APNS_SERVICE_TYPE.SANDBOX,    APNS.newService()
-                .withCert(mConfig.getApnsCertPath(),
-                        mConfig.getApnsCertPassword())
+                .withCert(mConfig.getApnsCertSandboxPath(),
+                        mConfig.getApnsCertSandboxPassword())
                 .withSandboxDestination()
                 .build());
 

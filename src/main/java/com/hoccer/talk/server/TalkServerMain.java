@@ -47,10 +47,17 @@ public class TalkServerMain {
 
         // report APNS expiry
         if (config.isApnsEnabled()) {
-            final P12CertificateChecker p12Verifier = new P12CertificateChecker(config.getApnsCertPath(), config.getApnsCertPassword());
+            final P12CertificateChecker p12ProductionVerifier = new P12CertificateChecker(
+                    config.getApnsCertProductionPath(),
+                    config.getApnsCertProductionPassword());
+            final P12CertificateChecker p12SandboxVerifier = new P12CertificateChecker(
+                    config.getApnsCertProductionPath(),
+                    config.getApnsCertProductionPassword());
             try {
-                LOG.info("APNS expiryDate is: " + p12Verifier.getCertificateExpiryDate());
-                LOG.info("APNS expiration status: " + p12Verifier.isExpired());
+                LOG.info("APNS production cert expiryDate is: " + p12ProductionVerifier.getCertificateExpiryDate());
+                LOG.info("APNS production cert expiration status: " + p12ProductionVerifier.isExpired());
+                LOG.info("APNS sandbox cert expiryDate is: " + p12SandboxVerifier.getCertificateExpiryDate());
+                LOG.info("APNS sandbox cert expiration status: " + p12SandboxVerifier.isExpired());
             } catch (IOException e) {
                 e.printStackTrace();
             }
