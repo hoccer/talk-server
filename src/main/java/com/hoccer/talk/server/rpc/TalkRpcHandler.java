@@ -166,7 +166,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
 
     private void updateClientHostInfo(TalkClientInfo clientInfo) {
         final String clientId = mConnection.getClientId();
-        TalkClientHostInfo existing = mDatabase.findClientHostInfo(clientId);
+        TalkClientHostInfo existing = mDatabase.findClientHostInfoForClient(clientId);
         if (existing == null) {
             LOG.debug("clientHostInfo for clientId '" + clientId + "' does not exist yet - creating a new one...");
             existing = new TalkClientHostInfo();

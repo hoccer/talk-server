@@ -804,13 +804,18 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     @Override
-    public TalkClientHostInfo findClientHostInfo(String clientId) {
+    public TalkClientHostInfo findClientHostInfoForClient(String clientId) {
         return mClientHostInfos.findOne("{clientId: #}", clientId)
                 .as(TalkClientHostInfo.class);
     }
 
     @Override
     public void saveClientHostInfo(TalkClientHostInfo clientHostInfo) {
-            mClientHostInfos.save(clientHostInfo);
+        mClientHostInfos.save(clientHostInfo);
+    }
+
+    @Override
+    public void deleteClientHostInfo(TalkClientHostInfo clientHostInfo) {
+        mClientHostInfos.remove("{clientId: #}", clientHostInfo);
     }
 }

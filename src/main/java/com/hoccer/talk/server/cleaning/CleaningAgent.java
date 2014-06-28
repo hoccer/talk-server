@@ -34,6 +34,7 @@ public class CleaningAgent {
     private final ITalkServerDatabase mDatabase;
     private final ScheduledExecutorService mExecutor;
 
+    // TODO: expose this to config?
     private static final int KEY_LIFE_TIME = 3; // in months
     private static final int RELATIONSHIP_LIFE_TIME = 3; // in months
 
@@ -69,6 +70,7 @@ public class CleaningAgent {
         doCleanKeysForClient(clientId);
         doCleanTokensForClient(clientId);
         doCleanRelationshipsForClient(clientId);
+        doCleanClientHostInfoForClient(clientId);
     }
 
     private void scheduleCleanAllDeliveries() {
@@ -108,7 +110,6 @@ public class CleaningAgent {
         for (TalkClient client : allClients) {
             cleanClientData(client.getClientId());
         }
-        // TODO: also clean the TalkClientHostInfos? We don't need them anymore.
         long endTime = System.currentTimeMillis();
         LOG.info("Cleaning of '" + allClients.size() + "' clients done (took '" + (endTime - startTime) + "ms'). rescheduling next run...");
         scheduleCleanAllClients();
@@ -257,6 +258,17 @@ public class CleaningAgent {
             }
             mDatabase.deleteRelationship(relationship);
             LOG.debug("deleted relationship from clientId '" + relationship.getClientId() + "' to clientID '" + relationship.getOtherClientId() + "'");
+        }
+    }
+
+    private void doCleanClientHostInfoForClient(String clientId) {
+        LOG.debug("cleaning client host infos for clientId: '" + clientId + "'");
+        final TalkClientHostInfo clientHostInfo = mDatabase.findClientHostInfoForClient(clientId);
+        if (clientHostInfo != null) {
+            mDatabase.deleteClientHostInfo(clientHostInfo);
+            LOG.debug("deleted client host info for clientId: '" + clientId + "'");
+        } else {
+            LOG.debug("unable to find client host info for clientId: '" + clientId + "' - IGNORING");
         }
     }
 
