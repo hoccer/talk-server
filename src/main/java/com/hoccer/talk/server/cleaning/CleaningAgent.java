@@ -108,6 +108,7 @@ public class CleaningAgent {
         for (TalkClient client : allClients) {
             cleanClientData(client.getClientId());
         }
+        // TODO: also clean the TalkClientHostInfos? We don't need them anymore.
         long endTime = System.currentTimeMillis();
         LOG.info("Cleaning of '" + allClients.size() + "' clients done (took '" + (endTime - startTime) + "ms'). rescheduling next run...");
         scheduleCleanAllClients();
