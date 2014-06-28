@@ -811,11 +811,6 @@ public class JongoDatabase implements ITalkServerDatabase {
 
     @Override
     public void saveClientHostInfo(TalkClientHostInfo clientHostInfo) {
-        final String clientId = clientHostInfo.getClientId();
-        if (findClientHostInfo(clientId) != null) {
-            mClientHostInfos.update("{clientId: #}", clientId).with("{$set: #}", clientHostInfo);
-        } else {
             mClientHostInfos.save(clientHostInfo);
-        }
     }
 }

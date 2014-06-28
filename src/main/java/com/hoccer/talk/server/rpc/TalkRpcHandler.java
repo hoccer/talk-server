@@ -148,10 +148,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
             }
         }
 
-        TalkClientHostInfo clientHostInfo = new TalkClientHostInfo(clientInfo);
-        clientHostInfo.setClientId(mConnection.getClientId());
-        clientHostInfo.setServerTime(new Date());
-        mDatabase.saveClientHostInfo(clientHostInfo);
+        updateClientHostInfo(clientInfo);
 
         TalkServerInfo serverInfo = new TalkServerInfo();
         serverInfo.setServerTime(new Date());
@@ -165,6 +162,23 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
 
         return serverInfo;
+    }
+
+    private void updateClientHostInfo(TalkClientInfo clientInfo) {
+        final String clientId = mConnection.getClientId();
+        TalkClientHostInfo existing = mDatabase.findClientHostInfo(clientId);
+        if (existing == null) {
+            LOG.debug("clientHostInfo for clientId '" + clientId + "' does not exist yet - creating a new one...");
+            existing = new TalkClientHostInfo();
+        } else {
+            LOG.debug("clientHostInfo for clientId '" + clientId + "' already exists - using that...");
+        }
+
+        existing.updateWith(clientInfo);
+        existing.setClientId(clientId);
+        existing.setServerTime(new Date());
+
+        mDatabase.saveClientHostInfo(existing);
     }
 
     @Override
