@@ -4,6 +4,7 @@ import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Result;
 import com.google.android.gcm.server.Sender;
 import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.model.TalkClientHostInfo;
 import com.hoccer.talk.model.TalkDelivery;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import com.hoccer.talk.server.TalkServerConfiguration;
@@ -26,13 +27,15 @@ public class PushRequest {
 
     String mClientId;
 	TalkClient mClient;
+    TalkClientHostInfo mClientHostInfo;
 
     TalkServerConfiguration mConfig;
 
-	public PushRequest(PushAgent agent, String clientId) {
+	public PushRequest(PushAgent agent, String clientId, TalkClientHostInfo clientHostInfo) {
         mAgent = agent;
         mConfig = mAgent.getConfiguration();
         mClientId = clientId;
+        mClientHostInfo = clientHostInfo;
 	}
 
     public void perform() {
@@ -84,8 +87,15 @@ public class PushRequest {
     private void performApns() {
         LOG.info("APNS push for " + mClientId);
         ITalkServerDatabase database = mAgent.getDatabase();
-        // TODO: Actually use the apns service that is specified by the client (TalkClientHost) - use PRODUCTION if unspecified
+
+        // We use the production service as default in all cases, even if no client host info is present,
+        // sandbox will only be used if buildVariant of host info is 'debug'
         ApnsService apnsService = mAgent.getApnsService(PushAgent.APNS_SERVICE_TYPE.PRODUCTION);
+        if (mClientHostInfo != null && "debug".equals(mClientHostInfo.getClientBuildVariant())) {
+            LOG.info("  * using sandbox apns service");
+            apnsService = mAgent.getApnsService(PushAgent.APNS_SERVICE_TYPE.SANDBOX);
+        }
+
         PayloadBuilder b = APNS.newPayload();
         List<TalkDelivery> deliveries =
                 database.findDeliveriesForClientInState(
@@ -100,8 +110,6 @@ public class PushRequest {
         } else {
             b.localizedKey("apn_one_new_message");
         }
-
-
 
         b.badge(messageCount);
         b.sound("default");

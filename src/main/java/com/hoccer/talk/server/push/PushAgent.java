@@ -96,7 +96,7 @@ public class PushAgent {
 
     public void submitSystemMessage(final TalkClient client, final String message) {
         LOG.info("submitSystemMessage -> clientId: '" + client.getClientId() + "' message: '" + message + "'");
-        final PushMessage pushMessage = new PushMessage(this, client, message);
+        final PushMessage pushMessage = new PushMessage(this, client, mDatabase.findClientHostInfo(client.getClientId()), message);
         mExecutor.schedule(new Runnable() {
             @Override
             public void run() {
@@ -143,7 +143,7 @@ public class PushAgent {
                 mPushBatched.incrementAndGet();
             } else {
                 // schedule the request
-                final PushRequest request = new PushRequest(this, clientId);
+                final PushRequest request = new PushRequest(this, clientId, mDatabase.findClientHostInfo(client.getClientId()));
                 mExecutor.schedule(new Runnable() {
                     @Override
                     public void run() {

@@ -1,6 +1,7 @@
 package com.hoccer.talk.server.push;
 
 import com.hoccer.talk.model.TalkClient;
+import com.hoccer.talk.model.TalkClientHostInfo;
 import com.hoccer.talk.server.TalkServerConfiguration;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
@@ -12,13 +13,15 @@ public class PushMessage {
     private static final Logger LOG = Logger.getLogger(PushMessage.class);
     private final String mMessage;
     private final TalkClient mClient;
+    private final TalkClientHostInfo mClientHostInfo;
 
     PushAgent mAgent;
     TalkServerConfiguration mConfig;
 
-    public PushMessage(PushAgent agent, TalkClient client, String message) {
+    public PushMessage(PushAgent agent, TalkClient client, TalkClientHostInfo clientHostInfo, String message) {
         this.mClient = client;
         this.mMessage = message;
+        this.mClientHostInfo = clientHostInfo;
 
         this.mAgent = agent;
         this.mConfig = mAgent.getConfiguration();
@@ -42,8 +45,15 @@ public class PushMessage {
 
     private void performApns() {
         LOG.info("performApns: to clientId: '" + mClient.getClientId() + "', message: '" + mMessage + "'");
-        // TODO: Actually use the apns service that is specified by the client (TalkClientHost) - use PRODUCTION if unspecified
+
+        // We use the production service as default in all cases, even if no client host info is present,
+        // sandbox will only be used if buildVariant of host info is 'debug'
         ApnsService apnsService = mAgent.getApnsService(PushAgent.APNS_SERVICE_TYPE.PRODUCTION);
+        if (mClientHostInfo != null && "debug".equals(mClientHostInfo.getClientBuildVariant())) {
+            LOG.info("  * using sandbox apns service");
+            apnsService = mAgent.getApnsService(PushAgent.APNS_SERVICE_TYPE.SANDBOX);
+        }
+
         PayloadBuilder b = APNS.newPayload();
 
         b.alertBody(mMessage);
