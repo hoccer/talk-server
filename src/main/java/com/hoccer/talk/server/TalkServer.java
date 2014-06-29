@@ -163,6 +163,15 @@ public class TalkServer {
         return lock;
     }
 
+    // lock for two Ids at the same time; note that the individual id will not be locked that way
+    public Object dualIdLock(String prefix, String id1, String id2) {
+        if (id1.compareTo(id2) > 0)   {
+            return idLock(prefix + id1 + id2);
+        } else {
+            return idLock(prefix + id2 + id1);
+        }
+    }
+
     // TODO: call this when we are through with an id (e.g. message)
     public void removeIdLock(String id) {
         mIdLocks.remove(id);
