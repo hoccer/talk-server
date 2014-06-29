@@ -46,11 +46,12 @@ public class UpdateAgent extends NotificationDeferrer {
         }
     }
 
-    public void requestPresenceUpdateForGroup(final String clientId, final String groupId) {
+    // send the presence of all other members of <groupId> to the group member <clientId>
+    public void requestPresenceUpdateForClientOfMembersOfGroup(final String clientId, final String groupId) {
         Runnable notificationGenerator = new Runnable() {
             @Override
             public void run() {
-                LOG.debug("RPUFG: update " + clientId + " for group " + clientId);
+                LOG.debug("RPUFG: update " + clientId + " for group " + groupId);
                 TalkRpcConnection conn = mServer.getClientConnection(clientId);
                 if (conn == null || !conn.isConnected()) {
                     return;
@@ -61,20 +62,21 @@ public class UpdateAgent extends NotificationDeferrer {
                     if (member.isInvited() || member.isJoined()) {
                         List<TalkGroupMember> members = mDatabase.findGroupMembersById(groupId);
                         for (TalkGroupMember otherMember : members) {
-                            // TODO: Check if filtering self(clientId) is necessary
-                            // only if otherMember != member
-                            if (otherMember.isJoined() || otherMember.isInvited()) {
-                                String clientId = otherMember.getClientId();
-                                LOG.debug("RPUFG: delivering presence of " + clientId);
-                                TalkPresence presence = mDatabase.findPresenceForClient(clientId);
-                                if (presence.getConnectionStatus() == null) {
-                                    updateConnectionStatus(presence);
+                            if (!clientId.equals(otherMember.getClientId())) {
+                                 if (otherMember.isJoined() || otherMember.isInvited()) {
+                                    String otherClientId = otherMember.getClientId();
+                                    LOG.debug("RPUFG: delivering presence of " + otherClientId + " to "+clientId);
+                                    TalkPresence presence = mDatabase.findPresenceForClient(otherClientId);
+                                    if (presence.getConnectionStatus() == null) {
+                                        updateConnectionStatus(presence);
+                                    }
+                                    // Calling Client via RPC
+                                    rpc.presenceUpdated(presence);
+                                } else {
+                                    LOG.debug("RPUFG: target " + otherMember.getClientId() + " is not invited or joined");
                                 }
-
-                                // Calling Client via RPC
-                                rpc.presenceUpdated(presence);
                             } else {
-                                LOG.debug("RPUFG: target " + otherMember.getClientId() + " is not invited or joined");
+                                LOG.debug("RPUFG: not sending presence update for group " + member.getGroupId()+" to self "+clientId);
                             }
                         }
                     } else {
@@ -88,6 +90,7 @@ public class UpdateAgent extends NotificationDeferrer {
         queueOrExecute(context, notificationGenerator);
     }
 
+    // send presence updates of <clientId>  to <targetClientId>
     public void requestPresenceUpdateForClient(final String clientId, final String targetClientId) {
         Runnable notificationGenerator = new Runnable() {
             @Override
@@ -111,6 +114,7 @@ public class UpdateAgent extends NotificationDeferrer {
         queueOrExecute(context, notificationGenerator);
     }
 
+    // send presence updates to all related clients of <clientId>
     public void requestPresenceUpdate(final String clientId, final Set<String> fields) {
         Runnable notificationGenerator = new Runnable() {
             @Override
@@ -130,6 +134,7 @@ public class UpdateAgent extends NotificationDeferrer {
         queueOrExecute(context, notificationGenerator);
     }
 
+    // send presence updates to all related clients of the client denoted by <presence>
     private void performPresenceUpdate(TalkPresence presence, final Set<String> fields) {
         String tag = "RPU-" + presence.getClientId() + ": ";
         LOG.trace(tag + "commencing");
@@ -158,7 +163,7 @@ public class UpdateAgent extends NotificationDeferrer {
                 LOG.trace(tag + "scanning group " + groupId);
                 List<TalkGroupMember> otherMembers = mDatabase.findGroupMembersById(groupId);
                 for (TalkGroupMember otherMember : otherMembers) {
-                    if (otherMember.isJoined() || ownMember.isInvited()) { // MARK
+                    if (otherMember.isJoined() || otherMember.isInvited()) { // MARK
                         LOG.trace(tag + "including group member " + otherMember.getClientId());
                         clientIds.add(otherMember.getClientId());
                     } else {

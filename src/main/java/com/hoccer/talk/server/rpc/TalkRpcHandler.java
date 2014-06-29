@@ -1540,7 +1540,11 @@ public class TalkRpcHandler implements ITalkRpcServer {
             touchGroupMemberPresences(groupId);
             mServer.getUpdateAgent().requestGroupUpdate(groupId, clientId);
             mServer.getUpdateAgent().requestGroupMembershipUpdatesForNewMember(groupId, clientId);
-            mServer.getUpdateAgent().requestPresenceUpdateForGroup(clientId, groupId);
+
+            // send the presence of all other group members to the new group member
+            mServer.getUpdateAgent().requestPresenceUpdateForClientOfMembersOfGroup(clientId, groupId);
+
+            // send presence updates to all related clients of <clientId>
             mServer.getUpdateAgent().requestPresenceUpdate(clientId, null);
         } else {
             throw new RuntimeException("Already invited or member to group");
@@ -1935,7 +1939,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         touchGroupMemberPresences(group.getGroupId());
         mServer.getUpdateAgent().requestGroupUpdate(group.getGroupId(), mConnection.getClientId());
         mServer.getUpdateAgent().requestGroupMembershipUpdatesForNewMember(group.getGroupId(), mConnection.getClientId());
-        mServer.getUpdateAgent().requestPresenceUpdateForGroup(mConnection.getClientId(), group.getGroupId());
+        mServer.getUpdateAgent().requestPresenceUpdateForClientOfMembersOfGroup(mConnection.getClientId(), group.getGroupId());
         mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId(), null);
     }
 
