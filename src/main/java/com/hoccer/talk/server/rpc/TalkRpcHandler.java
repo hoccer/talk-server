@@ -1882,13 +1882,13 @@ public class TalkRpcHandler implements ITalkRpcServer {
         }
         group.setGroupType(environment.getType());
         LOG.info("updateEnvironment: creating new group for client with id '" + mConnection.getClientId() + "' with type " + environment.getType());
-        TalkGroupMember groupAdmin = new TalkGroupMember();
-        groupAdmin.setClientId(mConnection.getClientId());
-        groupAdmin.setGroupId(group.getGroupId());
-        groupAdmin.setRole(TalkGroupMember.ROLE_NEARBY_MEMBER);
-        groupAdmin.setState(TalkGroupMember.STATE_JOINED);
+        TalkGroupMember groupMember = new TalkGroupMember();
+        groupMember.setClientId(mConnection.getClientId());
+        groupMember.setGroupId(group.getGroupId());
+        groupMember.setRole(TalkGroupMember.ROLE_NEARBY_MEMBER);
+        groupMember.setState(TalkGroupMember.STATE_JOINED);
         changedGroup(group, new Date());
-        changedGroupMember(groupAdmin, group.getLastChanged(), true);
+        changedGroupMember(groupMember, group.getLastChanged(), true);
 
         environment.setGroupId(group.getGroupId());
         environment.setClientId(mConnection.getClientId());
@@ -1907,7 +1907,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
     }
 
     private void joinGroupWithEnvironment(TalkGroup group, TalkEnvironment environment) {
-        LOG.info("joinGroupWithEnvironment: joining group with client id '" + mConnection.getClientId() + "'");
+        LOG.info("joinGroupWithEnvironment: joining group "+group.getGroupId()+" with client id '" + mConnection.getClientId() + "'");
 
         TalkGroupMember nearbyMember = mDatabase.findGroupMemberForClient(group.getGroupId(), mConnection.getClientId());
         boolean isNew = false;
@@ -1981,7 +1981,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
                 TalkGroupMember myMemberShip = mDatabase.findGroupMemberForClient(te.getGroupId(), te.getClientId());
                 TalkGroup myGroup = mDatabase.findGroupById(te.getGroupId());
                 if (myMemberShip != null && myGroup != null) {
-                    if (myMemberShip.isAdmin() && myMemberShip.isJoined() && myGroup.getState().equals(TalkGroup.STATE_EXISTS)) {
+                    if (myMemberShip.isNearby() && myMemberShip.isJoined() && myGroup.getState().equals(TalkGroup.STATE_EXISTS)) {
                         // everything seems fine, but are we in the largest group?
                         if (environmentsPerGroup.size() > 1) {
                             if (!environmentsPerGroup.get(0).getLeft().equals(te.getGroupId())) {
