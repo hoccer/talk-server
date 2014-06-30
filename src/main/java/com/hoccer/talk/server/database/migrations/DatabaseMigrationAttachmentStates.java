@@ -3,7 +3,7 @@ package com.hoccer.talk.server.database.migrations;
 public class DatabaseMigrationAttachmentStates extends BaseDatabaseMigration  implements IDatabaseMigration {
 
     // DO not change!
-    public final static String MIGRATION_NAME= "2014_06_30_attachment_states";
+    private final static String MIGRATION_NAME= "2014_06_30_attachment_states";
 
     @Override
     public void up() {

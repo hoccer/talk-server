@@ -2,7 +2,7 @@ package com.hoccer.talk.server.database.migrations;
 
 import com.hoccer.talk.server.ITalkServerDatabase;
 
-public class BaseDatabaseMigration {
+class BaseDatabaseMigration {
     protected boolean mExecuted = false;
     protected ITalkServerDatabase mDatabase;
 

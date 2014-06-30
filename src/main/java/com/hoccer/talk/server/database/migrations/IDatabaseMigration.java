@@ -2,7 +2,7 @@ package com.hoccer.talk.server.database.migrations;
 
 import com.hoccer.talk.server.ITalkServerDatabase;
 
-public interface IDatabaseMigration {
+interface IDatabaseMigration {
 
     /* up contains the actual code to bring the database into the desired state. Theoretically anything goes in here */
     public void up();

@@ -11,7 +11,7 @@ public class DatabaseMigrationManager {
 
     private static final Logger LOG = Logger.getLogger(DatabaseMigrationManager.class);
 
-    public final static List<Class<? extends IDatabaseMigration>> migrationClasses = new ArrayList<Class<? extends IDatabaseMigration>>();
+    private final static List<Class<? extends IDatabaseMigration>> migrationClasses = new ArrayList<Class<? extends IDatabaseMigration>>();
     // List of known migrations in applicable order. This list should only ever be extended but not modified!
     // The ordering here is very important. Do not change the ordering on a whim!
     static {
