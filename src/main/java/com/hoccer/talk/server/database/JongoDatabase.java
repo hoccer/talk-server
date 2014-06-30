@@ -54,6 +54,7 @@ public class JongoDatabase implements ITalkServerDatabase {
     MongoCollection mGroupMembers;
     MongoCollection mEnvironments;
     MongoCollection mClientHostInfos;
+    MongoCollection mMigrations;
 
     public JongoDatabase(TalkServerConfiguration configuration) {
         mCollections = new ArrayList<MongoCollection>();
@@ -103,6 +104,7 @@ public class JongoDatabase implements ITalkServerDatabase {
         mGroupMembers = getCollection("groupMember");
         mEnvironments = getCollection("environment");
         mClientHostInfos = getCollection("clientHostInfo");
+        mMigrations = getCollection("migrations");
     }
 
     private MongoCollection getCollection(String name) {
@@ -817,5 +819,24 @@ public class JongoDatabase implements ITalkServerDatabase {
     @Override
     public void deleteClientHostInfo(TalkClientHostInfo clientHostInfo) {
         mClientHostInfos.remove("{clientId: #}", clientHostInfo);
+    }
+
+    @Override
+    public List<TalkDatabaseMigration> findDatabaseMigrations() {
+        List<TalkDatabaseMigration> res = new ArrayList<TalkDatabaseMigration>();
+        Iterator<TalkDatabaseMigration> it =
+                mMigrations.find()
+                        .sort("{position: 1}") // retrieve migration sorted
+                        .as(TalkDatabaseMigration.class).iterator();
+        while (it.hasNext()) {
+            res.add(it.next());
+        }
+
+        return res;
+    }
+
+    @Override
+    public void saveDatabaseMigration(TalkDatabaseMigration migration) {
+        mMigrations.save(migration);
     }
 }
