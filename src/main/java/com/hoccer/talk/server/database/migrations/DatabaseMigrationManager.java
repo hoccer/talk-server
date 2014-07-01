@@ -94,13 +94,17 @@ public class DatabaseMigrationManager {
         LOG.info("  * executing 'up' for migration '" + migration.getName() + "'...");
 
         final Date now = new Date();
+        long startTime = System.currentTimeMillis();
         migration.up();
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
         final TalkDatabaseMigration dbMigration = new TalkDatabaseMigration();
         dbMigration.setName(migration.getName());
         dbMigration.setPosition(position);
         dbMigration.setTimeExecuted(now);
         mDatabase.saveDatabaseMigration(dbMigration);
-        LOG.info("  * ... done executing migration '" + migration.getName() + "' (at '" + dateFormatter.format(now) + "')");
+        migration.markAsExecuted();
+        LOG.info("  * ... done executing migration '" + migration.getName() + "' (at '" + dateFormatter.format(now) + "' - took '" + duration + "ms')");
     }
 
     private void validateMigrations() {
