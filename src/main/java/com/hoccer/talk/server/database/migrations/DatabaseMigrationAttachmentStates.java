@@ -7,7 +7,7 @@ public class DatabaseMigrationAttachmentStates extends BaseDatabaseMigration  im
 
     @Override
     public void up() {
-        mExecuted = true;
+        // TODO: implement me
     }
 
     @Override
@@ -18,10 +18,5 @@ public class DatabaseMigrationAttachmentStates extends BaseDatabaseMigration  im
     @Override
     public String getName() {
         return MIGRATION_NAME;
-    }
-
-    @Override
-    public boolean isReversible() {
-        return false;
     }
 }

@@ -17,4 +17,8 @@ class BaseDatabaseMigration {
     public void setDatabase(ITalkServerDatabase database) {
         this.mDatabase = database;
     }
+
+    public boolean isReversible() {
+        return false;
+    }
 }

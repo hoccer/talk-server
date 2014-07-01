@@ -8,7 +8,6 @@ public class DatabaseMigrationDeliveryStates extends BaseDatabaseMigration imple
     @Override
     public void up() {
         // TODO: implement me (mDatabase is availble!)
-        markAsExecuted();
     }
 
     @Override
@@ -19,11 +18,6 @@ public class DatabaseMigrationDeliveryStates extends BaseDatabaseMigration imple
     @Override
     public String getName() {
         return MIGRATION_NAME;
-    }
-
-    @Override
-    public boolean isReversible() {
-        return false;
     }
 
 }
