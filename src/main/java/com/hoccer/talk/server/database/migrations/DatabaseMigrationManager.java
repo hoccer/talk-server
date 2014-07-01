@@ -4,8 +4,13 @@ import com.hoccer.talk.model.TalkDatabaseMigration;
 import com.hoccer.talk.server.ITalkServerDatabase;
 import org.apache.log4j.Logger;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DatabaseMigrationManager {
 
@@ -23,14 +28,21 @@ public class DatabaseMigrationManager {
     private final ITalkServerDatabase mDatabase;
     private final List<TalkDatabaseMigration> mAppliedMigrations;
 
+    // for proper date printing
+    private static final TimeZone timeZone = TimeZone.getTimeZone("UTC");
+    private static final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+    static {
+        dateFormatter.setTimeZone(timeZone);
+    }
+
     public DatabaseMigrationManager(ITalkServerDatabase database) {
         this.mDatabase = database;
 
+        // TODO: demeter's law
         mAppliedMigrations = mDatabase.findDatabaseMigrations();
         LOG.info("migrations recorded in the database:");
-        for (int i1 = 0; i1 < mAppliedMigrations.size(); i1++) {
-            TalkDatabaseMigration appliedMigration = mAppliedMigrations.get(i1);
-            LOG.info(" * " + appliedMigration.getPosition() + ": " + appliedMigration.getName());
+        for (TalkDatabaseMigration appliedMigration : mAppliedMigrations) {
+            LOG.info(" * " + appliedMigration.getPosition() + ": '" + appliedMigration.getName() + "' executed at " + dateFormatter.format(appliedMigration.getTimeExecuted()));
         }
 
         // check uniqueness of migration names in the loaded classes
@@ -62,21 +74,33 @@ public class DatabaseMigrationManager {
 
     public void executeAllMigrations() {
         LOG.info("executeAllMigrations - START");
+        final AtomicInteger migrationsExecuted = new AtomicInteger(0);
+        final AtomicInteger migrationsAlreadyExecuted = new AtomicInteger(0);
         for (int i = 0; i < mMigrations.size(); i++) {
-            IDatabaseMigration migration = mMigrations.get(i);
+            final IDatabaseMigration migration = mMigrations.get(i);
+            final int position = i + 1;
             if (migration.isExecuted()) {
                 LOG.info("  * migration '" + migration.getName() + "' is already (marked as) executed - DOING NOTHING");
+                migrationsAlreadyExecuted.incrementAndGet();
             } else {
-                LOG.info("  * executing 'up' for migration '" + migration.getName() + "'...");
-                migration.up();
-                TalkDatabaseMigration dbMigration = new TalkDatabaseMigration();
-                dbMigration.setName(migration.getName());
-                dbMigration.setPosition((i + 1));
-                mDatabase.saveDatabaseMigration(dbMigration);
-                LOG.info("  * ... done executing migration '" + migration.getName() + "'");
+                executeMigrationUp(migration, position);
+                migrationsExecuted.incrementAndGet();
             }
         }
-        LOG.info("executeAllMigration - DONE");
+        LOG.info("executeAllMigration - " + migrationsExecuted + " migrations executed - " + migrationsAlreadyExecuted + " were already executed - DONE");
+    }
+
+    private void executeMigrationUp(IDatabaseMigration migration, int position) {
+        LOG.info("  * executing 'up' for migration '" + migration.getName() + "'...");
+
+        final Date now = new Date();
+        migration.up();
+        final TalkDatabaseMigration dbMigration = new TalkDatabaseMigration();
+        dbMigration.setName(migration.getName());
+        dbMigration.setPosition(position);
+        dbMigration.setTimeExecuted(now);
+        mDatabase.saveDatabaseMigration(dbMigration);
+        LOG.info("  * ... done executing migration '" + migration.getName() + "' (at '" + dateFormatter.format(now) + "')");
     }
 
     private void validateMigrations() {
