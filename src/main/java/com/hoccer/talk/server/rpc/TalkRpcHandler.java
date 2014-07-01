@@ -1739,7 +1739,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         logCall("processFileDownloadMessage(fileId: '" + fileId + "') for client "+clientId + ", nextState='"+nextState+"'");
 
         List<TalkMessage> messages = mDatabase.findMessagesWithAttachmentFileId(fileId);
-        if (messages.size() == 0) {
+        if (messages.isEmpty()) {
             throw new RuntimeException("No message found with file id "+fileId);
         }
         if (messages.size() > 1) {
@@ -1830,7 +1830,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         final String clientId = mConnection.getClientId();
 
         List<TalkMessage> messages = mDatabase.findMessagesWithAttachmentFileId(fileId);
-        if (messages.size() == 0) {
+        if (messages.isEmpty()) {
             throw new RuntimeException("No message found with file id "+fileId);
         }
         for (TalkMessage message : messages) {
@@ -1943,7 +1943,7 @@ public class TalkRpcHandler implements ITalkRpcServer {
         mServer.getUpdateAgent().requestPresenceUpdate(mConnection.getClientId(), null);
     }
 
-    public ArrayList<Pair<String, Integer>> findGroupSortedBySize(List<TalkEnvironment> matchingEnvironments) {
+    private ArrayList<Pair<String, Integer>> findGroupSortedBySize(List<TalkEnvironment> matchingEnvironments) {
         Map<String, Integer> environmentsPerGroup = new HashMap<String, Integer>();
         for (int i = 0; i < matchingEnvironments.size(); ++i) {
             String key = matchingEnvironments.get(i).getGroupId();

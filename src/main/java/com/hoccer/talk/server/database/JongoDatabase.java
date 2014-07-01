@@ -24,37 +24,36 @@ import java.util.*;
 public class JongoDatabase implements ITalkServerDatabase {
 
     private static final Logger LOG = Logger.getLogger(JongoDatabase.class);
-    private static final long GROUPKEY_LOCK_RETENTION_TIMEOUT = 1000 * 30; // in milliseconds
 
     /**
      * Mongo connection pool
      */
-    Mongo mMongo;
+    private final Mongo mMongo;
 
     /**
      * Mongo database accessor
      */
-    DB mDb;
+    private DB mDb;
 
     /**
      * Jongo object mapper
      */
-    Jongo mJongo;
+    private Jongo mJongo;
 
-    List<MongoCollection> mCollections;
+    private final List<MongoCollection> mCollections;
 
-    MongoCollection mClients;
-    MongoCollection mMessages;
-    MongoCollection mDeliveries;
-    MongoCollection mTokens;
-    MongoCollection mRelationships;
-    MongoCollection mPresences;
-    MongoCollection mKeys;
-    MongoCollection mGroups;
-    MongoCollection mGroupMembers;
-    MongoCollection mEnvironments;
-    MongoCollection mClientHostInfos;
-    MongoCollection mMigrations;
+    private MongoCollection mClients;
+    private MongoCollection mMessages;
+    private MongoCollection mDeliveries;
+    private MongoCollection mTokens;
+    private MongoCollection mRelationships;
+    private MongoCollection mPresences;
+    private MongoCollection mKeys;
+    private MongoCollection mGroups;
+    private MongoCollection mGroupMembers;
+    private MongoCollection mEnvironments;
+    private MongoCollection mClientHostInfos;
+    private MongoCollection mMigrations;
 
     public JongoDatabase(TalkServerConfiguration configuration) {
         mCollections = new ArrayList<MongoCollection>();
