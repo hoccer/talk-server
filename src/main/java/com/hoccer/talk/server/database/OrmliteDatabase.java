@@ -698,4 +698,10 @@ public class OrmliteDatabase implements ITalkServerDatabase {
     public void saveDatabaseMigration(TalkDatabaseMigration migration) {
         // TODO: implement me properly!
     }
+
+    @Override
+    public List<TalkDelivery> findAllDeliveries() {
+        // TODO: implement me properly!
+        return null;
+    }
 }

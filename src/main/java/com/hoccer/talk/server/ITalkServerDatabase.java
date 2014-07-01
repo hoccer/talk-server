@@ -39,6 +39,8 @@ public interface ITalkServerDatabase {
 
     public List<TalkDelivery> findDeliveriesInState(String state);
 
+    List<TalkDelivery> findAllDeliveries();
+
     public List<TalkDelivery> findDeliveriesInStates(String[] states);
 
     public List<TalkDelivery> findDeliveriesInStatesAndAttachmentStates(String[] states, String[] attachmentStates);
