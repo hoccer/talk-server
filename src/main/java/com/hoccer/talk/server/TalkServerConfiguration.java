@@ -1,7 +1,6 @@
 package com.hoccer.talk.server;
 
 import com.hoccer.scm.GitInfo;
-import com.sun.org.apache.xml.internal.security.algorithms.implementations.IntegrityHmac;
 import org.apache.log4j.Logger;
 
 import java.net.URI;
