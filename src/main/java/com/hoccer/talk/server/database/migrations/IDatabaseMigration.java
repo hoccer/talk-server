@@ -5,7 +5,7 @@ import com.hoccer.talk.server.ITalkServerDatabase;
 interface IDatabaseMigration {
 
     /* up contains the actual code to bring the database into the desired state. Theoretically anything goes in here */
-    public void up();
+    public void up() throws Exception;
 
     /* Architecturally it is important that migrations should be reversible in principle. However this may not alway
     * be the case, depending on the migration. If it is reversible, implement these methods in an appropriate fashion*/

@@ -5,6 +5,7 @@ import com.hoccer.talk.model.TalkMessage;
 import org.apache.log4j.Logger;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DatabaseMigrationAttachmentStates extends BaseDatabaseMigration  implements IDatabaseMigration {
@@ -15,33 +16,41 @@ public class DatabaseMigrationAttachmentStates extends BaseDatabaseMigration  im
     private static final Logger LOG = Logger.getLogger(DatabaseMigrationAttachmentStates.class);
 
     @Override
-    public void up() {
+    public void up() throws Exception {
         List<TalkDelivery> deliveries = mDatabase.findAllDeliveries();
         LOG.info("migrating attachment state for " + deliveries.size() + " deliveries");
-        AtomicInteger deliveriesWithoutAttachmentCounter = new AtomicInteger();
-        AtomicInteger deliveriesWithAttachmentsCounter = new AtomicInteger();
-        for (TalkDelivery delivery : deliveries) {
-            final TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
-            if (message == null) {
-                // Doesn't even have a message associated? Something went wrong with this delivery?
-                LOG.warn("Delivery " + delivery.getId() + " has no message associated - cannot migrate attachment state");
-            } else {
-                if (message.getAttachmentFileId() != null) {
-                    // has attachment
-                    delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED);
-                    mDatabase.saveDelivery(delivery);
-                    deliveriesWithAttachmentsCounter.incrementAndGet();
-                } else {
-                    // has no attachment
-                    delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_NONE);
-                    mDatabase.saveDelivery(delivery);
-                    deliveriesWithoutAttachmentCounter.incrementAndGet();
+        final AtomicInteger deliveriesWithoutAttachmentCounter = new AtomicInteger();
+        final AtomicInteger deliveriesWithAttachmentsCounter = new AtomicInteger();
+        for (final TalkDelivery delivery : deliveries) {
+            mExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    final TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
+                    if (message == null) {
+                        // Doesn't even have a message associated? Something went wrong with this delivery?
+                        LOG.warn("Delivery " + delivery.getId() + " has no message associated - cannot migrate attachment state");
+                    } else {
+                        if (message.getAttachmentFileId() != null) {
+                            // has attachment
+                            delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED);
+                            mDatabase.saveDelivery(delivery);
+                            deliveriesWithAttachmentsCounter.incrementAndGet();
+                        } else {
+                            // has no attachment
+                            delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_NONE);
+                            mDatabase.saveDelivery(delivery);
+                            deliveriesWithoutAttachmentCounter.incrementAndGet();
+                        }
+                    }
                 }
-            }
+            });
+
         }
 
-        LOG.info("Set Attachment state to '" + TalkDelivery.ATTACHMENT_STATE_NONE + "' for " + deliveriesWithoutAttachmentCounter + " deliveries");
-        LOG.info("Set Attachment state to '" + TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED + "' for " + deliveriesWithAttachmentsCounter + " deliveries");
+        LOG.info("Scheduled setting Attachment state to '" + TalkDelivery.ATTACHMENT_STATE_NONE + "' for " + deliveriesWithoutAttachmentCounter + " deliveries");
+        LOG.info("Scheduled setting Attachment state to '" + TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED + "' for " + deliveriesWithAttachmentsCounter + " deliveries");
+        mExecutor.shutdown();
+        mExecutor.awaitTermination(25, TimeUnit.MINUTES);
     }
 
     @Override

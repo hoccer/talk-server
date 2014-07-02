@@ -83,14 +83,19 @@ public class DatabaseMigrationManager {
                 LOG.info("  * migration '" + migration.getName() + "' is already (marked as) executed - DOING NOTHING");
                 migrationsAlreadyExecuted.incrementAndGet();
             } else {
-                executeMigrationUp(migration, position);
+                try {
+                    executeMigrationUp(migration, position);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
                 migrationsExecuted.incrementAndGet();
             }
         }
         LOG.info("executeAllMigration - " + migrationsExecuted + " migrations executed - " + migrationsAlreadyExecuted + " were already executed - DONE");
     }
 
-    private void executeMigrationUp(IDatabaseMigration migration, int position) {
+    private void executeMigrationUp(IDatabaseMigration migration, int position) throws Exception {
         LOG.info("  * executing 'up' for migration '" + migration.getName() + "'...");
 
         final Date now = new Date();
