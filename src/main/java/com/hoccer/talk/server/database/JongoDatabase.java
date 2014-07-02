@@ -68,16 +68,13 @@ public class JongoDatabase implements ITalkServerDatabase {
     }
 
     private Mongo createMongoClient(TalkServerConfiguration configuration) {
-
-        // write concern for all collections
-        // WriteConcern wc = WriteConcern.JOURNALED; //??? not used?
         // create connection pool
         try {
             MongoOptions options = new MongoOptions();
             options.threadsAllowedToBlockForConnectionMultiplier = 1500;
-            options.maxWaitTime = 5 * 1000;
-            // options.connectionsPerHost
-            return new Mongo("localhost", options);
+            options.maxWaitTime = configuration.getJongoMaxWaitTime();
+            options.connectionsPerHost = configuration.getJongoConnectionsPerHost();
+            return new Mongo(configuration.getJongoHost(), options);
         } catch (UnknownHostException e) {
             e.printStackTrace();
             return null;
