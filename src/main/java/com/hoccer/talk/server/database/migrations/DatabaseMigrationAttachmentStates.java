@@ -1,6 +1,7 @@
 package com.hoccer.talk.server.database.migrations;
 
 import com.hoccer.talk.model.TalkDelivery;
+import com.hoccer.talk.model.TalkMessage;
 import org.apache.log4j.Logger;
 
 import java.util.List;
@@ -20,16 +21,24 @@ public class DatabaseMigrationAttachmentStates extends BaseDatabaseMigration  im
         AtomicInteger deliveriesWithoutAttachmentCounter = new AtomicInteger();
         AtomicInteger deliveriesWithAttachmentsCounter = new AtomicInteger();
         for (TalkDelivery delivery : deliveries) {
-            if (!delivery.hasAttachment()) {
-                delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_NONE);
-                deliveriesWithoutAttachmentCounter.incrementAndGet();
+            final TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
+            if (message == null) {
+                LOG.warn("Delivery " + delivery.getId() + " has no message associated - cannot migrate attachment state");
             } else {
-                delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED);
-                deliveriesWithAttachmentsCounter.incrementAndGet();
+                if (message.getAttachmentFileId() != null) {
+                    // has attachment
+                    delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED);
+                    mDatabase.saveDelivery(delivery);
+                    deliveriesWithAttachmentsCounter.incrementAndGet();
+                } else {
+                    // has no attachment
+                    delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_NONE);
+                    mDatabase.saveDelivery(delivery);
+                    deliveriesWithoutAttachmentCounter.incrementAndGet();
+                }
             }
-            mDatabase.saveDelivery(delivery);
-
         }
+
         LOG.info("Set Attachment state to '" + TalkDelivery.ATTACHMENT_STATE_NONE + "' for " + deliveriesWithoutAttachmentCounter + " deliveries");
         LOG.info("Set Attachment state to '" + TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED + "' for " + deliveriesWithAttachmentsCounter + " deliveries");
     }
