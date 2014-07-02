@@ -23,6 +23,7 @@ public class DatabaseMigrationAttachmentStates extends BaseDatabaseMigration  im
         for (TalkDelivery delivery : deliveries) {
             final TalkMessage message = mDatabase.findMessageById(delivery.getMessageId());
             if (message == null) {
+                // Doesn't even have a message associated? Something went wrong with this delivery?
                 LOG.warn("Delivery " + delivery.getId() + " has no message associated - cannot migrate attachment state");
             } else {
                 if (message.getAttachmentFileId() != null) {
