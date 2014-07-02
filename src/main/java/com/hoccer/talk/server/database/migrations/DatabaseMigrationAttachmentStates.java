@@ -20,7 +20,7 @@ public class DatabaseMigrationAttachmentStates extends BaseDatabaseMigration  im
         AtomicInteger deliveriesWithoutAttachmentCounter = new AtomicInteger();
         AtomicInteger deliveriesWithAttachmentsCounter = new AtomicInteger();
         for (TalkDelivery delivery : deliveries) {
-            if (delivery.hasAttachment()) {
+            if (!delivery.hasAttachment()) {
                 delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_NONE);
                 deliveriesWithoutAttachmentCounter.incrementAndGet();
             } else {
