@@ -24,7 +24,7 @@ public class DatabaseMigrationAttachmentStates extends BaseDatabaseMigration  im
                 delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_NONE);
                 deliveriesWithoutAttachmentCounter.incrementAndGet();
             } else {
-                delivery.setState(TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED);
+                delivery.setAttachmentState(TalkDelivery.ATTACHMENT_STATE_RECEIVED_ACKNOWLEDGED);
                 deliveriesWithAttachmentsCounter.incrementAndGet();
             }
             mDatabase.saveDelivery(delivery);
