@@ -14,10 +14,10 @@ public class DatabaseMigrationDeliveryStates extends BaseDatabaseMigration imple
 
     @Override
     public void up() {
-        migrateFromDeliveriesFromStateToState(TalkDelivery.STATE_DELIVERED_OLD, TalkDelivery.STATE_DELIVERED_PRIVATE);
-        migrateFromDeliveriesFromStateToState(TalkDelivery.STATE_CONFIRMED_OLD, TalkDelivery.STATE_DELIVERED_PRIVATE_ACKNOWLEDGED);
-        migrateFromDeliveriesFromStateToState(TalkDelivery.STATE_ABORTED_OLD, TalkDelivery.STATE_ABORTED_ACKNOWLEDGED);
-        migrateFromDeliveriesFromStateToState(TalkDelivery.STATE_FAILED_OLD, TalkDelivery.STATE_FAILED_ACKNOWLEDGED);
+        migrateDeliveriesFromStateToState(TalkDelivery.STATE_DELIVERED_OLD, TalkDelivery.STATE_DELIVERED_PRIVATE);
+        migrateDeliveriesFromStateToState(TalkDelivery.STATE_CONFIRMED_OLD, TalkDelivery.STATE_DELIVERED_PRIVATE_ACKNOWLEDGED);
+        migrateDeliveriesFromStateToState(TalkDelivery.STATE_ABORTED_OLD, TalkDelivery.STATE_ABORTED_ACKNOWLEDGED);
+        migrateDeliveriesFromStateToState(TalkDelivery.STATE_FAILED_OLD, TalkDelivery.STATE_FAILED_ACKNOWLEDGED);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class DatabaseMigrationDeliveryStates extends BaseDatabaseMigration imple
         return MIGRATION_NAME;
     }
 
-    private void migrateFromDeliveriesFromStateToState(String startState, String targetState) {
+    private void migrateDeliveriesFromStateToState(String startState, String targetState) {
         final List<TalkDelivery> deliveries = mDatabase.findDeliveriesInState(startState);
         for (TalkDelivery delivery : deliveries) {
             delivery.setState(targetState);
